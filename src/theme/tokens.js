@@ -3,6 +3,7 @@
     Zeichnen: "#6B4E8A",
     Erklären: "#4F86A6",
     Quizfrage: "#E3B23C",
+    Singlechoice: "#2A9D8F",
     Pantomime: "#C76A2A",
     Start: "#3F6B3A",
     Ziel: "#3F6B3A",
