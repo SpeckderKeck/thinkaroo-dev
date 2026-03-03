@@ -1979,6 +1979,71 @@ button:disabled {
   color: var(--fullscreen-card-text, var(--text));
 }
 
+.turn-singlechoice-options {
+  width: min(940px, 100%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(10px, 2vw, 20px);
+}
+
+.singlechoice-option {
+  min-height: clamp(70px, 10vh, 120px);
+  border-radius: 16px;
+  border: 2px solid color-mix(in srgb, var(--fullscreen-card-text, var(--text)) 45%, transparent);
+  background: color-mix(in srgb, var(--fullscreen-card-text, var(--text)) 12%, transparent);
+  color: var(--fullscreen-card-text, var(--text));
+  font-size: clamp(1rem, 2.2vw, 1.8rem);
+  font-weight: 700;
+  padding: clamp(10px, 1.8vw, 16px);
+  text-align: left;
+  cursor: pointer;
+}
+
+.singlechoice-option:disabled {
+  cursor: default;
+}
+
+.singlechoice-option.is-result {
+  animation: singlechoice-blink 0.3s ease-in-out 3;
+  animation-fill-mode: forwards;
+}
+
+.singlechoice-option.is-result.is-correct {
+  --singlechoice-result-color: #22c55e;
+}
+
+.singlechoice-option.is-result.is-wrong {
+  --singlechoice-result-color: #ef4444;
+}
+
+.turn-word.is-singlechoice-question #turn-taboo-list {
+  display: none;
+}
+
+.turn-word.is-singlechoice-question #turn-word-title {
+  font-size: calc(clamp(1.2rem, 3.6vw, 2.8rem) * var(--term-scale, 1));
+  max-inline-size: min(36ch, 100%);
+}
+
+@keyframes singlechoice-blink {
+  0%, 100% {
+    background: var(--singlechoice-result-color);
+    color: #ffffff;
+    border-color: var(--singlechoice-result-color);
+  }
+  50% {
+    background: color-mix(in srgb, var(--singlechoice-result-color) 20%, transparent);
+    color: var(--fullscreen-card-text, var(--text));
+    border-color: color-mix(in srgb, var(--singlechoice-result-color) 45%, transparent);
+  }
+}
+
+@media (max-width: 768px) {
+  .turn-singlechoice-options {
+    grid-template-columns: 1fr;
+  }
+}
+
 #turn-taboo-list {
   list-style: none;
   padding: 0;
