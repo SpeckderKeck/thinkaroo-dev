@@ -1280,8 +1280,11 @@ function showPenaltyToast(penalty) {
 
 function getCardByCategory(category) {
   const pool = state.cards.filter((card) => {
-    if (isQuizCardCategory(category)) {
+    if (category === "Quizfrage") {
       return isQuizCardCategory(card.category);
+    }
+    if (category === "Singlechoice") {
+      return card.category === "Singlechoice";
     }
     return card.category === category;
   });
