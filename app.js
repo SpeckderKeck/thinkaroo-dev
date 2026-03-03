@@ -394,6 +394,7 @@ const CUSTOM_DATASETS_STORAGE_KEY = "wissivity.customDatasets";
 const CUSTOM_DATASETS_API_URL_STORAGE_KEY = "wissivity.customDatasetsApiUrl";
 const CUSTOM_DATASETS_API_ENDPOINT = "/datasets";
 const SINGLECHOICE_ANSWERS_API_ENDPOINT = "/singlechoice-answers";
+const SINGLECHOICE_OPTIONS_API_ENDPOINT = "/singlechoice-options";
 const SINGLECHOICE_ANSWERS_STORAGE_KEY = "wissivity.singlechoiceAnswers";
 const CUSTOM_DATASET_KEY_PREFIX = "custom:";
 const STORAGE_DATASET_KEY_PREFIX = "storage:";
@@ -441,6 +442,10 @@ const state = {
   singlechoiceSelectedAnswerId: null,
   singlechoiceAnsweredCorrectly: null,
   singlechoiceSubmitting: false,
+  singlechoiceLocked: false,
+  singlechoiceAnimating: false,
+  singlechoiceAnimationTimeoutId: null,
+  singlechoiceSubmitError: "",
   singlechoiceQuestionId: "",
   singlechoiceShuffledOptions: [],
   masterQuiz: false,
@@ -1315,7 +1320,7 @@ function setWordCard(card) {
 
 function setQuizQuestionCard(card) {
   if (card?.category === "Singlechoice") {
-    setSinglechoiceCard(card);
+    void setSinglechoiceCard(card);
     return;
   }
 
@@ -1335,6 +1340,10 @@ function setQuizQuestionCard(card) {
 }
 
 function resetSinglechoiceState() {
+  if (state.singlechoiceAnimationTimeoutId) {
+    clearTimeout(state.singlechoiceAnimationTimeoutId);
+    state.singlechoiceAnimationTimeoutId = null;
+  }
   if (!turnSinglechoiceOptions) return;
   turnSinglechoiceOptions.innerHTML = "";
   turnSinglechoiceOptions.classList.add("hidden");
@@ -1343,8 +1352,32 @@ function resetSinglechoiceState() {
   state.singlechoiceSelectedAnswerId = null;
   state.singlechoiceAnsweredCorrectly = null;
   state.singlechoiceSubmitting = false;
+  state.singlechoiceLocked = false;
+  state.singlechoiceAnimating = false;
+  state.singlechoiceSubmitError = "";
   state.singlechoiceQuestionId = "";
   state.singlechoiceShuffledOptions = [];
+}
+
+async function loadSinglechoiceOptions(questionId) {
+  if (!questionId) return [];
+  const response = await fetch(`${SINGLECHOICE_OPTIONS_API_ENDPOINT}/${encodeURIComponent(questionId)}`, {
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    throw new Error("Antwortoptionen konnten nicht geladen werden.");
+  }
+
+  const payload = await response.json();
+  const options = Array.isArray(payload?.options) ? payload.options : [];
+  return options
+    .map((option) => ({
+      id: String(option?.id ?? "").trim(),
+      label: String(option?.text ?? option?.label ?? "").trim(),
+      isCorrect: Boolean(option?.isCorrect),
+    }))
+    .filter((option) => option.id && option.label)
+    .slice(0, 4);
 }
 
 function readStoredSinglechoiceAnswers() {
@@ -1378,20 +1411,23 @@ async function loadSinglechoiceAnswer(questionId) {
   }
 }
 
-async function submitSinglechoiceAnswer(questionId, answerId) {
+async function submitSinglechoiceAnswer(questionId, answerId, isCorrect) {
   if (!questionId || !answerId) return;
   storeSinglechoiceAnswerLocally(questionId, answerId);
   try {
-    await fetch(SINGLECHOICE_ANSWERS_API_ENDPOINT, {
+    const response = await fetch(SINGLECHOICE_ANSWERS_API_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
       },
-      body: JSON.stringify({ questionId, answerId }),
+      body: JSON.stringify({ questionId, answerId, isCorrect: Boolean(isCorrect) }),
     });
+    if (!response.ok) {
+      throw new Error("Antwort konnte nicht gespeichert werden.");
+    }
   } catch {
-    // Lokal gespeichert reicht als Fallback.
+    throw new Error("Antwort konnte nicht gespeichert werden.");
   }
 }
 
@@ -1413,7 +1449,7 @@ function renderSinglechoiceOptions({ options, correctAnswerId, selectedAnswerId 
   options.forEach((option, index) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "singlechoice-option";
+    button.className = "singlechoice-option optionButton";
     button.dataset.answerId = option.id;
     button.dataset.correct = String(option.id === correctAnswerId);
     button.innerHTML = `<span class="singlechoice-prefix">${prefixes[index] ?? "?"}:</span><span class="singlechoice-label">${option.label}</span>`;
@@ -1427,7 +1463,7 @@ function renderSinglechoiceOptions({ options, correctAnswerId, selectedAnswerId 
   });
 }
 
-function setSinglechoiceCard(card) {
+async function setSinglechoiceCard(card) {
   turnWord?.classList.add("is-quiz-question", "is-singlechoice-question");
   if (turnCategoryIcon) {
     turnCategoryIcon.classList.remove("icon-fallback");
@@ -1448,24 +1484,30 @@ function setSinglechoiceCard(card) {
   if (!turnSinglechoiceOptions) return;
 
   const questionId = String(card?.questionId ?? "").trim();
-  const correctAnswer = String(card?.answer ?? "").trim();
-  const answerCandidates = [card?.answer, ...(Array.isArray(card?.taboo) ? card.taboo.slice(1, 4) : [])]
-    .map((entry) => String(entry ?? "").trim())
-    .filter(Boolean)
-    .slice(0, 4);
 
-  if (answerCandidates.length < 4 || !correctAnswer) {
+  let baseOptions = [];
+  try {
+    baseOptions = await loadSinglechoiceOptions(questionId);
+  } catch {
+    const fallbackCorrectAnswer = String(card?.answer ?? "").trim();
+    const answerCandidates = [card?.answer, ...(Array.isArray(card?.taboo) ? card.taboo.slice(1, 4) : [])]
+      .map((entry) => String(entry ?? "").trim())
+      .filter(Boolean)
+      .slice(0, 4);
+    baseOptions = answerCandidates.map((label, index) => ({
+      id: `${questionId || "question"}-${index + 1}`,
+      label,
+      isCorrect: label === fallbackCorrectAnswer,
+    }));
+  }
+
+  if (baseOptions.length !== 4) {
     turnSinglechoiceOptions.innerHTML = '<p class="singlechoice-error">Antwortoptionen konnten nicht geladen werden.</p>';
     turnSinglechoiceOptions.classList.remove("hidden");
     setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: false });
     return;
   }
 
-  const baseOptions = answerCandidates.map((label, index) => ({
-    id: `${questionId || "question"}-${index + 1}`,
-    label,
-    isCorrect: label === correctAnswer,
-  }));
   const correctOption = baseOptions.find((entry) => entry.isCorrect);
   if (!correctOption) {
     turnSinglechoiceOptions.innerHTML = '<p class="singlechoice-error">Korrekte Antwort konnte nicht ermittelt werden.</p>';
@@ -1484,9 +1526,11 @@ function setSinglechoiceCard(card) {
   state.singlechoiceSelectedAnswerId = null;
   state.singlechoiceAnsweredCorrectly = null;
   state.singlechoiceSubmitting = false;
+  state.singlechoiceLocked = false;
+  state.singlechoiceAnimating = false;
+  state.singlechoiceSubmitError = "";
   setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: false });
 
-  // Bereits gespeicherte Antwort beim Öffnen der Karte vorselektieren.
   void loadSinglechoiceAnswer(questionId).then((storedAnswerId) => {
     if (!storedAnswerId || state.singlechoiceQuestionId !== questionId) return;
     state.singlechoiceSelectedAnswerId = storedAnswerId;
@@ -1496,15 +1540,20 @@ function setSinglechoiceCard(card) {
 }
 
 async function handleSinglechoiceAnswer(button) {
-  if (!button || state.singlechoiceSubmitting) return;
+  if (!button || state.singlechoiceLocked || state.singlechoiceAnimating) return;
 
   const options = [...turnSinglechoiceOptions.querySelectorAll(".singlechoice-option")];
+  const oldFeedback = turnSinglechoiceOptions.querySelector(".singlechoice-feedback");
+  oldFeedback?.remove();
   const isCorrect = button.dataset.correct === "true";
   const answerId = String(button.dataset.answerId ?? "").trim();
   state.singlechoiceSelectedAnswer = button.textContent;
   state.singlechoiceSelectedAnswerId = answerId;
   state.singlechoiceAnsweredCorrectly = isCorrect;
+  state.singlechoiceLocked = true;
+  state.singlechoiceAnimating = true;
   state.singlechoiceSubmitting = true;
+  state.singlechoiceSubmitError = "";
 
   options.forEach((option) => option.classList.remove("is-selected"));
   button.classList.add("is-selected");
@@ -1513,18 +1562,27 @@ async function handleSinglechoiceAnswer(button) {
   });
 
   const questionId = String(state.singlechoiceQuestionId ?? "").trim();
-  await submitSinglechoiceAnswer(questionId, answerId);
+  void submitSinglechoiceAnswer(questionId, answerId, isCorrect).catch((error) => {
+    state.singlechoiceSubmitError = error instanceof Error ? error.message : "Antwort konnte nicht gespeichert werden.";
+    const feedback = document.createElement("p");
+    feedback.className = "singlechoice-error singlechoice-feedback";
+    feedback.textContent = state.singlechoiceSubmitError;
+    turnSinglechoiceOptions.appendChild(feedback);
+  });
 
-  button.classList.add("is-result");
-  button.classList.add(isCorrect ? "is-correct" : "is-wrong");
+  button.classList.add(isCorrect ? "blinkGreen" : "blinkRed");
 
-  setTimeout(() => {
+  state.singlechoiceAnimationTimeoutId = setTimeout(() => {
+    button.classList.remove("blinkGreen", "blinkRed");
+    button.classList.add(isCorrect ? "finalGreen" : "finalRed");
+    state.singlechoiceAnimating = false;
     setTurnButtons({ showCorrect: false, showWrong: false, showSwap: false, showContinue: true });
     if (turnContinueButton) {
       turnContinueButton.textContent = "Weiter";
     }
     state.singlechoiceSubmitting = false;
-  }, 950);
+    state.singlechoiceAnimationTimeoutId = null;
+  }, 1080);
 }
 
 function setQuizAnswerCard(card) {

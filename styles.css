@@ -2034,17 +2034,37 @@ button:disabled {
   background: color-mix(in srgb, #ef4444 16%, transparent);
 }
 
-.singlechoice-option.is-result {
-  animation: singlechoice-blink 0.3s ease-in-out 3;
-  animation-fill-mode: forwards;
+.optionButton {
+  justify-content: flex-start;
 }
 
-.singlechoice-option.is-result.is-correct {
+.singlechoice-option.blinkGreen,
+.singlechoice-option.blinkRed {
+  animation: singlechoice-blink 0.18s ease-in-out 6;
+}
+
+.singlechoice-option.blinkGreen {
   --singlechoice-result-color: #22c55e;
 }
 
-.singlechoice-option.is-result.is-wrong {
+.singlechoice-option.blinkRed {
   --singlechoice-result-color: #ef4444;
+}
+
+.singlechoice-option.finalGreen {
+  background: #22c55e;
+  color: #ffffff;
+  border-color: #22c55e;
+}
+
+.singlechoice-option.finalRed {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+.singlechoice-feedback {
+  margin-top: 0;
 }
 
 .turn-word.is-singlechoice-question #turn-taboo-list {
