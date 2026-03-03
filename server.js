@@ -8,6 +8,7 @@ const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const LEGACY_DATA_FILE = path.join(DATA_DIR, 'custom-datasets.json');
 const DATASET_STORE_DIR = path.join(DATA_DIR, 'custom-datasets-store');
+const SINGLECHOICE_ANSWERS_FILE = path.join(DATA_DIR, 'singlechoice-answers.json');
 const MANIFEST_VERSION = 2;
 
 const MIME_TYPES = {
@@ -81,6 +82,12 @@ function normalizeDataset(rawDataset) {
 async function ensureStorageInitialized() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.mkdir(DATASET_STORE_DIR, { recursive: true });
+
+  try {
+    await fs.access(SINGLECHOICE_ANSWERS_FILE);
+  } catch {
+    await fs.writeFile(SINGLECHOICE_ANSWERS_FILE, '{}\n', 'utf8');
+  }
 
   try {
     await fs.access(LEGACY_DATA_FILE);
@@ -218,6 +225,18 @@ async function listDatasets() {
   return datasets;
 }
 
+
+async function readSinglechoiceAnswers() {
+  await ensureStorageInitialized();
+  const raw = await fs.readFile(SINGLECHOICE_ANSWERS_FILE, 'utf8');
+  const parsed = JSON.parse(raw || '{}');
+  return parsed && typeof parsed === 'object' ? parsed : {};
+}
+
+async function writeSinglechoiceAnswers(entries) {
+  await fs.writeFile(SINGLECHOICE_ANSWERS_FILE, `${JSON.stringify(entries, null, 2)}\n`, 'utf8');
+}
+
 async function handleDatasetsApi(req, res, url) {
   if (req.method === 'OPTIONS') {
     setCorsHeaders(res);
@@ -352,6 +371,51 @@ async function handleDatasetsApi(req, res, url) {
   return sendJson(res, 405, { error: 'method_not_allowed' });
 }
 
+
+async function handleSinglechoiceAnswersApi(req, res, url) {
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    res.writeHead(204);
+    res.end();
+    return true;
+  }
+
+  const itemPathMatch = url.pathname.match(/^\/singlechoice-answers\/([^/]+)$/);
+  const questionIdFromPath = itemPathMatch ? decodeURIComponent(itemPathMatch[1]) : '';
+
+  if (req.method === 'GET' && questionIdFromPath) {
+    const answers = await readSinglechoiceAnswers();
+    const answerId = typeof answers[questionIdFromPath] === 'string' ? answers[questionIdFromPath] : null;
+    sendJson(res, 200, { questionId: questionIdFromPath, answerId });
+    return true;
+  }
+
+  if (req.method === 'POST' && url.pathname === '/singlechoice-answers') {
+    let payload;
+    try {
+      payload = await readBodyJson(req);
+    } catch {
+      sendJson(res, 400, { error: 'invalid_json' });
+      return true;
+    }
+
+    const questionId = String(payload?.questionId ?? '').trim();
+    const answerId = String(payload?.answerId ?? '').trim();
+    if (!questionId || !answerId) {
+      sendJson(res, 400, { error: 'invalid_payload' });
+      return true;
+    }
+
+    const answers = await readSinglechoiceAnswers();
+    answers[questionId] = answerId;
+    await writeSinglechoiceAnswers(answers);
+    sendJson(res, 200, { ok: true, questionId, answerId });
+    return true;
+  }
+
+  return false;
+}
+
 async function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
@@ -392,6 +456,13 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/datasets' || /^\/datasets\/[^/]+$/.test(url.pathname)) {
       await handleDatasetsApi(req, res, url);
       return;
+    }
+
+    if (url.pathname === '/singlechoice-answers' || /^\/singlechoice-answers\/[^/]+$/.test(url.pathname)) {
+      const handled = await handleSinglechoiceAnswersApi(req, res, url);
+      if (handled) {
+        return;
+      }
     }
 
     await serveStatic(req, res);
