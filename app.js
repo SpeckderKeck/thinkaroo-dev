@@ -1387,15 +1387,23 @@ function buildSinglechoiceOptionsFromCard(card, questionId = "") {
     ? card.taboo.map((entry) => String(entry ?? "").trim()).filter(Boolean)
     : [];
 
-  const allOptions = [correctAnswer, ...tabooEntries]
-    .map((entry) => String(entry ?? "").trim())
-    .filter(Boolean);
+  const uniqueOptions = [];
+  const seen = new Set();
+  const addOption = (text) => {
+    const normalized = String(text ?? "").trim();
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    uniqueOptions.push(normalized);
+  };
 
-  if (!correctAnswer || allOptions.length < 4) {
+  addOption(correctAnswer);
+  tabooEntries.forEach(addOption);
+
+  if (!correctAnswer || uniqueOptions.length < 4) {
     return [];
   }
 
-  return allOptions.slice(0, 4).map((label, index) => ({
+  return uniqueOptions.slice(0, 4).map((label, index) => ({
     id: `${questionId || "question"}-${index + 1}`,
     label,
     isCorrect: label === correctAnswer,
