@@ -31,6 +31,7 @@ const turnWord = document.getElementById("turn-word");
 const turnTimer = document.getElementById("turn-timer");
 const turnPenalty = document.getElementById("turn-penalty");
 const turnWordTitle = document.getElementById("turn-word-title");
+const turnSinglechoiceOptions = document.getElementById("turn-singlechoice-options");
 const turnTabooList = document.getElementById("turn-taboo-list");
 const turnWordCategoryLabel = document.getElementById("turn-word-category-label");
 const turnWordHint = document.getElementById("turn-word-hint");
@@ -331,7 +332,11 @@ const CATEGORY_VISUALS = {
 const START_ICON_PATH = "start.svg";
 const GOAL_ICON_PATH = "ziel.svg";
 
-const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage"];
+const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Singlechoice"];
+
+function isQuizCardCategory(category) {
+  return category === "Quizfrage" || category === "Singlechoice";
+}
 
 function getCategoryIconPath(category) {
   return CATEGORY_CONFIG[category]?.iconPath ?? "";
@@ -424,6 +429,8 @@ const state = {
   pendingReturn: null,
   currentCard: null,
   quizPhase: null,
+  singlechoiceSelectedAnswer: null,
+  singlechoiceAnsweredCorrectly: null,
   masterQuiz: false,
   selectedDatasets: [],
   customDatasets: {},
@@ -540,7 +547,7 @@ function isValidNormalizedCard(card) {
   if (!card || !ALLOWED_CARD_CATEGORIES.includes(card.category) || !card.term) {
     return false;
   }
-  if (card.category === "Quizfrage") {
+  if (isQuizCardCategory(card.category)) {
     return Boolean(card.answer);
   }
   return true;
@@ -1266,13 +1273,19 @@ function showPenaltyToast(penalty) {
 }
 
 function getCardByCategory(category) {
-  const pool = state.cards.filter((card) => card.category === category);
+  const pool = state.cards.filter((card) => {
+    if (isQuizCardCategory(category)) {
+      return isQuizCardCategory(card.category);
+    }
+    return card.category === category;
+  });
   if (pool.length === 0) return null;
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 function setWordCard(card) {
-  turnWord?.classList.remove("is-quiz-question");
+  turnWord?.classList.remove("is-quiz-question", "is-singlechoice-question");
+  resetSinglechoiceState();
   fullscreenCardOverlay.update({
     category: state.pendingCategory,
     term: card?.term ?? "Keine Karte",
@@ -1286,7 +1299,14 @@ function setWordCard(card) {
 }
 
 function setQuizQuestionCard(card) {
+  if (card?.category === "Singlechoice") {
+    setSinglechoiceCard(card);
+    return;
+  }
+
   turnWord?.classList.add("is-quiz-question");
+  turnWord?.classList.remove("is-singlechoice-question");
+  resetSinglechoiceState();
   fullscreenCardOverlay.update({
     category: state.pendingCategory,
     term: card?.term ?? "Keine Quizfrage",
@@ -1299,8 +1319,85 @@ function setQuizQuestionCard(card) {
   }
 }
 
+function resetSinglechoiceState() {
+  if (!turnSinglechoiceOptions) return;
+  turnSinglechoiceOptions.innerHTML = "";
+  turnSinglechoiceOptions.classList.add("hidden");
+  turnWord?.classList.remove("is-singlechoice-question");
+  state.singlechoiceSelectedAnswer = null;
+  state.singlechoiceAnsweredCorrectly = null;
+}
+
+function setSinglechoiceCard(card) {
+  turnWord?.classList.add("is-quiz-question", "is-singlechoice-question");
+  fullscreenCardOverlay.update({
+    category: state.pendingCategory,
+    term: card?.term ?? "Keine Single-Choice-Frage",
+    tabooTerms: [],
+    showHint: false,
+  });
+  if (turnAnswer) {
+    turnAnswer.textContent = "";
+    turnAnswer.classList.add("hidden");
+  }
+
+  if (!turnSinglechoiceOptions) return;
+
+  const correctAnswer = String(card?.answer ?? "").trim();
+  const wrongAnswers = Array.isArray(card?.taboo)
+    ? card.taboo.slice(1).map((entry) => String(entry ?? "").trim()).filter(Boolean)
+    : [];
+  const options = [correctAnswer, ...wrongAnswers].filter(Boolean).slice(0, 4);
+
+  const shuffledOptions = options
+    .map((option) => ({ option, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map((entry) => entry.option);
+
+  turnSinglechoiceOptions.innerHTML = "";
+  turnSinglechoiceOptions.classList.remove("hidden");
+
+  shuffledOptions.forEach((option) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "singlechoice-option";
+    button.textContent = option;
+    button.dataset.correct = String(option === correctAnswer);
+    button.addEventListener("click", () => handleSinglechoiceAnswer(button));
+    turnSinglechoiceOptions.appendChild(button);
+  });
+
+  state.singlechoiceSelectedAnswer = null;
+  state.singlechoiceAnsweredCorrectly = null;
+  setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: false });
+}
+
+function handleSinglechoiceAnswer(button) {
+  if (!button || state.singlechoiceSelectedAnswer) return;
+
+  const options = [...turnSinglechoiceOptions.querySelectorAll(".singlechoice-option")];
+  const isCorrect = button.dataset.correct === "true";
+  state.singlechoiceSelectedAnswer = button.textContent;
+  state.singlechoiceAnsweredCorrectly = isCorrect;
+
+  options.forEach((option) => {
+    option.disabled = true;
+  });
+
+  button.classList.add("is-result");
+  button.classList.add(isCorrect ? "is-correct" : "is-wrong");
+
+  setTimeout(() => {
+    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: false, showContinue: true });
+    if (turnContinueButton) {
+      turnContinueButton.textContent = "Weiter";
+    }
+  }, 950);
+}
+
 function setQuizAnswerCard(card) {
   turnWord?.classList.remove("is-quiz-question");
+  resetSinglechoiceState();
   const answerText = card?.answer || "Antwort fehlt.";
   fullscreenCardOverlay.update({
     category: state.pendingCategory,
@@ -1493,25 +1590,25 @@ function handleStartGame() {
 function normalizeCardInput(rawRow = {}) {
   const category = String(rawRow.category ?? "").trim();
   const term = String(rawRow.term ?? "").trim();
+  const tabooCandidates = Array.isArray(rawRow.taboo)
+    ? rawRow.taboo
+    : [rawRow.answer, rawRow.tabu2, rawRow.tabu3, rawRow.tabu4];
+  const normalizedTaboo = tabooCandidates.map((entry) => String(entry ?? "").trim()).filter(Boolean);
 
-  if (category === "Quizfrage") {
-    const answer = String(rawRow.answer ?? rawRow.taboo?.[0] ?? "").trim();
+  if (isQuizCardCategory(category)) {
+    const answer = String(rawRow.answer ?? normalizedTaboo[0] ?? "").trim();
     return {
       category,
       term,
       answer,
-      taboo: [],
+      taboo: category === "Singlechoice" ? normalizedTaboo : [],
     };
   }
-
-  const tabooCandidates = Array.isArray(rawRow.taboo)
-    ? rawRow.taboo
-    : [rawRow.answer, rawRow.tabu2, rawRow.tabu3, rawRow.tabu4];
 
   return {
     category,
     term,
-    taboo: tabooCandidates.map((entry) => String(entry ?? "").trim()).filter(Boolean),
+    taboo: normalizedTaboo,
   };
 }
 
@@ -1560,8 +1657,12 @@ function validateEditorCards(rows) {
       rowErrors.push("Begriff/Frage ist erforderlich");
     }
 
-    if (normalized.category === "Quizfrage" && !normalized.answer) {
+    if (isQuizCardCategory(normalized.category) && !normalized.answer) {
       rowErrors.push("Antwort ist für Quizfrage erforderlich");
+    }
+
+    if (normalized.category === "Singlechoice" && normalized.taboo.length < 4) {
+      rowErrors.push("Singlechoice braucht 1 richtige + 3 falsche Antworten");
     }
 
     if (rowErrors.length > 0) {
@@ -2656,8 +2757,11 @@ function showWordCard() {
   state.timeLimit = state.categoryTimes[state.pendingCategory] ?? 60;
   if (state.pendingCategory === "Quizfrage") {
     state.quizPhase = "question";
+    if (turnContinueButton) {
+      turnContinueButton.textContent = "Lösen";
+    }
     setQuizQuestionCard(card);
-    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: true });
+    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: card?.category !== "Singlechoice" });
     startTimer({
       onTimeout: () => finishTurn(false, true, { returnToPrevious: true }),
     });
@@ -2860,6 +2964,20 @@ turnWordHint?.addEventListener("click", () => {
 
 turnContinueButton.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
+  if (state.pendingCategory === "Quizfrage" && state.currentCard?.category === "Singlechoice") {
+    if (state.singlechoiceAnsweredCorrectly === null) return;
+    const answeredCorrectly = Boolean(state.singlechoiceAnsweredCorrectly);
+    resetSinglechoiceState();
+    if (turnContinueButton) {
+      turnContinueButton.textContent = "Lösen";
+    }
+    if (answeredCorrectly) {
+      finishTurn(true);
+      return;
+    }
+    finishTurn(false, false, { returnToPrevious: true });
+    return;
+  }
   if (state.pendingCategory === "Quizfrage" && state.quizPhase === "question") {
     stopTimer();
     state.quizPhase = "answer";
