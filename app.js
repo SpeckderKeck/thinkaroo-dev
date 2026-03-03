@@ -393,6 +393,8 @@ const MAX_DATASET_SELECTIONS = 5;
 const CUSTOM_DATASETS_STORAGE_KEY = "wissivity.customDatasets";
 const CUSTOM_DATASETS_API_URL_STORAGE_KEY = "wissivity.customDatasetsApiUrl";
 const CUSTOM_DATASETS_API_ENDPOINT = "/datasets";
+const SINGLECHOICE_ANSWERS_API_ENDPOINT = "/singlechoice-answers";
+const SINGLECHOICE_ANSWERS_STORAGE_KEY = "wissivity.singlechoiceAnswers";
 const CUSTOM_DATASET_KEY_PREFIX = "custom:";
 const STORAGE_DATASET_KEY_PREFIX = "storage:";
 const REMOVED_PRESET_DATASET_KEYS = new Set(["umformen"]);
@@ -436,7 +438,11 @@ const state = {
   currentCard: null,
   quizPhase: null,
   singlechoiceSelectedAnswer: null,
+  singlechoiceSelectedAnswerId: null,
   singlechoiceAnsweredCorrectly: null,
+  singlechoiceSubmitting: false,
+  singlechoiceQuestionId: "",
+  singlechoiceShuffledOptions: [],
   masterQuiz: false,
   selectedDatasets: [],
   customDatasets: {},
@@ -1334,7 +1340,91 @@ function resetSinglechoiceState() {
   turnSinglechoiceOptions.classList.add("hidden");
   turnWord?.classList.remove("is-singlechoice-question");
   state.singlechoiceSelectedAnswer = null;
+  state.singlechoiceSelectedAnswerId = null;
   state.singlechoiceAnsweredCorrectly = null;
+  state.singlechoiceSubmitting = false;
+  state.singlechoiceQuestionId = "";
+  state.singlechoiceShuffledOptions = [];
+}
+
+function readStoredSinglechoiceAnswers() {
+  try {
+    const raw = localStorage.getItem(SINGLECHOICE_ANSWERS_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function storeSinglechoiceAnswerLocally(questionId, answerId) {
+  if (!questionId || !answerId) return;
+  const allAnswers = readStoredSinglechoiceAnswers();
+  allAnswers[questionId] = answerId;
+  localStorage.setItem(SINGLECHOICE_ANSWERS_STORAGE_KEY, JSON.stringify(allAnswers));
+}
+
+async function loadSinglechoiceAnswer(questionId) {
+  if (!questionId) return null;
+  try {
+    const response = await fetch(`${SINGLECHOICE_ANSWERS_API_ENDPOINT}/${encodeURIComponent(questionId)}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) return readStoredSinglechoiceAnswers()[questionId] ?? null;
+    const payload = await response.json();
+    return typeof payload?.answerId === "string" ? payload.answerId : null;
+  } catch {
+    return readStoredSinglechoiceAnswers()[questionId] ?? null;
+  }
+}
+
+async function submitSinglechoiceAnswer(questionId, answerId) {
+  if (!questionId || !answerId) return;
+  storeSinglechoiceAnswerLocally(questionId, answerId);
+  try {
+    await fetch(SINGLECHOICE_ANSWERS_API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ questionId, answerId }),
+    });
+  } catch {
+    // Lokal gespeichert reicht als Fallback.
+  }
+}
+
+function shuffleFisherYates(items) {
+  const shuffled = [...items];
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+  return shuffled;
+}
+
+function renderSinglechoiceOptions({ options, correctAnswerId, selectedAnswerId = null }) {
+  if (!turnSinglechoiceOptions) return;
+  const prefixes = ["A", "B", "C", "D"];
+  turnSinglechoiceOptions.innerHTML = "";
+  turnSinglechoiceOptions.classList.remove("hidden");
+
+  options.forEach((option, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "singlechoice-option";
+    button.dataset.answerId = option.id;
+    button.dataset.correct = String(option.id === correctAnswerId);
+    button.innerHTML = `<span class="singlechoice-prefix">${prefixes[index] ?? "?"}:</span><span class="singlechoice-label">${option.label}</span>`;
+    if (selectedAnswerId && option.id === selectedAnswerId) {
+      button.classList.add("is-selected");
+    }
+    button.addEventListener("click", () => {
+      handleSinglechoiceAnswer(button);
+    });
+    turnSinglechoiceOptions.appendChild(button);
+  });
 }
 
 function setSinglechoiceCard(card) {
@@ -1357,46 +1447,73 @@ function setSinglechoiceCard(card) {
 
   if (!turnSinglechoiceOptions) return;
 
+  const questionId = String(card?.questionId ?? "").trim();
   const correctAnswer = String(card?.answer ?? "").trim();
-  const wrongAnswers = Array.isArray(card?.taboo)
-    ? card.taboo.slice(1).map((entry) => String(entry ?? "").trim()).filter(Boolean)
-    : [];
-  const options = [correctAnswer, ...wrongAnswers].filter(Boolean).slice(0, 4);
+  const answerCandidates = [card?.answer, ...(Array.isArray(card?.taboo) ? card.taboo.slice(1, 4) : [])]
+    .map((entry) => String(entry ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 4);
 
-  const shuffledOptions = options
-    .map((option) => ({ option, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map((entry) => entry.option);
+  if (answerCandidates.length < 4 || !correctAnswer) {
+    turnSinglechoiceOptions.innerHTML = '<p class="singlechoice-error">Antwortoptionen konnten nicht geladen werden.</p>';
+    turnSinglechoiceOptions.classList.remove("hidden");
+    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: false });
+    return;
+  }
 
-  turnSinglechoiceOptions.innerHTML = "";
-  turnSinglechoiceOptions.classList.remove("hidden");
+  const baseOptions = answerCandidates.map((label, index) => ({
+    id: `${questionId || "question"}-${index + 1}`,
+    label,
+    isCorrect: label === correctAnswer,
+  }));
+  const correctOption = baseOptions.find((entry) => entry.isCorrect);
+  if (!correctOption) {
+    turnSinglechoiceOptions.innerHTML = '<p class="singlechoice-error">Korrekte Antwort konnte nicht ermittelt werden.</p>';
+    turnSinglechoiceOptions.classList.remove("hidden");
+    return;
+  }
 
-  shuffledOptions.forEach((option) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "singlechoice-option";
-    button.textContent = option;
-    button.dataset.correct = String(option === correctAnswer);
-    button.addEventListener("click", () => handleSinglechoiceAnswer(button));
-    turnSinglechoiceOptions.appendChild(button);
-  });
+  if (state.singlechoiceQuestionId !== questionId) {
+    state.singlechoiceQuestionId = questionId;
+    state.singlechoiceShuffledOptions = shuffleFisherYates(baseOptions);
+  }
+  const shuffledOptions = state.singlechoiceShuffledOptions;
+  renderSinglechoiceOptions({ options: shuffledOptions, correctAnswerId: correctOption.id });
 
   state.singlechoiceSelectedAnswer = null;
+  state.singlechoiceSelectedAnswerId = null;
   state.singlechoiceAnsweredCorrectly = null;
+  state.singlechoiceSubmitting = false;
   setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: false });
+
+  // Bereits gespeicherte Antwort beim Öffnen der Karte vorselektieren.
+  void loadSinglechoiceAnswer(questionId).then((storedAnswerId) => {
+    if (!storedAnswerId || state.singlechoiceQuestionId !== questionId) return;
+    state.singlechoiceSelectedAnswerId = storedAnswerId;
+    const selectedButton = turnSinglechoiceOptions.querySelector(`[data-answer-id="${CSS.escape(storedAnswerId)}"]`);
+    selectedButton?.classList.add("is-selected");
+  });
 }
 
-function handleSinglechoiceAnswer(button) {
-  if (!button || state.singlechoiceSelectedAnswer) return;
+async function handleSinglechoiceAnswer(button) {
+  if (!button || state.singlechoiceSubmitting) return;
 
   const options = [...turnSinglechoiceOptions.querySelectorAll(".singlechoice-option")];
   const isCorrect = button.dataset.correct === "true";
+  const answerId = String(button.dataset.answerId ?? "").trim();
   state.singlechoiceSelectedAnswer = button.textContent;
+  state.singlechoiceSelectedAnswerId = answerId;
   state.singlechoiceAnsweredCorrectly = isCorrect;
+  state.singlechoiceSubmitting = true;
 
+  options.forEach((option) => option.classList.remove("is-selected"));
+  button.classList.add("is-selected");
   options.forEach((option) => {
     option.disabled = true;
   });
+
+  const questionId = String(state.singlechoiceQuestionId ?? "").trim();
+  await submitSinglechoiceAnswer(questionId, answerId);
 
   button.classList.add("is-result");
   button.classList.add(isCorrect ? "is-correct" : "is-wrong");
@@ -1406,6 +1523,7 @@ function handleSinglechoiceAnswer(button) {
     if (turnContinueButton) {
       turnContinueButton.textContent = "Weiter";
     }
+    state.singlechoiceSubmitting = false;
   }, 950);
 }
 
@@ -1648,6 +1766,13 @@ function cloneCards(cards) {
   return cards.map((card) => ({
     ...card,
     taboo: Array.isArray(card.taboo) ? [...card.taboo] : [],
+  }));
+}
+
+function withQuestionIds(cards, datasetKey) {
+  return cloneCards(cards).map((card, index) => ({
+    ...card,
+    questionId: `${datasetKey}:${index + 1}`,
   }));
 }
 
@@ -2194,7 +2319,7 @@ function applySelectedDatasets() {
 
   const mergedCards = selectedKeys.flatMap((key) => {
     const datasetEntry = getDatasetEntryByKey(key);
-    return datasetEntry ? cloneCards(datasetEntry.cards) : [];
+    return datasetEntry ? withQuestionIds(datasetEntry.cards, key) : [];
   });
 
   state.cards = mergedCards;
