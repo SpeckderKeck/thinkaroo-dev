@@ -331,6 +331,7 @@ const CATEGORY_VISUALS = {
 
 const START_ICON_PATH = "start.svg";
 const GOAL_ICON_PATH = "ziel.svg";
+const SINGLECHOICE_ICON_PATH = "singlechoice.svg";
 
 const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Singlechoice"];
 
@@ -1330,6 +1331,11 @@ function resetSinglechoiceState() {
 
 function setSinglechoiceCard(card) {
   turnWord?.classList.add("is-quiz-question", "is-singlechoice-question");
+  if (turnCategoryIcon) {
+    turnCategoryIcon.classList.remove("icon-fallback");
+    turnCategoryIcon.textContent = "";
+    turnCategoryIcon.style.setProperty("--icon-url", `url("${SINGLECHOICE_ICON_PATH}")`);
+  }
   fullscreenCardOverlay.update({
     category: state.pendingCategory,
     term: card?.term ?? "Keine Single-Choice-Frage",
