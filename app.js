@@ -304,6 +304,7 @@ const CATEGORY_CONFIG = {
   Zeichnen: { id: "draw", iconPath: "zeichnen_1.svg", fallbackIcon: "✏️" },
   Pantomime: { id: "pantomime", iconPath: "pantomime_1.svg", fallbackIcon: "🎭" },
   Quizfrage: { id: "quiz", iconPath: "quiz.svg", fallbackIcon: "?" },
+  Singlechoice: { id: "singlechoice", iconPath: "singlechoice.svg", fallbackIcon: "☑️" },
 };
 
 const theme = globalThis.THINKAROO_THEME;
@@ -326,6 +327,10 @@ const CATEGORY_VISUALS = {
   Quizfrage: {
     color: getCardColor("Quizfrage"),
     iconColor: getReadableTextColor(getCardColor("Quizfrage")),
+  },
+  Singlechoice: {
+    color: getCardColor("Singlechoice"),
+    iconColor: getReadableTextColor(getCardColor("Singlechoice")),
   },
 };
 
