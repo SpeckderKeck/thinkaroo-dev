@@ -50,7 +50,9 @@ function setAuthUi(session) {
   authStatus.textContent = "Du bist nicht eingeloggt.";
 }
 
-loginButton?.addEventListener("click", navigateToLogin);
+loginButton?.addEventListener("click", () => {
+  window.location.href = "./auth.html?mode=login";
+});
 
 logoutButton?.addEventListener("click", async () => {
   try {
