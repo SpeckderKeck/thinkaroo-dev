@@ -1824,11 +1824,13 @@ button:disabled {
   transition: transform 0.7s ease, width 0.7s ease, height 0.7s ease, border-radius 0.7s ease;
 }
 
-.turn-overlay.category.turn-overlay-panel {
+.turn-overlay.category .turn-overlay-panel {
 
   width: var(--panel-category-width, 33vw);
   height: var(--panel-category-height, 33vh);
   transform: translate(var(--panel-category-x, 0px), var(--panel-category-y, 0px));
+  background: var(--category-panel-bg, var(--panel));
+  color: var(--category-panel-text, var(--text));
   box-shadow: 0 18px 40px var(--shadow);
 }
 

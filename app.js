@@ -1357,7 +1357,10 @@ function setSingleChoiceResult(optionButton, isCorrect, correctAnswer) {
   });
 
   if (optionButton) {
-    optionButton.classList.add("is-selected", "is-animating", isCorrect ? "is-correct" : "is-wrong");
+    optionButton.classList.add("is-selected", "is-animating");
+    if (!isCorrect) {
+      optionButton.classList.add("is-wrong");
+    }
   }
 
   stopTimer();
@@ -1433,6 +1436,10 @@ function setTurnButtons({ showCorrect = true, showWrong = true, showSwap = true,
 
 function setCategoryLabel(label, category = label) {
   turnCategoryLabel.textContent = label;
+  const categoryColor = CATEGORY_VISUALS[category]?.color ?? getCardColor(category);
+  const categoryTextColor = getReadableTextColor(categoryColor ?? "#F3E9D3");
+  turnOverlayPanel?.style.setProperty("--category-panel-bg", categoryColor ?? "#F3E9D3");
+  turnOverlayPanel?.style.setProperty("--category-panel-text", categoryTextColor);
   applyCategoryIcon(turnCategoryIcon, category, { allowFallback: true });
 }
 
@@ -1475,7 +1482,7 @@ function handleRoll() {
         setCategory(category);
         hideDiceOverlay();
         showTurnOverlay();
-      }, 2000);
+      }, 1000);
     });
   }, 600);
 }
