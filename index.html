@@ -10,6 +10,18 @@
 <body>
   <header class="global-header">
     <div class="global-header-inner">
+      <div class="auth-topbar" aria-label="Authentifizierung">
+        <div class="auth-topbar-left">
+          <input id="auth-email" type="email" placeholder="E-Mail" autocomplete="email" />
+          <button id="auth-login" type="button">Login / Registrierung</button>
+          <p id="auth-user" hidden>Eingeloggt als</p>
+          <button id="auth-logout" type="button" hidden>Logout</button>
+        </div>
+        <div class="auth-topbar-right" id="auth-status-wrapper">
+          <span id="auth-status">Du bist nicht eingeloggt.</span>
+          <span id="auth-hint"></span>
+        </div>
+      </div>
       <button
         id="qr-toggle"
         class="icon-button"
@@ -440,5 +452,6 @@
   <script src="landing-overlay.js"></script>
   <script src="src/theme/tokens.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="./assets/app.js"></script>
 </body>
 </html>
