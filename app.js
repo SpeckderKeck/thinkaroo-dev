@@ -1430,6 +1430,10 @@ function setTurnButtons({ showCorrect = true, showWrong = true, showSwap = true,
 
 function setCategoryLabel(label, category = label) {
   turnCategoryLabel.textContent = label;
+  const categoryColor = CATEGORY_VISUALS[category]?.color ?? getCardColor(category);
+  const categoryTextColor = getReadableTextColor(categoryColor ?? "#F3E9D3");
+  turnOverlayPanel?.style.setProperty("--category-panel-bg", categoryColor ?? "#F3E9D3");
+  turnOverlayPanel?.style.setProperty("--category-panel-text", categoryTextColor);
   applyCategoryIcon(turnCategoryIcon, category, { allowFallback: true });
 }
 
@@ -1472,7 +1476,7 @@ function handleRoll() {
         setCategory(category);
         hideDiceOverlay();
         showTurnOverlay();
-      }, 2000);
+      }, 1000);
     });
   }, 600);
 }
