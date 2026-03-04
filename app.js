@@ -435,6 +435,7 @@ const CUSTOM_DATASETS_API_ENDPOINT = "/datasets";
 const CUSTOM_DATASET_KEY_PREFIX = "custom:";
 const STORAGE_DATASET_KEY_PREFIX = "storage:";
 const REMOVED_PRESET_DATASET_KEYS = new Set(["umformen"]);
+const STANDARD_PRESET_DATASET_KEYS = new Set(["allgemein", "kfz", "kfz_einfach", "geographie"]);
 const REMOVED_CUSTOM_DATASET_LABELS = new Set(["umformen"]);
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
@@ -558,7 +559,8 @@ function clearRestrictedDatasetSelections() {
   const allowedDatasetKeys = readSelectedDatasetKeys().filter((key) => {
     const isCustomDataset = Boolean(fromCustomDatasetKey(key));
     const isStorageDataset = Boolean(fromStorageDatasetKey(key));
-    return !isCustomDataset && !isStorageDataset;
+    const isAllowedPreset = STANDARD_PRESET_DATASET_KEYS.has(key);
+    return !isCustomDataset && !isStorageDataset && isAllowedPreset;
   });
   if (allowedDatasetKeys.length > 0) {
     state.selectedDatasets = allowedDatasetKeys.slice(0, MAX_DATASET_SELECTIONS);
@@ -948,6 +950,7 @@ async function loadCustomDatasets() {
 function getAllDatasetEntries() {
   const presetEntries = Object.entries(PRESET_DATASETS)
     .filter(([key]) => !REMOVED_PRESET_DATASET_KEYS.has(key))
+    .filter(([key]) => isLoggedIn || STANDARD_PRESET_DATASET_KEYS.has(key))
     .map(([key, dataset]) => ({
       key,
       label: dataset.label,
@@ -979,6 +982,9 @@ function getAllDatasetEntries() {
 function getDatasetEntryByKey(key) {
   const normalizedKey = String(key ?? "").trim();
   if (REMOVED_PRESET_DATASET_KEYS.has(normalizedKey)) {
+    return null;
+  }
+  if (!isLoggedIn && !STANDARD_PRESET_DATASET_KEYS.has(normalizedKey)) {
     return null;
   }
   if (PRESET_DATASETS[normalizedKey]) {
