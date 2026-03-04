@@ -88,7 +88,7 @@ body.game-active .app {
 }
 
 .global-header {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -383,7 +383,6 @@ body.fullscreen .board {
   filter: grayscale(0.25);
 }
 
-.speedquiz-category-button:hover,
 .speedquiz-category-button:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 14px 24px color-mix(in srgb, var(--category-color, var(--shadow)) 32%, transparent);
@@ -414,7 +413,6 @@ body.fullscreen .board {
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.speedquiz-category-button:hover::after,
 .speedquiz-category-button:focus-visible::after {
   opacity: 1;
   transform: translate(-50%, 0);

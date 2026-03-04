@@ -74,6 +74,9 @@ if (registerForm) {
 
   const subscription = listenAuthChanges((session) => {
     setStatus(session);
+    if (session?.user?.email) {
+      window.location.href = getReturnTarget();
+    }
   });
 
   window.addEventListener("beforeunload", () => {
