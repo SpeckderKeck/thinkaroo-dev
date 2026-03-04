@@ -14,6 +14,15 @@ const registerPassword = document.querySelector("#register-password");
 const statusText = document.querySelector("#auth-page-status");
 const hintText = document.querySelector("#auth-page-hint");
 
+function getReturnTarget() {
+  const query = new URLSearchParams(window.location.search);
+  const returnTo = query.get("returnTo");
+  if (!returnTo || !returnTo.startsWith("/")) {
+    return "./index.html";
+  }
+  return `${window.location.origin}${returnTo}`;
+}
+
 function setStatus(session) {
   const isLoggedIn = Boolean(session?.user?.email);
   if (statusText) {
@@ -67,6 +76,9 @@ registerForm?.addEventListener("submit", async (event) => {
 
   const subscription = listenAuthChanges((session) => {
     setStatus(session);
+    if (session?.user?.email) {
+      window.location.href = getReturnTarget();
+    }
   });
 
   window.addEventListener("beforeunload", () => {
