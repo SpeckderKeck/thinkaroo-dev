@@ -394,13 +394,16 @@ body.fullscreen .board {
   filter: grayscale(0.25);
 }
 
-.speedquiz-category-button:is(:hover, :focus-visible) {
+.speedquiz-category-button.is-selected {
+  opacity: 1;
+  filter: none;
+}
+
+.speedquiz-category-button:not(.is-selected):is(:hover, :focus-visible) {
   border-color: color-mix(in srgb, var(--category-color, white) 68%, white 32%);
   box-shadow:
     0 0 0 2px color-mix(in srgb, var(--category-color, white) 40%, transparent),
     0 0 18px color-mix(in srgb, var(--category-color, white) 55%, transparent);
-  opacity: 1;
-  filter: none;
 }
 
 .speedquiz-category-button:focus-visible {
