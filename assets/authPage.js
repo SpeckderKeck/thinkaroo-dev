@@ -1,9 +1,16 @@
-import { getSession, listenAuthChanges, loginWithOtp } from "./auth.js";
+import {
+  getSession,
+  listenAuthChanges,
+  loginWithPassword,
+  registerWithPassword,
+} from "./auth.js";
 
 const loginForm = document.querySelector("#login-form");
 const registerForm = document.querySelector("#register-form");
 const loginEmail = document.querySelector("#login-email");
+const password = document.querySelector("#login-password");
 const registerEmail = document.querySelector("#register-email");
+const registerPassword = document.querySelector("#register-password");
 const statusText = document.querySelector("#auth-page-status");
 const hintText = document.querySelector("#auth-page-hint");
 
@@ -14,26 +21,28 @@ function setStatus(session) {
   }
 }
 
-async function handleOtp(email, shouldCreateUser) {
+loginForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+
   try {
-    await loginWithOtp(email, shouldCreateUser);
-    if (hintText) {
-      hintText.textContent = "Check deine E-Mail";
-    }
+    await loginWithPassword(loginEmail.value.trim(), password.value);
+    hintText.textContent = "Login erfolgreich";
   } catch (error) {
     console.error(error);
     alert(error.message);
   }
-}
-
-loginForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  await handleOtp(loginEmail.value.trim(), false);
 });
 
 registerForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  await handleOtp(registerEmail.value.trim(), true);
+
+  try {
+    await registerWithPassword(registerEmail.value.trim(), registerPassword.value);
+    hintText.textContent = "Account erstellt";
+  } catch (error) {
+    console.error(error);
+    alert(error.message);
+  }
 });
 
 (function setInitialModeFromQuery() {

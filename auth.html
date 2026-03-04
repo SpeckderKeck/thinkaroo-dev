@@ -24,7 +24,6 @@
   <main class="app auth-page-main">
     <section class="card auth-page-card" aria-label="Login und Registrierung">
       <h1>Login & Registrierung</h1>
-      <p class="tagline">Nutze Magic Link per E-Mail.</p>
 
       <div class="auth-page-columns">
         <form id="login-form" class="auth-form">
@@ -32,6 +31,10 @@
           <label class="field" for="login-email">
             E-Mail
             <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+          </label>
+          <label class="field" for="login-password">
+            Passwort
+            <input id="login-password" type="password" required autocomplete="current-password" />
           </label>
           <button class="primary" type="submit">Login</button>
         </form>
@@ -41,6 +44,10 @@
           <label class="field" for="register-email">
             E-Mail
             <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+          </label>
+          <label class="field" for="register-password">
+            Passwort
+            <input id="register-password" type="password" required autocomplete="new-password" />
           </label>
           <button class="primary" type="submit">Registrierung</button>
         </form>
