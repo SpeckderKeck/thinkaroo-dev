@@ -219,6 +219,23 @@ body.fullscreen .board {
   isolation: isolate;
 }
 
+.menu-auth {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: clamp(10px, 1.6vw, 16px);
+}
+
+.menu-auth__user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  color: var(--muted-text);
+  font-size: 0.95rem;
+}
+
 #mode-selection.panel--active,
 #speedquiz-menu.panel--active {
   min-height: calc(100dvh - var(--header-height) - clamp(32px, 5vh, 72px));

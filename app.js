@@ -1,3 +1,5 @@
+import { supabase } from "./supabaseClient.js";
+
 const swapSelect = document.getElementById("swap-select");
 const teamCountInput = document.getElementById("team-count");
 const teamCountDecrease = document.getElementById("team-count-decrease");
@@ -52,7 +54,16 @@ const csvOverwriteButton = document.getElementById("csv-overwrite");
 const csvStatus = document.getElementById("csv-status");
 const csvUploadButton = document.getElementById("csv-upload-button");
 const csvRefreshListButton = document.getElementById("csv-refresh-list");
+const csvDeleteSelectedButton = document.getElementById("csv-delete-selected");
 const storageDatasetSelect = document.getElementById("storage-dataset-select");
+const authLoginButton = document.getElementById("auth-login-button");
+const authLogoutButton = document.getElementById("auth-logout-button");
+const authUserInfo = document.getElementById("auth-user-info");
+const authUserEmail = document.getElementById("auth-user-email");
+const privateCardsetsLoggedOut = document.getElementById("private-cardsets-logged-out");
+const privateCardsetsLoggedIn = document.getElementById("private-cardsets-logged-in");
+const privateCardsetsUpload = document.getElementById("private-cardsets-upload");
+const privateFocusLoginButton = document.getElementById("private-focus-login");
 const csvInfo = document.getElementById("csv-info");
 const csvTooltip = document.getElementById("csv-tooltip");
 const datasetSelect = document.getElementById("dataset-select");
@@ -2373,12 +2384,9 @@ function renderSpeedQuizCategoryOptions() {
   });
 }
 
-const SUPABASE_URL = "https://mqbokupviznrmnwvtwwe.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xYm9rdXB2aXpucm1ud3Z0d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMzczNzYsImV4cCI6MjA4NzYxMzM3Nn0.dckhmcqrKAv8dYTxg6b4313OQs-uI2MCeWXPqfQr5HI";
-const SUPABASE_BUCKET_ID = "Kartensets";
+const SUPABASE_BUCKET_ID = "cardsets";
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
-let supabaseStorageClientPromise;
+let currentUser = null;
 
 
 function setStorageSelectOptions(files = []) {
@@ -2441,18 +2449,6 @@ function isValidCsvUpload(file) {
   return hasCsvExtension && allowedMimeTypes.has(file?.type ?? "");
 }
 
-async function getSupabaseStorageClient() {
-  if (!supabaseStorageClientPromise) {
-    supabaseStorageClientPromise = import("https://esm.sh/@supabase/supabase-js@2")
-      .then(({ createClient }) => createClient(SUPABASE_URL, SUPABASE_ANON_KEY))
-      .catch((error) => {
-        supabaseStorageClientPromise = undefined;
-        throw error;
-      });
-  }
-  return supabaseStorageClientPromise;
-}
-
 function parseStorageCsvToCards(csvText) {
   const parsedRows = parseCsv(csvText);
   return parsedRows
@@ -2475,16 +2471,21 @@ function parseStorageCsvToCards(csvText) {
 }
 
 
-async function refreshPublicCsvList() {
+async function refreshUserCsvList() {
   if (csvStatus) {
     csvStatus.textContent = "Lade Dateiliste ...";
   }
 
   try {
-    const supabase = await getSupabaseStorageClient();
+    if (!currentUser) {
+      setStorageSelectOptions([]);
+      if (csvStatus) csvStatus.textContent = "Bitte einloggen, um eigene Kartensets zu sehen.";
+      return;
+    }
+
     const { data, error } = await supabase.storage
       .from(SUPABASE_BUCKET_ID)
-      .list("", { limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } });
+      .list(currentUser.id, { limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } });
 
     if (error) {
       throw error;
@@ -2496,7 +2497,7 @@ async function refreshPublicCsvList() {
 
     setStorageSelectOptions(sortedFiles);
     if (csvStatus) {
-      csvStatus.textContent = `${sortedFiles.length} Datei(en) im öffentlichen Bucket Kartensets.`;
+      csvStatus.textContent = `${sortedFiles.length} eigene Datei(en) gefunden.`;
     }
   } catch (error) {
     if (csvStatus) {
@@ -2518,19 +2519,15 @@ async function loadStorageDataset(objectName) {
       csvStatus.textContent = `Lade Kartenset aus Storage: ${datasetLabel} ...`;
     }
 
-    const supabase = await getSupabaseStorageClient();
-    const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET_ID).getPublicUrl(selectedName);
-    const publicUrl = publicUrlData?.publicUrl;
-    if (!publicUrl) {
-      throw new Error("Public URL konnte nicht erzeugt werden.");
+    if (!currentUser) {
+      throw new Error("Nicht eingeloggt.");
     }
-
-    const response = await fetch(publicUrl, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`CSV-Abruf fehlgeschlagen (HTTP ${response.status}).`);
+    const objectPath = `${currentUser.id}/${selectedName}`;
+    const { data, error } = await supabase.storage.from(SUPABASE_BUCKET_ID).download(objectPath);
+    if (error) {
+      throw error;
     }
-
-    const csvText = await response.text();
+    const csvText = await data.text();
     const cards = parseStorageCsvToCards(csvText);
 
     if (cards.length === 0) {
@@ -2581,14 +2578,20 @@ async function handleCsvUpload() {
 
   const safeName = sanitizeUploadFileName(file.name);
   const uploadName = safeName;
+
+  if (!currentUser) {
+    if (csvStatus) csvStatus.textContent = "Bitte zuerst einloggen.";
+    alert("Bitte zuerst einloggen.");
+    return;
+  }
   const derivedLabel = getDisplayDatasetName(file.name);
 
   try {
     csvUploadButton && (csvUploadButton.disabled = true);
     if (csvStatus) csvStatus.textContent = "Upload läuft ...";
 
-    const supabase = await getSupabaseStorageClient();
-    const { error } = await supabase.storage.from(SUPABASE_BUCKET_ID).upload(uploadName, file, {
+    const uploadPath = `${currentUser.id}/${uploadName}`;
+    const { error } = await supabase.storage.from(SUPABASE_BUCKET_ID).upload(uploadPath, file, {
       upsert: false,
       cacheControl: "3600",
       contentType: file.type || "text/csv"
@@ -2608,7 +2611,7 @@ async function handleCsvUpload() {
       csvStatus.textContent = `Upload erfolgreich: ${derivedLabel}`;
     }
 
-    await refreshPublicCsvList();
+    await refreshUserCsvList();
     if (storageDatasetSelect) {
       storageDatasetSelect.value = uploadName;
     }
@@ -2620,6 +2623,87 @@ async function handleCsvUpload() {
   } finally {
     csvUploadButton && (csvUploadButton.disabled = false);
   }
+}
+
+function setPrivateCardsetVisibility(isLoggedIn) {
+  authLoginButton && (authLoginButton.hidden = isLoggedIn);
+  authUserInfo && (authUserInfo.hidden = !isLoggedIn);
+  privateCardsetsLoggedOut && (privateCardsetsLoggedOut.hidden = isLoggedIn);
+  privateCardsetsLoggedIn && (privateCardsetsLoggedIn.hidden = !isLoggedIn);
+  privateCardsetsUpload && (privateCardsetsUpload.hidden = !isLoggedIn);
+}
+
+async function initializeAuthUi() {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.log("Session Fehler:", error);
+  }
+  currentUser = session?.user ?? null;
+  setPrivateCardsetVisibility(Boolean(currentUser));
+  if (authUserEmail) {
+    authUserEmail.textContent = currentUser ? `eingeloggt als ${currentUser.email}` : "";
+  }
+  if (currentUser) {
+    await refreshUserCsvList();
+  } else {
+    setStorageSelectOptions([]);
+  }
+
+  supabase.auth.onAuthStateChange(async (_event, sessionData) => {
+    currentUser = sessionData?.user ?? null;
+    setPrivateCardsetVisibility(Boolean(currentUser));
+    if (authUserEmail) {
+      authUserEmail.textContent = currentUser ? `eingeloggt als ${currentUser.email}` : "";
+    }
+    if (currentUser) {
+      await refreshUserCsvList();
+    } else {
+      setStorageSelectOptions([]);
+    }
+  });
+}
+
+async function handleMagicLinkLogin() {
+  const email = window.prompt("Bitte Email für Magic-Link Login eingeben:", "");
+  if (!email) return;
+  const { error } = await supabase.auth.signInWithOtp({
+    email: email.trim(),
+    options: { emailRedirectTo: window.location.origin },
+  });
+  if (error) {
+    console.log("Login Fehler:", error);
+    alert("Login fehlgeschlagen. Siehe Konsole.");
+    return;
+  }
+  alert("Magic Link versendet. Bitte Postfach prüfen.");
+}
+
+async function handleLogout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.log("Logout Fehler:", error);
+  }
+}
+
+async function handleDeleteSelectedStorageFile() {
+  if (!currentUser) {
+    alert("Bitte zuerst einloggen.");
+    return;
+  }
+  const selectedName = String(storageDatasetSelect?.value ?? "").trim();
+  if (!selectedName) {
+    alert("Bitte zuerst ein Kartenset auswählen.");
+    return;
+  }
+  const { error } = await supabase.storage
+    .from(SUPABASE_BUCKET_ID)
+    .remove([`${currentUser.id}/${selectedName}`]);
+  if (error) {
+    console.log("Löschen Fehler:", error);
+    alert("Löschen fehlgeschlagen. Siehe Konsole.");
+    return;
+  }
+  await refreshUserCsvList();
 }
 
 async function saveUploadedCsvAsNewDataset() {
@@ -2884,7 +2968,7 @@ async function setup() {
   refreshCsvDatasetOverwriteSelect("");
   applySelectedDatasets();
   updateCsvDatasetActionState();
-  refreshPublicCsvList();
+  await initializeAuthUi();
 }
 
 window.addEventListener("resize", () => {
@@ -2949,7 +3033,7 @@ document.addEventListener("keydown", (event) => {
 rollButton.addEventListener("click", handleRoll);
 undoButton.addEventListener("click", handleUndo);
 csvUploadButton?.addEventListener("click", handleCsvUpload);
-csvRefreshListButton?.addEventListener("click", refreshPublicCsvList);
+csvRefreshListButton?.addEventListener("click", refreshUserCsvList);
 storageDatasetSelect?.addEventListener("change", (event) => {
   loadStorageDataset(event.target.value);
   updateMainMenuRequiredSelectionState();
@@ -3058,6 +3142,10 @@ turnReadyButton.addEventListener("click", () => {
   startCountdown();
 });
 winnerRestartButton.addEventListener("click", handleWinnerRestart);
+authLoginButton?.addEventListener("click", handleMagicLinkLogin);
+authLogoutButton?.addEventListener("click", handleLogout);
+privateFocusLoginButton?.addEventListener("click", handleMagicLinkLogin);
+csvDeleteSelectedButton?.addEventListener("click", handleDeleteSelectedStorageFile);
 
 turnPenalty?.addEventListener("animationend", () => {
   turnPenalty.classList.remove("show");

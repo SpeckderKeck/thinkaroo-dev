@@ -79,6 +79,13 @@
       </section>
 
       <section id="menu" class="panel panel--active" aria-label="Hauptmenü" aria-hidden="false">
+        <div class="menu-auth" id="menu-auth">
+          <button id="auth-login-button" class="ghost" type="button">Login</button>
+          <div id="auth-user-info" class="menu-auth__user" hidden>
+            <span id="auth-user-email"></span>
+            <button id="auth-logout-button" class="ghost" type="button">Logout</button>
+          </div>
+        </div>
         <div class="panel-grid">
           <div class="card-stack">
             <div class="card card--teams">
@@ -183,19 +190,28 @@
                 <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden>+</button>
               </div>
               <div class="field">
-                Kartenset aus Storage laden
-                <select id="storage-dataset-select" aria-label="Kartenset aus Storage laden">
-                  <option value="">Lade Kartensets ...</option>
-                </select>
+                <div id="private-cardsets-logged-out">
+                  <button id="private-focus-login" class="ghost" type="button">Eigene Kartensets wählen</button>
+                  <p class="hint">Um eigene Kartensets hochzuladen oder auszuwählen musst du dich anmelden.</p>
+                </div>
+                <div id="private-cardsets-logged-in" hidden>
+                  Kartenset aus Storage laden
+                  <select id="storage-dataset-select" aria-label="Kartenset aus Storage laden">
+                    <option value="">Lade Kartensets ...</option>
+                  </select>
+                </div>
               </div>
-              <label class="field upload">
-                CSV Upload
-                <input id="csv-upload" type="file" accept=".csv,text/csv" />
-              </label>
-              <div class="field">
-                <div class="dataset-upload-actions">
-                  <button id="csv-upload-button" class="ghost" type="button">Hochladen</button>
-                  <button id="csv-refresh-list" class="ghost" type="button">Dateiliste aktualisieren</button>
+              <div id="private-cardsets-upload" hidden>
+                <label class="field upload">
+                  CSV Upload
+                  <input id="csv-upload" type="file" accept=".csv,text/csv" />
+                </label>
+                <div class="field">
+                  <div class="dataset-upload-actions">
+                    <button id="csv-upload-button" class="ghost" type="button">Hochladen</button>
+                    <button id="csv-refresh-list" class="ghost" type="button">Dateiliste aktualisieren</button>
+                    <button id="csv-delete-selected" class="ghost" type="button">Ausgewähltes löschen</button>
+                  </div>
                 </div>
               </div>
               <button id="open-card-editor" class="ghost" type="button">Karten bearbeiten</button>
@@ -439,6 +455,6 @@
   <script src="data/mk11d.js"></script>
   <script src="landing-overlay.js"></script>
   <script src="src/theme/tokens.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
