@@ -442,6 +442,7 @@ const state = {
   pendingReturn: null,
   currentCard: null,
   quizPhase: null,
+  singleChoiceResult: null,
   masterQuiz: false,
   selectedDatasets: [],
   customDatasets: {},
@@ -1332,6 +1333,36 @@ function getSingleChoiceOptions(card) {
   return options;
 }
 
+function normalizeAnswerOption(value) {
+  return String(value ?? "").trim().toLocaleLowerCase("de-DE");
+}
+
+function setSingleChoiceResult(optionButton, isCorrect) {
+  if (!turnSingleChoiceOptions) return;
+  const optionButtons = [...turnSingleChoiceOptions.querySelectorAll(".single-choice-option-button")];
+  optionButtons.forEach((button) => {
+    button.disabled = true;
+    button.classList.remove("is-selected", "is-correct", "is-wrong", "is-animating");
+  });
+
+  if (optionButton) {
+    optionButton.classList.add("is-selected", "is-animating", isCorrect ? "is-correct" : "is-wrong");
+  }
+
+  stopTimer();
+  state.quizPhase = "answer";
+  state.singleChoiceResult = {
+    isCorrect,
+    returnToPrevious: !isCorrect,
+  };
+  turnSwapButton?.classList.add("hidden");
+  if (turnContinueButton) {
+    turnContinueButton.textContent = "Weiter";
+    turnContinueButton.classList.remove("hidden");
+  }
+}
+
+
 function setQuizQuestionCard(card) {
   turnWord?.classList.add("is-quiz-question");
   fullscreenCardOverlay.update({
@@ -1352,6 +1383,7 @@ function setQuizQuestionCard(card) {
         const optionButton = document.createElement("button");
         optionButton.type = "button";
         optionButton.className = "single-choice-option-button";
+        optionButton.dataset.option = option;
         optionButton.textContent = option;
         turnSingleChoiceOptions.append(optionButton);
       });
@@ -1487,6 +1519,7 @@ function finishTurn(isCorrect, timedOut = false, { returnToPrevious = false } = 
   state.pendingCategory = null;
   state.currentCard = null;
   state.quizPhase = null;
+  state.singleChoiceResult = null;
   if (wasMasterQuiz && isCorrect) {
     showWinner(formatTeamLabel(teamIndex));
     return;
@@ -2748,12 +2781,19 @@ function showWordCard() {
   state.currentCard = card;
   state.timeLimit = state.categoryTimes[state.pendingCategory] ?? 60;
   if (isAnswerCardCategory(state.pendingCategory)) {
+    state.singleChoiceResult = null;
     state.quizPhase = "question";
-    if (turnContinueButton) {
-      turnContinueButton.textContent = "Lösen";
-    }
     setQuizQuestionCard(card);
-    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: true, showContinue: true });
+    const isSingleChoice = state.pendingCategory === "Single-Choice";
+    if (turnContinueButton) {
+      turnContinueButton.textContent = isSingleChoice ? "Weiter" : "Lösen";
+    }
+    setTurnButtons({
+      showCorrect: false,
+      showWrong: false,
+      showSwap: true,
+      showContinue: !isSingleChoice,
+    });
     startTimer({
       onTimeout: () => finishTurn(false, true, { returnToPrevious: true }),
     });
@@ -2956,6 +2996,14 @@ turnWordHint?.addEventListener("click", () => {
 
 turnContinueButton.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
+  if (state.pendingCategory === "Single-Choice" && state.singleChoiceResult) {
+    finishTurn(
+      state.singleChoiceResult.isCorrect,
+      false,
+      { returnToPrevious: state.singleChoiceResult.returnToPrevious },
+    );
+    return;
+  }
   if (isAnswerCardCategory(state.pendingCategory) && state.quizPhase === "question") {
     stopTimer();
     state.quizPhase = "answer";
@@ -2964,6 +3012,16 @@ turnContinueButton.addEventListener("click", () => {
     return;
   }
   finishTurn(false);
+});
+turnSingleChoiceOptions?.addEventListener("click", (event) => {
+  if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
+  if (state.pendingCategory !== "Single-Choice") return;
+  if (state.quizPhase !== "question") return;
+  const optionButton = event.target.closest(".single-choice-option-button");
+  if (!optionButton || optionButton.disabled) return;
+  const selectedOption = normalizeAnswerOption(optionButton.dataset.option ?? optionButton.textContent);
+  const correctAnswer = normalizeAnswerOption(state.currentCard?.answer);
+  setSingleChoiceResult(optionButton, selectedOption === correctAnswer);
 });
 turnCorrectButton?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
