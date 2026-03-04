@@ -2555,12 +2555,12 @@ body.landing-open {
   padding: 6px;
 }
 
-.auth-icon-button--login {
-  background: #2563eb !important;
-  border-color: color-mix(in srgb, #2563eb 85%, #ffffff 15%) !important;
+.auth-icon-button--logged-out {
+  background: #16a34a !important;
+  border-color: color-mix(in srgb, #16a34a 85%, #ffffff 15%) !important;
 }
 
-.auth-icon-button--logout {
+.auth-icon-button--logged-in {
   background: #dc2626 !important;
   border-color: color-mix(in srgb, #dc2626 85%, #ffffff 15%) !important;
 }
