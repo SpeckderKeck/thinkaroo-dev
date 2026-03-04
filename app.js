@@ -569,6 +569,7 @@ function clearRestrictedDatasetSelections() {
 
 function applyDatasetAuthMode() {
   if (!isLoggedIn) {
+    state.customDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
     state.storageDatasets = {};
     state.uploadedCsvCards = [];
     clearRestrictedDatasetSelections();
@@ -680,6 +681,52 @@ function normalizeDatasetTimestamp(value, fallback) {
   return parsedDate.toISOString();
 }
 
+function normalizeOwnerId(value) {
+  const raw = String(value ?? "").trim();
+  return raw || "";
+}
+
+function isCustomDatasetPublic(rawDataset) {
+  if (!rawDataset || typeof rawDataset !== "object") {
+    return false;
+  }
+
+  if (typeof rawDataset.isPublic === "boolean") {
+    return rawDataset.isPublic;
+  }
+
+  if (typeof rawDataset.public === "boolean") {
+    return rawDataset.public;
+  }
+
+  const visibility = String(rawDataset.visibility ?? "").trim().toLowerCase();
+  if (visibility === "public") {
+    return true;
+  }
+  if (visibility === "private") {
+    return false;
+  }
+
+  return !normalizeOwnerId(rawDataset.ownerId ?? rawDataset.owner_id);
+}
+
+function canAccessCustomDataset(rawDataset) {
+  return isLoggedIn || isCustomDatasetPublic(rawDataset);
+}
+
+function filterCustomDatasetsForAuthMode(datasetsById) {
+  return Object.values(datasetsById ?? {}).reduce((accumulator, dataset) => {
+    if (!canAccessCustomDataset(dataset)) {
+      return accumulator;
+    }
+    const normalized = normalizeStoredCustomDataset(dataset);
+    if (normalized) {
+      accumulator[normalized.id] = normalized;
+    }
+    return accumulator;
+  }, {});
+}
+
 function isValidNormalizedCard(card) {
   if (!card || !ALLOWED_CARD_CATEGORIES.includes(card.category) || !card.term) {
     return false;
@@ -721,6 +768,8 @@ function normalizeStoredCustomDataset(rawDataset) {
     cards,
     createdAt,
     updatedAt,
+    ownerId: normalizeOwnerId(rawDataset.ownerId ?? rawDataset.owner_id),
+    isPublic: isCustomDatasetPublic(rawDataset),
     version: Number.isInteger(rawDataset.version) && rawDataset.version > 0 ? rawDataset.version : 1,
   };
 }
@@ -905,10 +954,8 @@ function getAllDatasetEntries() {
       cards: dataset.cards,
       isCustom: false,
     }));
-  if (!isLoggedIn) {
-    return presetEntries;
-  }
   const customEntries = Object.values(state.customDatasets)
+    .filter((dataset) => canAccessCustomDataset(dataset))
     .map((dataset) => normalizeStoredCustomDataset(dataset))
     .filter(Boolean)
     .map((dataset) => ({
@@ -940,7 +987,9 @@ function getDatasetEntryByKey(key) {
   }
   const customId = fromCustomDatasetKey(normalizedKey);
   if (customId) {
-    const dataset = normalizeStoredCustomDataset(state.customDatasets[customId]);
+    const rawDataset = state.customDatasets[customId];
+    if (!canAccessCustomDataset(rawDataset)) return null;
+    const dataset = normalizeStoredCustomDataset(rawDataset);
     if (!dataset) return null;
     return {
       key: toCustomDatasetKey(dataset.id),
@@ -3149,7 +3198,7 @@ async function setup() {
   if (isLoggedIn) {
     state.customDatasets = await loadCustomDatasets();
   } else {
-    state.customDatasets = {};
+    state.customDatasets = filterCustomDatasetsForAuthMode(readCustomDatasetsFromStorage());
   }
   menuCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   gameCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
@@ -3420,8 +3469,10 @@ window.addEventListener(AUTH_MODE_EVENT, async (event) => {
   authSession = event.detail?.session ?? null;
   if (nextIsLoggedIn === isLoggedIn) return;
   isLoggedIn = nextIsLoggedIn;
-  if (isLoggedIn && Object.keys(state.customDatasets).length === 0) {
-    state.customDatasets = await loadCustomDatasets();
+  if (isLoggedIn) {
+    const publicDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
+    const loadedDatasets = await loadCustomDatasets();
+    state.customDatasets = { ...publicDatasets, ...loadedDatasets };
   }
   applyDatasetAuthMode();
 });
