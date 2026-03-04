@@ -11,15 +11,16 @@
   <header class="global-header">
     <div class="global-header-inner">
       <div class="auth-topbar" aria-label="Authentifizierung">
-        <div class="auth-topbar-left">
-          <input id="auth-email" type="email" placeholder="E-Mail" autocomplete="email" />
-          <button id="auth-login" type="button">Login / Registrierung</button>
-          <p id="auth-user" hidden>Eingeloggt als</p>
-          <button id="auth-logout" type="button" hidden>Logout</button>
+        <div class="auth-topbar-left" id="auth-left-logged-out">
+          <button id="auth-login" type="button" class="auth-split-button">Login</button>
+          <button id="auth-register" type="button" class="auth-split-button">Registrierung</button>
+        </div>
+        <div class="auth-topbar-left" id="auth-left-logged-in" hidden>
+          <p id="auth-user"></p>
+          <button id="auth-logout" type="button">Logout</button>
         </div>
         <div class="auth-topbar-right" id="auth-status-wrapper">
           <span id="auth-status">Du bist nicht eingeloggt.</span>
-          <span id="auth-hint"></span>
         </div>
       </div>
       <button
@@ -453,95 +454,5 @@
   <script src="src/theme/tokens.js"></script>
   <script src="app.js"></script>
   <script type="module" src="./assets/app.js"></script>
-  <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-  const supabase = createClient(
-    "https://mqbokupviznrmnwvtwwe.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xYm9rdXB2aXpucm1ud3Z0d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMzczNzYsImV4cCI6MjA4NzYxMzM3Nn0.dckhmcqrKAv8dYTxg6b4313OQs-uI2MCeWXPqfQr5HI"
-  );
-
-  // Mini UI
-  const bar = document.createElement("div");
-  bar.style.position = "fixed";
-  bar.style.top = "0";
-  bar.style.left = "0";
-  bar.style.right = "0";
-  bar.style.padding = "10px";
-  bar.style.background = "#fff";
-  bar.style.borderBottom = "1px solid #ddd";
-  bar.style.zIndex = "9999";
-  bar.innerHTML = `
-    <input id="email" placeholder="Email" style="padding:6px; width:220px;" />
-    <button id="login" style="padding:6px 10px;">Login / Registrierung</button>
-    <span id="status" style="margin-left:10px;"></span>
-    <button id="logout" style="padding:6px 10px; margin-left:10px; display:none;">Logout</button>
-  `;
-  document.body.appendChild(bar);
-
-  const $ = (id) => document.getElementById(id);
-
-  function setStatus(msg) { $("status").textContent = msg; }
-
-  async function refresh() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user?.email) {
-      setStatus(`Eingeloggt als ${session.user.email}`);
-      $("logout").style.display = "";
-    } else {
-      setStatus("Nicht eingeloggt");
-      $("logout").style.display = "none";
-    }
-  }
-$("login").addEventListener("click", async () => {
-  const email = $("email").value.trim();
-  if (!email) return alert("Bitte Email eingeben.");
-
-  const password = prompt("Passwort eingeben (oder ein neues wählen für Registrierung):");
-  if (!password) return;
-
-  // 1) Erst versuchen: Login
-  const { error: signInError } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (!signInError) {
-    setStatus("Eingeloggt.");
-    await refresh();
-    return;
-  }
-
-  // 2) Wenn Login fehlschlägt: Registrierung versuchen
-  const { error: signUpError } = await supabase.auth.signUp({
-    email,
-    password
-  });
-
-  if (signUpError) {
-    console.error(signUpError);
-    alert(signUpError.message);
-    return;
-  }
-
-  alert("Account erstellt. Falls Email-Bestätigung aktiv ist, bestätige bitte deine Mail und logge dich dann ein.");
-  await refresh();
-});
-
-  $("logout").addEventListener("click", async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      console.error(error);
-      alert(error.message);
-    }
-    await refresh();
-  });
-
-  supabase.auth.onAuthStateChange(async () => {
-    await refresh();
-  });
-
-  await refresh();
-</script>
 </body>
 </html>

@@ -1,50 +1,36 @@
-import { getSession, listenAuthChanges, loginWithOtp, logout } from "./auth.js";
+import { getSession, listenAuthChanges, logout } from "./auth.js";
 
-const emailInput = document.querySelector("#auth-email");
+const loggedOutContainer = document.querySelector("#auth-left-logged-out");
+const loggedInContainer = document.querySelector("#auth-left-logged-in");
 const loginButton = document.querySelector("#auth-login");
+const registerButton = document.querySelector("#auth-register");
 const logoutButton = document.querySelector("#auth-logout");
 const loggedInText = document.querySelector("#auth-user");
 const authStatus = document.querySelector("#auth-status");
-const authHint = document.querySelector("#auth-hint");
 
 function setAuthUi(session) {
   const isLoggedIn = Boolean(session?.user?.email);
 
-  authHint.textContent = "";
-
   if (isLoggedIn) {
-    loginButton.hidden = true;
-    emailInput.hidden = true;
-    logoutButton.hidden = false;
-    loggedInText.hidden = false;
+    loggedOutContainer.hidden = true;
+    loggedInContainer.hidden = false;
     loggedInText.textContent = `Eingeloggt als ${session.user.email}`;
     authStatus.textContent = "Du bist eingeloggt.";
     return;
   }
 
-  loginButton.hidden = false;
-  emailInput.hidden = false;
-  logoutButton.hidden = true;
-  loggedInText.hidden = true;
+  loggedOutContainer.hidden = false;
+  loggedInContainer.hidden = true;
   loggedInText.textContent = "";
   authStatus.textContent = "Du bist nicht eingeloggt.";
 }
 
-loginButton?.addEventListener("click", async () => {
-  const email = emailInput.value.trim();
+loginButton?.addEventListener("click", () => {
+  window.location.href = "./auth.html?mode=login";
+});
 
-  if (!email) {
-    alert("Bitte gib eine E-Mail-Adresse ein.");
-    return;
-  }
-
-  try {
-    await loginWithOtp(email);
-    authHint.textContent = "Check deine E-Mail";
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
-  }
+registerButton?.addEventListener("click", () => {
+  window.location.href = "./auth.html?mode=register";
 });
 
 logoutButton?.addEventListener("click", async () => {

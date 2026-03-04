@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Thinkaroo · Auth</title>
+  <link rel="icon" href="./thinkaroologo.ico" sizes="any">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="auth-page">
+  <header class="global-header">
+    <div class="global-header-inner">
+      <div class="auth-topbar" aria-label="Authentifizierung">
+        <div class="auth-topbar-left">
+          <a class="auth-back-link" href="./index.html">← Zurück zum Spiel</a>
+        </div>
+        <div class="auth-topbar-right">
+          <span id="auth-page-status">Du bist nicht eingeloggt.</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app auth-page-main">
+    <section class="card auth-page-card" aria-label="Login und Registrierung">
+      <h1>Login & Registrierung</h1>
+      <p class="tagline">Nutze Magic Link per E-Mail.</p>
+
+      <div class="auth-page-columns">
+        <form id="login-form" class="auth-form">
+          <h2>Login</h2>
+          <label class="field" for="login-email">
+            E-Mail
+            <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+          </label>
+          <button class="primary" type="submit">Login</button>
+        </form>
+
+        <form id="register-form" class="auth-form">
+          <h2>Registrierung</h2>
+          <label class="field" for="register-email">
+            E-Mail
+            <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+          </label>
+          <button class="primary" type="submit">Registrierung</button>
+        </form>
+      </div>
+
+      <p id="auth-page-hint" class="hint" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script type="module" src="./assets/authPage.js"></script>
+</body>
+</html>

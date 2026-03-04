@@ -2417,3 +2417,117 @@ body.landing-open {
     transform: translateY(-48px);
   }
 }
+
+.auth-topbar {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.auth-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: min(360px, 52vw);
+  flex-shrink: 1;
+}
+
+.auth-split-button {
+  flex: 1;
+}
+
+#auth-user {
+  margin: 0;
+  color: var(--color-text-on-dark);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-topbar-right {
+  color: var(--color-text-on-dark);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.auth-topbar button,
+.auth-page-card button {
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 35%, var(--color-surface));
+  color: var(--color-text-on-dark);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.auth-back-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-on-dark);
+  text-decoration: none;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--color-bg) 35%, var(--color-surface));
+}
+
+.auth-page-main {
+  display: grid;
+  place-items: center;
+  min-height: calc(100dvh - var(--header-height));
+}
+
+.auth-page-card {
+  width: min(880px, 100%);
+}
+
+.auth-page-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.auth-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, #000000 8%);
+  background: color-mix(in srgb, var(--color-surface) 78%, var(--color-bg) 22%);
+  color: var(--color-text);
+}
+
+.auth-form input::placeholder {
+  color: color-mix(in srgb, var(--color-muted) 88%, #000000 12%);
+}
+
+.auth-form input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 68%, transparent);
+  outline-offset: 1px;
+  border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+}
+
+@media (max-width: 880px) {
+  .auth-topbar {
+    gap: 8px;
+  }
+
+  .auth-topbar-right {
+    display: none;
+  }
+
+  .auth-page-columns {
+    grid-template-columns: 1fr;
+  }
+}
