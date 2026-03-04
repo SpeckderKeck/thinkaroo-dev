@@ -1,5 +1,5 @@
 import { logout } from "./auth.js";
-import { supabase } from "./supabaseClient.js";
+import { initAuthState } from "./authState.js";
 
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
@@ -19,9 +19,7 @@ function navigateToLogin() {
 }
 
 function setAuthUi(session) {
-  isLoggedIn = Boolean(session?.user?.email);
-  applyAuthMode(isLoggedIn);
-  dispatchAuthMode(isLoggedIn);
+  const isLoggedIn = Boolean(session?.user?.email);
 
   if (isLoggedIn) {
     loggedOutContainer.hidden = true;
@@ -42,8 +40,6 @@ loginButton?.addEventListener("click", navigateToLogin);
 logoutButton?.addEventListener("click", async () => {
   try {
     await logout();
-    applyAuthMode(false);
-    dispatchAuthMode(false);
   } catch (error) {
     console.error(error);
     alert(error.message);
@@ -52,20 +48,14 @@ logoutButton?.addEventListener("click", async () => {
 
 (async function initAuthUi() {
   try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    setAuthUi(session);
+    const authState = await initAuthState();
+    setAuthUi(authState.session);
   } catch (error) {
     console.error(error);
     alert(error.message);
   }
 
-  const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-    setAuthUi(session);
-  });
-
-  window.addEventListener("beforeunload", () => {
-    data.subscription.unsubscribe();
+  window.addEventListener(AUTH_MODE_EVENT, (event) => {
+    setAuthUi(event.detail?.session ?? null);
   });
 })();

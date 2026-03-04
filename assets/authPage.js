@@ -1,9 +1,7 @@
-import {
-  getSession,
-  listenAuthChanges,
-  loginWithPassword,
-  registerWithPassword,
-} from "./auth.js";
+import { loginWithPassword, registerWithPassword } from "./auth.js";
+import { initAuthState } from "./authState.js";
+
+const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
 const loginForm = document.querySelector("#login-form");
 const registerForm = document.querySelector("#register-form");
@@ -13,6 +11,15 @@ const registerEmail = document.querySelector("#register-email");
 const registerPassword = document.querySelector("#register-password");
 const statusText = document.querySelector("#auth-page-status") ?? document.querySelector("#auth-status");
 const hintText = document.querySelector("#auth-page-hint");
+
+function getReturnTarget() {
+  const params = new URLSearchParams(window.location.search);
+  const returnTo = params.get("returnTo");
+  if (typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+    return returnTo;
+  }
+  return "./index.html#/select";
+}
 
 function routeToSelect() {
   if (window.thinkarooRouter?.setRoute) {
@@ -65,21 +72,18 @@ if (registerForm) {
   }
 
   try {
-    const session = await getSession();
-    setStatus(session);
+    const authState = await initAuthState();
+    setStatus(authState.session);
   } catch (error) {
     console.error(error);
     alert(error.message);
   }
 
-  const subscription = listenAuthChanges((session) => {
+  window.addEventListener(AUTH_MODE_EVENT, (event) => {
+    const session = event.detail?.session ?? null;
     setStatus(session);
     if (session?.user?.email) {
       window.location.href = getReturnTarget();
     }
-  });
-
-  window.addEventListener("beforeunload", () => {
-    subscription.unsubscribe();
   });
 })();
