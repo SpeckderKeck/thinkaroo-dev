@@ -11,7 +11,7 @@ const loginEmail = document.querySelector("#login-email");
 const password = document.querySelector("#login-password");
 const registerEmail = document.querySelector("#register-email");
 const registerPassword = document.querySelector("#register-password");
-const statusText = document.querySelector("#auth-page-status");
+const statusText = document.querySelector("#auth-page-status") ?? document.querySelector("#auth-status");
 const hintText = document.querySelector("#auth-page-hint");
 
 function getReturnTarget() {
@@ -30,42 +30,41 @@ function setStatus(session) {
   }
 }
 
-loginForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
+if (loginForm) {
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  try {
-    await loginWithPassword(loginEmail.value.trim(), password.value);
-    hintText.textContent = "Login erfolgreich";
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
-  }
-});
+    try {
+      await loginWithPassword(loginEmail.value.trim(), password.value);
+      hintText.textContent = "Login erfolgreich";
+      routeToSelect();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  });
+}
 
-registerForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
+if (registerForm) {
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  try {
-    await registerWithPassword(registerEmail.value.trim(), registerPassword.value);
-    hintText.textContent = "Account erstellt";
-  } catch (error) {
-    console.error(error);
-    alert(error.message);
-  }
-});
-
-(function setInitialModeFromQuery() {
-  const query = new URLSearchParams(window.location.search);
-  const mode = query.get("mode");
-
-  if (mode === "register") {
-    registerEmail?.focus();
-  } else {
-    loginEmail?.focus();
-  }
-})();
+    try {
+      await registerWithPassword(registerEmail.value.trim(), registerPassword.value);
+      hintText.textContent = "Account erstellt";
+      routeToSelect();
+    } catch (error) {
+      console.error(error);
+      alert(error.message);
+    }
+  });
+}
 
 (async function initAuthPage() {
+  if (!loginForm && !registerForm) {
+    return;
+  }
+
   try {
     const session = await getSession();
     setStatus(session);

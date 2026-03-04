@@ -88,7 +88,7 @@ body.game-active .app {
 }
 
 .global-header {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -378,7 +378,6 @@ body.fullscreen .board {
   filter: grayscale(0.25);
 }
 
-.speedquiz-category-button:hover,
 .speedquiz-category-button:focus-visible {
   transform: translateY(-2px);
   box-shadow: 0 14px 24px color-mix(in srgb, var(--category-color, var(--shadow)) 32%, transparent);
@@ -409,7 +408,6 @@ body.fullscreen .board {
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.speedquiz-category-button:hover::after,
 .speedquiz-category-button:focus-visible::after {
   opacity: 1;
   transform: translate(-50%, 0);
@@ -2507,8 +2505,30 @@ body.landing-open {
   flex-shrink: 1;
 }
 
-.auth-split-button {
-  flex: 1;
+
+.settings-back-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 10px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.auth-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+}
+
+.auth-icon-button img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 #auth-user {
