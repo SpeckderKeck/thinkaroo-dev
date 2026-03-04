@@ -363,19 +363,20 @@ body.fullscreen .board {
   width: clamp(62px, 7vw, 88px);
   aspect-ratio: 1;
   border-radius: 16px;
-  border: 2px solid color-mix(in srgb, var(--category-color, var(--panel)) 62%, black 12%);
-  background: color-mix(in srgb, var(--category-color, var(--panel)) 90%, white 10%);
+  border: 2px solid color-mix(in srgb, var(--category-color, var(--border)) 45%, var(--border) 55%);
+  background: color-mix(in srgb, var(--panel) 94%, white 6%);
   display: grid;
   place-items: center;
   cursor: pointer;
   position: relative;
-  transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-  box-shadow: 0 10px 18px color-mix(in srgb, var(--category-color, var(--shadow)) 24%, transparent);
+  transition: border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease, filter 120ms ease;
+  box-shadow: none;
 }
 
 .speedquiz-category-button .category-icon {
   width: clamp(36px, 4.4vw, 54px);
   height: clamp(36px, 4.4vw, 54px);
+  transition: opacity 120ms ease;
 }
 
 .speedquiz-category-button:not(.is-selected) {
@@ -383,9 +384,11 @@ body.fullscreen .board {
   filter: grayscale(0.25);
 }
 
-.speedquiz-category-button:focus-visible {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 24px color-mix(in srgb, var(--category-color, var(--shadow)) 32%, transparent);
+.speedquiz-category-button:is(:hover, :focus-visible) {
+  border-color: color-mix(in srgb, var(--category-color, white) 68%, white 32%);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--category-color, white) 40%, transparent),
+    0 0 18px color-mix(in srgb, var(--category-color, white) 55%, transparent);
   opacity: 1;
   filter: none;
 }
@@ -399,13 +402,10 @@ body.fullscreen .board {
   content: attr(data-category-label);
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 8px);
-  transform: translate(-50%, 6px);
-  padding: 5px 8px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--panel) 85%, black 15%);
-  color: var(--text);
-  font-size: 0.8rem;
+  top: 50%;
+  transform: translate(-50%, -45%);
+  color: color-mix(in srgb, var(--category-color, var(--text)) 75%, var(--text) 25%);
+  font-size: 0.82rem;
   font-weight: 700;
   white-space: nowrap;
   pointer-events: none;
@@ -413,9 +413,13 @@ body.fullscreen .board {
   transition: opacity 120ms ease, transform 120ms ease;
 }
 
-.speedquiz-category-button:focus-visible::after {
+.speedquiz-category-button:is(:hover, :focus-visible)::after {
   opacity: 1;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, -50%);
+}
+
+.speedquiz-category-button:is(:hover, :focus-visible) .category-icon {
+  opacity: 0;
 }
 
 #menu > *:not(.menu-background),
