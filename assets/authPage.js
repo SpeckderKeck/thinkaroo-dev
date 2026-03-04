@@ -14,12 +14,13 @@ const registerPassword = document.querySelector("#register-password");
 const statusText = document.querySelector("#auth-page-status") ?? document.querySelector("#auth-status");
 const hintText = document.querySelector("#auth-page-hint");
 
-function routeToSelect() {
-  if (window.thinkarooRouter?.setRoute) {
-    window.thinkarooRouter.setRoute("#/select");
-    return;
+function getReturnTarget() {
+  const query = new URLSearchParams(window.location.search);
+  const returnTo = query.get("returnTo");
+  if (!returnTo || !returnTo.startsWith("/")) {
+    return "./index.html";
   }
-  window.location.href = "./index.html#/select";
+  return `${window.location.origin}${returnTo}`;
 }
 
 function setStatus(session) {

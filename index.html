@@ -12,7 +12,7 @@
     <div class="global-header-inner">
       <div class="auth-topbar" aria-label="Authentifizierung">
         <div class="auth-topbar-left" id="auth-left-logged-out">
-          <button id="auth-login" type="button" class="auth-icon-button" data-route="#/login" aria-label="Login öffnen" title="Login">
+          <button id="auth-login" type="button" class="auth-icon-button" aria-label="Login öffnen" title="Login">
             <img src="./login.svg" alt="Login" />
           </button>
         </div>
@@ -73,7 +73,7 @@
             <img src="landingpc.png" alt="Thinkaroo Landing Page" />
           </picture>
           <div class="landing-overlay__actions">
-            <button id="landing-start" type="button" class="landing-overlay__start-button" data-route="#/select">Spiel starten</button>
+            <button id="landing-start" type="button" class="landing-overlay__start-button">Spiel starten</button>
           </div>
         </div>
       </section>
@@ -82,10 +82,10 @@
         <div class="mode-selection">
           <div class="mode-selection__options" role="group" aria-label="Spielmodi">
             <div class="mode-option">
-              <button id="mode-speedquiz" class="mode-option__button" type="button" data-route="#/settings-speedquiz" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
+              <button id="mode-speedquiz" class="mode-option__button" type="button" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
             </div>
             <div class="mode-option">
-              <button id="mode-board" class="mode-option__button" type="button" data-route="#/settings-board" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
+              <button id="mode-board" class="mode-option__button" type="button" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
             </div>
           </div>
         </div>
@@ -125,9 +125,6 @@
               </label>
             </div>
           </div>
-          <footer class="menu-footer">
-            <button id="start-speedquiz-game" class="primary menu-start-button" type="button">Spiel starten</button>
-          </footer>
         </div>
       </section>
 
@@ -287,7 +284,6 @@
         <div class="card">
           <h2>SpeedQuiz Game</h2>
           <p class="hint">Die bestehende SpeedQuiz-Spielansicht wird hier angezeigt.</p>
-          <button id="speedquiz-back-select" class="ghost" type="button" data-route="#/select">Zurück zur Spielauswahl</button>
         </div>
       </section>
 
