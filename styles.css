@@ -2014,21 +2014,56 @@ button:disabled {
 .turn-single-choice-options {
   width: min(760px, 100%);
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
   gap: clamp(10px, 1.8vw, 18px);
 }
 
 .single-choice-option-button {
+  width: 100%;
   min-height: clamp(58px, 10vh, 94px);
   border: none;
   border-radius: 16px;
   padding: clamp(10px, 2vw, 16px);
-  font-size: clamp(0.95rem, 2vw, 1.35rem);
-  line-height: 1.2;
+  font-size: clamp(0.95rem, 2.4vw, 1.35rem);
+  line-height: 1.24;
   font-weight: 600;
   color: var(--fullscreen-card-text, var(--text));
   background: color-mix(in srgb, var(--fullscreen-card-text, var(--text)) 14%, transparent);
   text-wrap: balance;
+  cursor: pointer;
+  transition: transform 0.2s ease, background-color 0.24s ease, color 0.24s ease;
+}
+
+.single-choice-option-button:disabled {
+  cursor: default;
+}
+
+.single-choice-option-button:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+.single-choice-option-button.is-animating {
+  animation: single-choice-blink 1.05s ease-in-out 3;
+}
+
+.single-choice-option-button.is-correct {
+  background: color-mix(in srgb, #2bb673 86%, #ffffff 14%);
+  color: #0f2f1f;
+}
+
+.single-choice-option-button.is-wrong {
+  background: color-mix(in srgb, #e44747 86%, #ffffff 14%);
+  color: #3d1212;
+}
+
+@keyframes single-choice-blink {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.55);
+  }
 }
 
 @media (max-width: 680px) {
