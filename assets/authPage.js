@@ -32,7 +32,7 @@ function routeToSelect() {
 function setStatus(session) {
   const isLoggedIn = Boolean(session?.user?.email);
   if (statusText) {
-    statusText.textContent = isLoggedIn ? "Du bist eingeloggt." : "Du bist nicht eingeloggt.";
+    statusText.textContent = isLoggedIn ? "Vollmodus aktiv · Du bist eingeloggt." : "Lite-Modus aktiv · Du bist nicht eingeloggt.";
   }
 }
 

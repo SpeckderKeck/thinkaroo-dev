@@ -18,6 +18,8 @@ function dispatchAuthMode(nextIsLoggedIn, nextSession) {
 }
 
 export function applyAuthMode(nextIsLoggedIn) {
+  document.body?.setAttribute("data-auth-mode", nextIsLoggedIn ? "full" : "lite");
+
   const fullElements = document.querySelectorAll('[data-auth="full"]');
   const liteElements = document.querySelectorAll('[data-auth="lite"]');
 

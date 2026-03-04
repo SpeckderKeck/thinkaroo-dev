@@ -9,7 +9,7 @@ const authActionIcon = authActionButton?.querySelector("img");
 
 function dispatchAuthMode(isLoggedIn) {
   window.THINKAROO_AUTH = { isLoggedIn };
-  window.dispatchEvent(new CustomEvent(AUTH_MODE_EVENT, { detail: { isLoggedIn } }));
+  window.dispatchEvent(new CustomEvent(AUTH_MODE_EVENT, { detail: { isLoggedIn, session: null } }));
 }
 
 function navigateToLogin() {
@@ -31,7 +31,7 @@ function setAuthUi(session) {
     authActionButton?.setAttribute("title", "Logout");
     authActionIcon?.setAttribute("src", "./logout.svg");
     authActionIcon?.setAttribute("alt", "Logout");
-    authStatus.textContent = `Eingeloggt als ${session.user.email}`;
+    authStatus.textContent = `Vollmodus aktiv · Eingeloggt als ${session.user.email}`;
     return;
   }
 
@@ -41,7 +41,7 @@ function setAuthUi(session) {
   authActionButton?.setAttribute("title", "Login");
   authActionIcon?.setAttribute("src", "./login.svg");
   authActionIcon?.setAttribute("alt", "Login");
-  authStatus.textContent = "Du bist nicht eingeloggt.";
+  authStatus.textContent = "Lite-Modus aktiv · Du bist nicht eingeloggt.";
 }
 
 authActionButton?.addEventListener("click", async () => {
