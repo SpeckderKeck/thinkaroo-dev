@@ -1337,16 +1337,24 @@ function normalizeAnswerOption(value) {
   return String(value ?? "").trim().toLocaleLowerCase("de-DE");
 }
 
-function setSingleChoiceResult(optionButton, isCorrect) {
+function setSingleChoiceResult(optionButton, isCorrect, correctAnswer) {
   if (!turnSingleChoiceOptions) return;
   const optionButtons = [...turnSingleChoiceOptions.querySelectorAll(".single-choice-option-button")];
   optionButtons.forEach((button) => {
     button.disabled = true;
     button.classList.remove("is-selected", "is-correct", "is-wrong", "is-animating");
+
+    const buttonOption = normalizeAnswerOption(button.dataset.option ?? button.textContent);
+    if (correctAnswer && buttonOption === correctAnswer) {
+      button.classList.add("is-correct");
+    }
   });
 
   if (optionButton) {
-    optionButton.classList.add("is-selected", "is-animating", isCorrect ? "is-correct" : "is-wrong");
+    optionButton.classList.add("is-selected", "is-animating");
+    if (!isCorrect) {
+      optionButton.classList.add("is-wrong");
+    }
   }
 
   stopTimer();
@@ -3021,7 +3029,7 @@ turnSingleChoiceOptions?.addEventListener("click", (event) => {
   if (!optionButton || optionButton.disabled) return;
   const selectedOption = normalizeAnswerOption(optionButton.dataset.option ?? optionButton.textContent);
   const correctAnswer = normalizeAnswerOption(state.currentCard?.answer);
-  setSingleChoiceResult(optionButton, selectedOption === correctAnswer);
+  setSingleChoiceResult(optionButton, selectedOption === correctAnswer, correctAnswer);
 });
 turnCorrectButton?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
