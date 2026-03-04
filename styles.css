@@ -339,9 +339,10 @@ body.fullscreen .board {
 }
 
 #speedquiz-categories {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, max-content));
   gap: 12px;
+  align-items: start;
 }
 
 .speedquiz-category-button {
