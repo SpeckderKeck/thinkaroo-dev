@@ -1021,7 +1021,7 @@ body.fullscreen-card-open {
   border-radius: clamp(8px, 1.4vmin, 14px);
   background: var(--card-color, var(--card));
   color: var(--card-text-color, var(--color-text));
-  border: 1px solid var(--board-card-border);
+  border: 1px solid var(--card-border-color, var(--board-card-border));
   display: flex;
   align-items: center;
   justify-content: center;

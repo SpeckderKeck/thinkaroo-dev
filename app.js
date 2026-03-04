@@ -308,11 +308,13 @@ const CATEGORY_CONFIG = {
   Zeichnen: { id: "draw", iconPath: "zeichnen_1.svg", fallbackIcon: "✏️" },
   Pantomime: { id: "pantomime", iconPath: "pantomime_1.svg", fallbackIcon: "🎭" },
   Quizfrage: { id: "quiz", iconPath: "quiz.svg", fallbackIcon: "?" },
+  Vokabel: { id: "vocab", iconPath: "voc.svg", fallbackIcon: "📝" },
   "Single-Choice": { id: "singlechoice", iconPath: "singlechoice.svg", fallbackIcon: "☑️" },
 };
 
 const theme = globalThis.THINKAROO_THEME;
 const getCardColor = theme?.getCardColor ?? (() => "#F3E9D3");
+const getCardBorderColor = theme?.getCardBorderColor ?? (() => "#8B5E34");
 const getReadableTextColor = theme?.getReadableTextColor ?? (() => "#1E1E1E");
 
 const CATEGORY_VISUALS = {
@@ -330,26 +332,36 @@ const CATEGORY_VISUALS = {
   },
   Quizfrage: {
     color: getCardColor("Quizfrage"),
+    borderColor: getCardBorderColor("Quizfrage"),
     iconColor: getReadableTextColor(getCardColor("Quizfrage")),
+  },
+  Vokabel: {
+    color: getCardColor("Vokabel"),
+    borderColor: getCardBorderColor("Vokabel"),
+    iconColor: getReadableTextColor(getCardColor("Vokabel")),
   },
   "Single-Choice": {
     color: getCardColor("Single-Choice"),
+    borderColor: getCardBorderColor("Single-Choice"),
     iconColor: getReadableTextColor(getCardColor("Single-Choice")),
   },
 };
 
 const START_ICON_PATH = "start.svg";
 const GOAL_ICON_PATH = "ziel.svg";
-const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Single-Choice"];
+const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Vokabel", "Single-Choice"];
 
 function isAnswerCardCategory(category) {
-  return category === "Quizfrage" || category === "Single-Choice";
+  return category === "Quizfrage" || category === "Vokabel" || category === "Single-Choice";
 }
 
 function normalizeCategoryInput(value) {
   const normalized = String(value ?? "").trim().toLowerCase();
   if (normalized === "singlechoice") {
     return "Single-Choice";
+  }
+  if (normalized === "vokabeln") {
+    return "Vokabel";
   }
   return String(value ?? "").trim();
 }
@@ -434,10 +446,11 @@ const state = {
     Zeichnen: 60,
     Pantomime: 60,
     Quizfrage: 60,
+    Vokabel: 60,
     "Single-Choice": 60,
   },
   swapPenalty: 10,
-  categories: ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Single-Choice"],
+  categories: ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Vokabel", "Single-Choice"],
   cards: [...DEFAULT_DATA],
   history: [],
   boardCategories: [],
@@ -1142,6 +1155,7 @@ function buildBoard(categories = state.categories) {
         if (category) {
           const visuals = CATEGORY_VISUALS[category];
           card.style.setProperty("--card-color", visuals?.color ?? "#ffffff");
+          card.style.setProperty("--card-border-color", visuals?.borderColor ?? "var(--board-card-border)");
           card.style.setProperty("--card-text-color", getReadableTextColor(visuals?.color ?? "#ffffff"));
           const icon = document.createElement("span");
           icon.className = "category-icon";
@@ -1745,7 +1759,7 @@ function validateEditorCards(rows) {
     }
 
     if (isAnswerCardCategory(normalized.category) && !normalized.answer) {
-      rowErrors.push("Antwort ist für Quizfrage/Single-Choice erforderlich");
+      rowErrors.push("Antwort ist für Quizfrage/Vokabel/Single-Choice erforderlich");
     }
 
     if (normalized.category === "Single-Choice" && (!Array.isArray(normalized.wrongAnswers) || normalized.wrongAnswers.length < 3)) {
