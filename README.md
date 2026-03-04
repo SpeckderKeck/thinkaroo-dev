@@ -21,6 +21,20 @@ Danach im Browser öffnen:
 Die Daten werden serverseitig in `data/custom-datasets.json` abgelegt.
 Falls die API nicht erreichbar ist, nutzt die App automatisch den lokalen Browser-Speicher als Fallback.
 
+### CSV-Storage (benutzerbezogen)
+CSV-Uploads unter `/csv-files` werden benutzerbezogen gespeichert in:
+
+```text
+data/csv-store/<ownerId>/<dateiname>.csv
+```
+
+`<ownerId>` wird aus dem Request-Header `x-owner-id` (Fallback: `x-user-id`) gelesen.
+
+#### Übergang von altem globalem CSV-Store
+Frühere globale Dateien unter `data/csv-store/*.csv` werden nicht mehr automatisch gelistet.
+Für eine Migration müssen vorhandene CSV-Dateien manuell in einen Benutzerordner verschoben werden,
+z. B. nach `data/csv-store/<ownerId>/...`.
+
 
 ## Zugriff von anderen Browsern/Geräten
 Wenn die Webseite von einem anderen Host/Port geladen wird als der API-Server, setze die API-URL per Query-Parameter:
@@ -30,4 +44,3 @@ https://deine-seite.example/?datasetsApi=http://SERVER-IP:3000
 ```
 
 Die App merkt sich diesen Wert danach im Browser.
-
