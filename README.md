@@ -30,4 +30,3 @@ https://deine-seite.example/?datasetsApi=http://SERVER-IP:3000
 ```
 
 Die App merkt sich diesen Wert danach im Browser.
-
