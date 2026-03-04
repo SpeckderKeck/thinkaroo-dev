@@ -3260,11 +3260,19 @@ csvInfo.addEventListener("click", () => {
 });
 
 
+function getFullscreenIconMarkup(isFullscreen) {
+  const path = isFullscreen
+    ? "M9 4H4v5M20 9V4h-5M15 20h5v-5M4 15v5h5"
+    : "M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5";
+
+  return `<svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${path}"></path></svg>`;
+}
+
 function updateFullscreenState() {
   const isFullscreen = Boolean(document.fullscreenElement);
   document.body.classList.toggle("fullscreen", isFullscreen);
   fullscreenToggle.setAttribute("aria-pressed", String(isFullscreen));
-  fullscreenToggle.textContent = isFullscreen ? "🗗" : "⛶";
+  fullscreenToggle.innerHTML = getFullscreenIconMarkup(isFullscreen);
   fullscreenToggle.title = isFullscreen ? "Vollbildmodus verlassen" : "Vollbildmodus";
 }
 
