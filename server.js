@@ -8,7 +8,9 @@ const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const LEGACY_DATA_FILE = path.join(DATA_DIR, 'custom-datasets.json');
 const DATASET_STORE_DIR = path.join(DATA_DIR, 'custom-datasets-store');
+const CSV_STORE_DIR = path.join(DATA_DIR, 'csv-store');
 const MANIFEST_VERSION = 2;
+const CSV_MAX_SIZE_BYTES = 1024 * 1024;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -81,6 +83,7 @@ function normalizeDataset(rawDataset) {
 async function ensureStorageInitialized() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.mkdir(DATASET_STORE_DIR, { recursive: true });
+  await fs.mkdir(CSV_STORE_DIR, { recursive: true });
 
 
   try {
@@ -121,6 +124,121 @@ async function ensureStorageInitialized() {
     datasets: manifestEntries,
   };
   await fs.writeFile(LEGACY_DATA_FILE, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+}
+
+function sanitizeCsvFileName(name) {
+  const raw = String(name ?? '').trim();
+  const sanitized = raw
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-zA-Z0-9._-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-_.]+|[-_.]+$/g, '');
+
+  if (!sanitized) {
+    return '';
+  }
+
+  return sanitized.toLowerCase().endsWith('.csv') ? sanitized : `${sanitized}.csv`;
+}
+
+function toCsvFilePath(fileName) {
+  return path.join(CSV_STORE_DIR, fileName);
+}
+
+async function listStoredCsvFiles() {
+  await ensureStorageInitialized();
+  const entries = await fs.readdir(CSV_STORE_DIR, { withFileTypes: true });
+  const csvFiles = [];
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    if (!entry.name.toLowerCase().endsWith('.csv')) continue;
+    const stat = await fs.stat(toCsvFilePath(entry.name));
+    csvFiles.push({
+      name: entry.name,
+      size: stat.size,
+      updatedAt: stat.mtime.toISOString(),
+    });
+  }
+
+  return csvFiles.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+}
+
+async function handleCsvFilesApi(req, res, url) {
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  await ensureStorageInitialized();
+
+  const listPathMatch = url.pathname === '/csv-files';
+  const itemPathMatch = url.pathname.match(/^\/csv-files\/([^/]+)$/);
+  const fileNameFromPath = itemPathMatch ? decodeURIComponent(itemPathMatch[1]) : '';
+
+  if (req.method === 'GET' && listPathMatch) {
+    const files = await listStoredCsvFiles();
+    return sendJson(res, 200, files);
+  }
+
+  if (req.method === 'GET' && itemPathMatch) {
+    const safeName = sanitizeCsvFileName(fileNameFromPath);
+    if (!safeName || safeName !== fileNameFromPath) {
+      return sendJson(res, 400, { error: 'invalid_filename' });
+    }
+
+    const csvPath = toCsvFilePath(safeName);
+    try {
+      const content = await fs.readFile(csvPath, 'utf8');
+      setCorsHeaders(res);
+      res.writeHead(200, {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Cache-Control': 'no-store',
+      });
+      res.end(content);
+      return;
+    } catch {
+      return sendJson(res, 404, { error: 'not_found' });
+    }
+  }
+
+  if (req.method === 'POST' && listPathMatch) {
+    let payload;
+    try {
+      payload = await readBodyJson(req);
+    } catch {
+      return sendJson(res, 400, { error: 'invalid_json' });
+    }
+
+    const safeName = sanitizeCsvFileName(payload?.name);
+    const content = String(payload?.content ?? '');
+
+    if (!safeName) {
+      return sendJson(res, 400, { error: 'invalid_filename' });
+    }
+    if (!content.trim()) {
+      return sendJson(res, 400, { error: 'empty_content' });
+    }
+
+    const byteSize = Buffer.byteLength(content, 'utf8');
+    if (byteSize > CSV_MAX_SIZE_BYTES) {
+      return sendJson(res, 413, { error: 'file_too_large', maxSizeBytes: CSV_MAX_SIZE_BYTES });
+    }
+
+    await fs.writeFile(toCsvFilePath(safeName), content, 'utf8');
+    const stat = await fs.stat(toCsvFilePath(safeName));
+    return sendJson(res, 201, {
+      name: safeName,
+      size: stat.size,
+      updatedAt: stat.mtime.toISOString(),
+    });
+  }
+
+  return sendJson(res, 405, { error: 'method_not_allowed' });
 }
 
 async function readManifest() {
@@ -395,6 +513,11 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     if (url.pathname === '/datasets' || /^\/datasets\/[^/]+$/.test(url.pathname)) {
       await handleDatasetsApi(req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/csv-files' || /^\/csv-files\/[^/]+$/.test(url.pathname)) {
+      await handleCsvFilesApi(req, res, url);
       return;
     }
 
