@@ -9,8 +9,17 @@ const DATA_DIR = path.join(ROOT_DIR, 'data');
 const LEGACY_DATA_FILE = path.join(DATA_DIR, 'custom-datasets.json');
 const DATASET_STORE_DIR = path.join(DATA_DIR, 'custom-datasets-store');
 const CSV_STORE_DIR = path.join(DATA_DIR, 'csv-store');
-const MANIFEST_VERSION = 2;
+const MANIFEST_VERSION = 3;
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
+const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
+const SUPABASE_SERVICE_ROLE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+const ADMIN_USER_IDS = new Set(
+  String(process.env.DATASET_ADMIN_USER_IDS || '')
+    .split(',')
+    .map((id) => id.trim())
+    .filter(Boolean),
+);
+const LEGACY_DATASET_OWNER_ID = String(process.env.LEGACY_DATASET_OWNER_ID || '').trim();
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -74,10 +83,78 @@ function normalizeDataset(rawDataset) {
     id,
     label,
     cards,
+    ownerId: '',
     createdAt,
     updatedAt,
     version,
   };
+}
+
+function normalizeOwnerId(value) {
+  const ownerId = String(value ?? '').trim();
+  return ownerId || '';
+}
+
+function isAdminUser(userId) {
+  return ADMIN_USER_IDS.has(String(userId || ''));
+}
+
+async function validateSupabaseToken(token) {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('missing_supabase_server_auth_config');
+  }
+
+  const response = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, {
+    method: 'GET',
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`supabase_auth_error_${response.status}`);
+  }
+
+  const user = await response.json();
+  if (!user || typeof user !== 'object' || !String(user.id || '').trim()) {
+    return null;
+  }
+
+  return {
+    id: String(user.id),
+    email: String(user.email || ''),
+    role: String(user.role || ''),
+  };
+}
+
+async function authenticateApiRequest(req, res) {
+  const authHeader = String(req.headers.authorization || '').trim();
+  const match = authHeader.match(/^Bearer\s+(.+)$/i);
+  const token = match ? String(match[1] || '').trim() : '';
+
+  if (!token) {
+    sendJson(res, 401, { error: 'unauthorized' });
+    return null;
+  }
+
+  try {
+    const user = await validateSupabaseToken(token);
+    if (!user) {
+      sendJson(res, 401, { error: 'unauthorized' });
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error('Auth validation failed:', error);
+    sendJson(res, 500, { error: 'auth_unavailable' });
+    return null;
+  }
 }
 
 async function ensureStorageInitialized() {
@@ -312,7 +389,8 @@ async function readManifest() {
         const createdAt = normalizeIsoTimestamp(entry.createdAt, nowIso);
         const updatedAt = normalizeIsoTimestamp(entry.updatedAt, createdAt);
         const version = Number.isInteger(entry.version) && entry.version > 0 ? entry.version : 1;
-        return { id, label, createdAt, updatedAt, version };
+        const ownerId = normalizeOwnerId(entry.ownerId);
+        return { id, label, ownerId, createdAt, updatedAt, version };
       })
       .filter(Boolean),
   };
@@ -326,16 +404,61 @@ async function writeManifest(manifest) {
   await fs.writeFile(LEGACY_DATA_FILE, `${JSON.stringify(normalizedManifest, null, 2)}\n`, 'utf8');
 }
 
-async function readDatasetCards(datasetId) {
+async function migrateLegacyOwnerIds(manifest) {
+  if (!LEGACY_DATASET_OWNER_ID) {
+    return manifest;
+  }
+
+  let changed = false;
+  const datasets = manifest.datasets.map((entry) => {
+    if (entry.ownerId) {
+      return entry;
+    }
+    changed = true;
+    return {
+      ...entry,
+      ownerId: LEGACY_DATASET_OWNER_ID,
+    };
+  });
+
+  if (!changed) {
+    return manifest;
+  }
+
+  const nextManifest = {
+    ...manifest,
+    datasets,
+  };
+  await writeManifest(nextManifest);
+  return nextManifest;
+}
+
+async function readDatasetRecord(datasetId, fallbackOwnerId = '') {
   const datasetPath = toDatasetFilePath(datasetId);
   const raw = await fs.readFile(datasetPath, 'utf8');
   const parsed = JSON.parse(raw || '[]');
-  return Array.isArray(parsed) ? parsed : [];
+
+  if (Array.isArray(parsed)) {
+    return { ownerId: normalizeOwnerId(fallbackOwnerId), cards: parsed };
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return { ownerId: normalizeOwnerId(fallbackOwnerId), cards: [] };
+  }
+
+  return {
+    ownerId: normalizeOwnerId(parsed.ownerId || fallbackOwnerId),
+    cards: Array.isArray(parsed.cards) ? parsed.cards : [],
+  };
 }
 
-async function writeDatasetCards(datasetId, cards) {
+async function writeDatasetRecord(datasetId, ownerId, cards) {
   const datasetPath = toDatasetFilePath(datasetId);
-  await fs.writeFile(datasetPath, `${JSON.stringify(cards, null, 2)}\n`, 'utf8');
+  await fs.writeFile(
+    datasetPath,
+    `${JSON.stringify({ ownerId: normalizeOwnerId(ownerId), cards }, null, 2)}\n`,
+    'utf8',
+  );
 }
 
 async function readBodyJson(req) {
@@ -371,14 +494,23 @@ function checkOptimisticConcurrency(current, payload) {
   return false;
 }
 
-async function listDatasets() {
-  const manifest = await readManifest();
+async function listDatasets(authUser, includeGlobal = false) {
+  let manifest = await readManifest();
+  manifest = await migrateLegacyOwnerIds(manifest);
   const datasets = [];
+  const canSeeGlobal = includeGlobal && isAdminUser(authUser.id);
 
   for (const entry of manifest.datasets) {
     try {
-      const cards = await readDatasetCards(entry.id);
-      datasets.push({ ...entry, cards });
+      if (entry.ownerId !== authUser.id && !(canSeeGlobal && !entry.ownerId)) {
+        continue;
+      }
+      const record = await readDatasetRecord(entry.id, entry.ownerId);
+      const ownerId = record.ownerId || entry.ownerId;
+      if (ownerId !== authUser.id && !(canSeeGlobal && !ownerId)) {
+        continue;
+      }
+      datasets.push({ ...entry, ownerId, cards: record.cards });
     } catch {
       // Skip broken entry files gracefully.
     }
@@ -399,9 +531,15 @@ async function handleDatasetsApi(req, res, url) {
   const listPathMatch = url.pathname === '/datasets';
   const itemPathMatch = url.pathname.match(/^\/datasets\/([^/]+)$/);
   const datasetIdFromPath = itemPathMatch ? decodeURIComponent(itemPathMatch[1]) : '';
+  const authUser = await authenticateApiRequest(req, res);
+  if (!authUser) {
+    return;
+  }
+  const isAdmin = isAdminUser(authUser.id);
 
   if (req.method === 'GET' && listPathMatch) {
-    const datasets = await listDatasets();
+    const includeGlobal = String(url.searchParams.get('includeGlobal') || '').toLowerCase() === 'true';
+    const datasets = await listDatasets(authUser, includeGlobal);
     return sendJson(res, 200, datasets);
   }
 
@@ -427,11 +565,13 @@ async function handleDatasetsApi(req, res, url) {
     dataset.createdAt = nowIso;
     dataset.updatedAt = nowIso;
     dataset.version = 1;
+    dataset.ownerId = authUser.id;
 
-    await writeDatasetCards(dataset.id, dataset.cards);
+    await writeDatasetRecord(dataset.id, dataset.ownerId, dataset.cards);
     manifest.datasets.push({
       id: dataset.id,
       label: dataset.label,
+      ownerId: dataset.ownerId,
       createdAt: dataset.createdAt,
       updatedAt: dataset.updatedAt,
       version: dataset.version,
@@ -449,22 +589,28 @@ async function handleDatasetsApi(req, res, url) {
       return sendJson(res, 400, { error: 'invalid_json' });
     }
 
-    const manifest = await readManifest();
+    let manifest = await readManifest();
+    manifest = await migrateLegacyOwnerIds(manifest);
     const datasetIndex = manifest.datasets.findIndex((entry) => entry.id === datasetIdFromPath);
     if (datasetIndex < 0) {
       return sendJson(res, 404, { error: 'not_found' });
     }
 
     const currentEntry = manifest.datasets[datasetIndex];
-    const currentCards = await readDatasetCards(currentEntry.id);
-    const currentDataset = { ...currentEntry, cards: currentCards };
+    const currentRecord = await readDatasetRecord(currentEntry.id, currentEntry.ownerId);
+    const effectiveOwnerId = normalizeOwnerId(currentRecord.ownerId || currentEntry.ownerId);
+    if (effectiveOwnerId !== authUser.id && !isAdmin) {
+      return sendJson(res, 403, { error: 'forbidden' });
+    }
+
+    const currentDataset = { ...currentEntry, ownerId: effectiveOwnerId, cards: currentRecord.cards };
 
     if (checkOptimisticConcurrency(currentDataset, payload)) {
       return sendJson(res, 409, { error: 'conflict', current: currentDataset });
     }
 
     const nextLabel = String(payload.label ?? currentEntry.label).trim() || currentEntry.id;
-    const nextCards = Array.isArray(payload.cards) ? payload.cards : currentCards;
+    const nextCards = Array.isArray(payload.cards) ? payload.cards : currentRecord.cards;
     if (!Array.isArray(nextCards) || nextCards.length === 0) {
       return sendJson(res, 400, { error: 'invalid_payload' });
     }
@@ -472,9 +618,10 @@ async function handleDatasetsApi(req, res, url) {
     const updatedAt = new Date().toISOString();
     const version = currentEntry.version + 1;
 
-    await writeDatasetCards(currentEntry.id, nextCards);
+    await writeDatasetRecord(currentEntry.id, effectiveOwnerId, nextCards);
     manifest.datasets[datasetIndex] = {
       ...currentEntry,
+      ownerId: effectiveOwnerId,
       label: nextLabel,
       updatedAt,
       version,
@@ -484,6 +631,7 @@ async function handleDatasetsApi(req, res, url) {
     return sendJson(res, 200, {
       id: currentEntry.id,
       label: nextLabel,
+      ownerId: effectiveOwnerId,
       cards: nextCards,
       createdAt: currentEntry.createdAt,
       updatedAt,
@@ -499,15 +647,21 @@ async function handleDatasetsApi(req, res, url) {
       return sendJson(res, 400, { error: 'invalid_json' });
     }
 
-    const manifest = await readManifest();
+    let manifest = await readManifest();
+    manifest = await migrateLegacyOwnerIds(manifest);
     const datasetIndex = manifest.datasets.findIndex((entry) => entry.id === datasetIdFromPath);
     if (datasetIndex < 0) {
       return sendJson(res, 404, { error: 'not_found' });
     }
 
     const currentEntry = manifest.datasets[datasetIndex];
-    const currentCards = await readDatasetCards(currentEntry.id);
-    const currentDataset = { ...currentEntry, cards: currentCards };
+    const currentRecord = await readDatasetRecord(currentEntry.id, currentEntry.ownerId);
+    const effectiveOwnerId = normalizeOwnerId(currentRecord.ownerId || currentEntry.ownerId);
+    if (effectiveOwnerId !== authUser.id && !isAdmin) {
+      return sendJson(res, 403, { error: 'forbidden' });
+    }
+
+    const currentDataset = { ...currentEntry, ownerId: effectiveOwnerId, cards: currentRecord.cards };
 
     if (checkOptimisticConcurrency(currentDataset, payload)) {
       return sendJson(res, 409, { error: 'conflict', current: currentDataset });
