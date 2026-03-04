@@ -2520,12 +2520,8 @@ function renderSpeedQuizCategoryOptions() {
   });
 }
 
-const SUPABASE_URL = "https://mqbokupviznrmnwvtwwe.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1xYm9rdXB2aXpucm1ud3Z0d3dlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwMzczNzYsImV4cCI6MjA4NzYxMzM3Nn0.dckhmcqrKAv8dYTxg6b4313OQs-uI2MCeWXPqfQr5HI";
-const SUPABASE_BUCKET_ID = "Kartensets";
+const CSV_FILES_API_ENDPOINT = "/csv-files";
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
-let supabaseStorageClientPromise;
 
 
 function setStorageSelectOptions(files = []) {
@@ -2588,18 +2584,6 @@ function isValidCsvUpload(file) {
   return hasCsvExtension && allowedMimeTypes.has(file?.type ?? "");
 }
 
-async function getSupabaseStorageClient() {
-  if (!supabaseStorageClientPromise) {
-    supabaseStorageClientPromise = import("https://esm.sh/@supabase/supabase-js@2")
-      .then(({ createClient }) => createClient(SUPABASE_URL, SUPABASE_ANON_KEY))
-      .catch((error) => {
-        supabaseStorageClientPromise = undefined;
-        throw error;
-      });
-  }
-  return supabaseStorageClientPromise;
-}
-
 function parseStorageCsvToCards(csvText) {
   const parsedRows = parseCsv(csvText);
   return parsedRows
@@ -2632,22 +2616,19 @@ async function refreshPublicCsvList() {
   }
 
   try {
-    const supabase = await getSupabaseStorageClient();
-    const { data, error } = await supabase.storage
-      .from(SUPABASE_BUCKET_ID)
-      .list("", { limit: 1000, offset: 0, sortBy: { column: "created_at", order: "desc" } });
-
-    if (error) {
-      throw error;
+    const response = await fetch(CSV_FILES_API_ENDPOINT, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`Dateiliste konnte nicht geladen werden (HTTP ${response.status}).`);
     }
+    const data = await response.json();
 
     const sortedFiles = [...(data || [])]
       .filter((item) => isSelectableStorageDataset(item))
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
 
     setStorageSelectOptions(sortedFiles);
     if (csvStatus) {
-      csvStatus.textContent = `${sortedFiles.length} Datei(en) im öffentlichen Bucket Kartensets.`;
+      csvStatus.textContent = `${sortedFiles.length} hochgeladene Datei(en) verfügbar.`;
     }
   } catch (error) {
     if (csvStatus) {
@@ -2670,14 +2651,7 @@ async function loadStorageDataset(objectName) {
       csvStatus.textContent = `Lade Kartenset aus Storage: ${datasetLabel} ...`;
     }
 
-    const supabase = await getSupabaseStorageClient();
-    const { data: publicUrlData } = supabase.storage.from(SUPABASE_BUCKET_ID).getPublicUrl(selectedName);
-    const publicUrl = publicUrlData?.publicUrl;
-    if (!publicUrl) {
-      throw new Error("Public URL konnte nicht erzeugt werden.");
-    }
-
-    const response = await fetch(publicUrl, { cache: "no-store" });
+    const response = await fetch(`${CSV_FILES_API_ENDPOINT}/${encodeURIComponent(selectedName)}`, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`CSV-Abruf fehlgeschlagen (HTTP ${response.status}).`);
     }
@@ -2740,15 +2714,20 @@ async function handleCsvUpload() {
     csvUploadButton && (csvUploadButton.disabled = true);
     if (csvStatus) csvStatus.textContent = "Upload läuft ...";
 
-    const supabase = await getSupabaseStorageClient();
-    const { error } = await supabase.storage.from(SUPABASE_BUCKET_ID).upload(uploadName, file, {
-      upsert: false,
-      cacheControl: "3600",
-      contentType: file.type || "text/csv"
+    const csvText = await file.text();
+    const response = await fetch(CSV_FILES_API_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: uploadName,
+        content: csvText,
+      }),
     });
 
-    if (error) {
-      throw error;
+    if (!response.ok) {
+      throw new Error(`Upload fehlgeschlagen (HTTP ${response.status}).`);
     }
 
     if (csvUpload) {
