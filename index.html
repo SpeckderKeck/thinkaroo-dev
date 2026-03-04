@@ -12,12 +12,15 @@
     <div class="global-header-inner">
       <div class="auth-topbar" aria-label="Authentifizierung">
         <div class="auth-topbar-left" id="auth-left-logged-out">
-          <button id="auth-login" type="button" class="auth-split-button">Login</button>
-          <button id="auth-register" type="button" class="auth-split-button">Registrierung</button>
+          <button id="auth-login" type="button" class="auth-icon-button" aria-label="Login öffnen" title="Login">
+            <img src="./login.svg" alt="Login" />
+          </button>
         </div>
         <div class="auth-topbar-left" id="auth-left-logged-in" hidden>
           <p id="auth-user"></p>
-          <button id="auth-logout" type="button">Logout</button>
+          <button id="auth-logout" type="button" class="auth-icon-button" aria-label="Logout" title="Logout">
+            <img src="./logout.svg" alt="Logout" />
+          </button>
         </div>
         <div class="auth-topbar-right" id="auth-status-wrapper">
           <span id="auth-status">Du bist nicht eingeloggt.</span>
@@ -62,7 +65,20 @@
   <div id="app-root" class="app">
 
     <main>
-      <section id="mode-selection" class="panel" aria-label="Modus auswählen" aria-hidden="true" hidden>
+
+      <section id="screen-landing" class="panel panel--active" aria-label="Landing Page" aria-hidden="false">
+        <div class="landing-overlay" role="region" aria-label="Thinkaroo Startbildschirm">
+          <picture class="landing-overlay__media" aria-hidden="true">
+            <source media="(max-width: 768px)" srcset="landigphone.png" />
+            <img src="landingpc.png" alt="Thinkaroo Landing Page" />
+          </picture>
+          <div class="landing-overlay__actions">
+            <button id="landing-start" type="button" class="landing-overlay__start-button">Spiel starten</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-select" class="panel" aria-label="Modus auswählen" aria-hidden="true" hidden>
         <div class="mode-selection">
           <div class="mode-selection__options" role="group" aria-label="Spielmodi">
             <div class="mode-option">
@@ -75,8 +91,9 @@
         </div>
       </section>
 
-      <section id="speedquiz-menu" class="panel" aria-label="SpeedQuiz Menü" aria-hidden="true" hidden>
+      <section id="screen-settings-speedquiz" class="panel" aria-label="SpeedQuiz Menü" aria-hidden="true" hidden>
         <div class="speedquiz-menu">
+          <a href="#/select" class="settings-back-link" aria-label="Zurück zur Spielauswahl">← Zurück</a>
           <div class="panel-grid speedquiz-menu__grid">
             <div class="card speedquiz-menu__card card--teams">
               <h2>Teams</h2>
@@ -111,8 +128,9 @@
         </div>
       </section>
 
-      <section id="menu" class="panel panel--active" aria-label="Hauptmenü" aria-hidden="false">
+      <section id="screen-settings-board" class="panel" aria-label="Hauptmenü" aria-hidden="true" hidden>
         <div class="panel-grid">
+          <a href="#/select" class="settings-back-link" aria-label="Zurück zur Spielauswahl">← Zurück</a>
           <div class="card-stack">
             <div class="card card--teams">
               <h2>Teams</h2>
@@ -260,7 +278,48 @@
         </footer>
       </section>
 
-      <section id="game" class="panel" aria-label="Spielfeld" aria-hidden="true" hidden>
+      
+      <section id="screen-game-speedquiz" class="panel" aria-label="SpeedQuiz Spiel" aria-hidden="true" hidden>
+        <div class="card">
+          <h2>SpeedQuiz Game</h2>
+          <p class="hint">Die bestehende SpeedQuiz-Spielansicht wird hier angezeigt.</p>
+        </div>
+      </section>
+
+      <section id="screen-login" class="panel" aria-label="Login und Registrierung" aria-hidden="true" hidden>
+        <section class="card auth-page-card" aria-label="Login und Registrierung">
+          <h1>Login & Registrierung</h1>
+          <div class="auth-page-columns">
+            <form id="login-form" class="auth-form">
+              <h2>Login</h2>
+              <label class="field" for="login-email">
+                E-Mail
+                <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <label class="field" for="login-password">
+                Passwort
+                <input id="login-password" type="password" required autocomplete="current-password" />
+              </label>
+              <button class="primary" type="submit">Login</button>
+            </form>
+            <form id="register-form" class="auth-form">
+              <h2>Registrierung</h2>
+              <label class="field" for="register-email">
+                E-Mail
+                <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <label class="field" for="register-password">
+                Passwort
+                <input id="register-password" type="password" required autocomplete="new-password" />
+              </label>
+              <button class="primary" type="submit">Registrierung</button>
+            </form>
+          </div>
+          <p id="auth-page-hint" class="hint" aria-live="polite"></p>
+        </section>
+      </section>
+
+      <section id="screen-game-board" class="panel" aria-label="Spielfeld" aria-hidden="true" hidden>
         <div class="game-top">
           <div class="board" id="board" aria-hidden="true"></div>
           <div id="dice-overlay" class="dice-overlay" aria-hidden="true">
@@ -488,9 +547,9 @@
   <script src="data/gesellschaft_kunst_geo_sport_geschichte_mathe_grammatik.js"></script>
   <script src="data/druck_luftdruck_pneumatik_regelung_fertigungsmechanik.js"></script>
   <script src="data/mk11d.js"></script>
-  <script src="landing-overlay.js"></script>
-  <script src="src/theme/tokens.js"></script>
+    <script src="src/theme/tokens.js"></script>
   <script src="app.js"></script>
   <script type="module" src="./assets/app.js"></script>
+  <script type="module" src="./assets/authPage.js"></script>
 </body>
 </html>

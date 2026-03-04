@@ -88,7 +88,7 @@ body.game-active .app {
 }
 
 .global-header {
-  position: fixed;
+  position: relative;
   top: 0;
   left: 0;
   width: 100%;
@@ -2507,8 +2507,30 @@ body.landing-open {
   flex-shrink: 1;
 }
 
-.auth-split-button {
-  flex: 1;
+
+.settings-back-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 10px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.auth-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+}
+
+.auth-icon-button img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 #auth-user {
