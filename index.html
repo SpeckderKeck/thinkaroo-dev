@@ -10,15 +10,13 @@
 <body>
   <header class="global-header">
     <div class="global-header-inner">
+      <a id="settings-back-topbar" href="#/select" class="settings-back-link settings-back-link--topbar" aria-label="Zurück zur Spielauswahl" hidden>← Zurück</a>
       <div class="auth-topbar" aria-label="Authentifizierung">
-        <div class="auth-topbar-left" id="auth-left-logged-out">
-          <button id="auth-login" type="button" class="auth-icon-button" data-route="#/login" aria-label="Login öffnen" title="Login">
+        <div class="auth-topbar-left" id="auth-left-actions">
+          <button id="auth-login" type="button" class="auth-icon-button auth-icon-button--login" data-route="#/login" aria-label="Login öffnen" title="Login">
             <img src="./login.svg" alt="Login" />
           </button>
-        </div>
-        <div class="auth-topbar-left" id="auth-left-logged-in" hidden>
-          <p id="auth-user"></p>
-          <button id="auth-logout" type="button" class="auth-icon-button" aria-label="Logout" title="Logout">
+          <button id="auth-logout" type="button" class="auth-icon-button auth-icon-button--logout" aria-label="Logout" title="Logout" hidden>
             <img src="./logout.svg" alt="Logout" />
           </button>
         </div>
@@ -93,7 +91,6 @@
 
       <section id="screen-settings-speedquiz" class="panel" aria-label="SpeedQuiz Menü" aria-hidden="true" hidden>
         <div class="speedquiz-menu">
-          <a href="#/select" class="settings-back-link" aria-label="Zurück zur Spielauswahl">← Zurück</a>
           <div class="panel-grid speedquiz-menu__grid">
             <div class="card speedquiz-menu__card card--teams">
               <h2>Teams</h2>
@@ -133,7 +130,6 @@
 
       <section id="screen-settings-board" class="panel" aria-label="Hauptmenü" aria-hidden="true" hidden>
         <div class="panel-grid">
-          <a href="#/select" class="settings-back-link" aria-label="Zurück zur Spielauswahl">← Zurück</a>
           <div class="card-stack">
             <div class="card card--teams">
               <h2>Teams</h2>

@@ -2533,10 +2533,17 @@ body.landing-open {
   display: inline-flex;
   align-items: center;
   width: fit-content;
-  margin-bottom: 10px;
-  color: var(--color-text);
+  color: var(--color-text-on-dark);
   text-decoration: none;
   font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--color-bg) 35%, var(--color-surface));
+}
+
+.settings-back-link--topbar {
+  margin-right: 2px;
 }
 
 .auth-icon-button {
@@ -2546,6 +2553,16 @@ body.landing-open {
   width: 44px;
   height: 44px;
   padding: 6px;
+}
+
+.auth-icon-button--login {
+  background: #2563eb !important;
+  border-color: color-mix(in srgb, #2563eb 85%, #ffffff 15%) !important;
+}
+
+.auth-icon-button--logout {
+  background: #dc2626 !important;
+  border-color: color-mix(in srgb, #dc2626 85%, #ffffff 15%) !important;
 }
 
 .auth-icon-button img {
