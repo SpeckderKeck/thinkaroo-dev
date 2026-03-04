@@ -3,6 +3,10 @@ const teamCountInput = document.getElementById("team-count");
 const teamCountDecrease = document.getElementById("team-count-decrease");
 const teamCountIncrease = document.getElementById("team-count-increase");
 const teamListContainer = document.getElementById("team-list");
+const speedQuizTeamCountInput = document.getElementById("speedquiz-team-count");
+const speedQuizTeamCountDecrease = document.getElementById("speedquiz-team-count-decrease");
+const speedQuizTeamCountIncrease = document.getElementById("speedquiz-team-count-increase");
+const speedQuizTeamListContainer = document.getElementById("speedquiz-team-list");
 const startButton = document.getElementById("start-game");
 const menuPanel = document.getElementById("menu");
 const modeSelectionPanel = document.getElementById("mode-selection");
@@ -886,8 +890,9 @@ function syncCategoryControls(controls, selectedCategories, categoryTimes) {
   });
 }
 
-function renderTeams(count) {
-  teamListContainer.innerHTML = "";
+function renderTeamRows(container, count) {
+  if (!container) return;
+  container.innerHTML = "";
   for (let i = 0; i < count; i += 1) {
     const defaultIcon = TEAM_ICONS[i % TEAM_ICONS.length];
     const defaultName = DEFAULT_TEAM_NAMES[i] ?? `Team ${i + 1}`;
@@ -924,8 +929,35 @@ function renderTeams(count) {
         </div>
       </div>
     `;
-    teamListContainer.appendChild(row);
+    container.appendChild(row);
   }
+}
+
+function syncTeamsBetweenEditors(sourceContainer, targetContainer) {
+  if (!sourceContainer || !targetContainer) return;
+  const sourceRows = [...sourceContainer.querySelectorAll(".team-row")];
+  const targetRows = [...targetContainer.querySelectorAll(".team-row")];
+  if (sourceRows.length !== targetRows.length) return;
+
+  sourceRows.forEach((sourceRow, index) => {
+    const targetRow = targetRows[index];
+    if (!targetRow) return;
+    const name = sourceRow.querySelector("[data-team-name]")?.value ?? "";
+    const icon = sourceRow.querySelector("[data-team-icon]")?.value ?? TEAM_ICONS[index % TEAM_ICONS.length];
+    const targetNameInput = targetRow.querySelector("[data-team-name]");
+    const targetPicker = targetRow.querySelector(".team-picker");
+    if (targetNameInput) {
+      targetNameInput.value = name;
+    }
+    if (targetPicker) {
+      updatePickerSelection(targetPicker, icon);
+    }
+  });
+}
+
+function renderTeams(count) {
+  renderTeamRows(teamListContainer, count);
+  renderTeamRows(speedQuizTeamListContainer, count);
 }
 
 function clampTeamCount(value) {
@@ -936,10 +968,38 @@ function clampTeamCount(value) {
 
 function syncTeamCountControls(value) {
   const clamped = clampTeamCount(value);
-  teamCountInput.value = clamped;
-  teamCountDecrease.disabled = clamped <= 2;
-  teamCountIncrease.disabled = clamped >= 4;
+  if (teamCountInput) {
+    teamCountInput.value = clamped;
+  }
+  if (speedQuizTeamCountInput) {
+    speedQuizTeamCountInput.value = clamped;
+  }
+  if (teamCountDecrease) {
+    teamCountDecrease.disabled = clamped <= 2;
+  }
+  if (teamCountIncrease) {
+    teamCountIncrease.disabled = clamped >= 4;
+  }
+  if (speedQuizTeamCountDecrease) {
+    speedQuizTeamCountDecrease.disabled = clamped <= 2;
+  }
+  if (speedQuizTeamCountIncrease) {
+    speedQuizTeamCountIncrease.disabled = clamped >= 4;
+  }
   renderTeams(clamped);
+}
+
+function closeAllTeamPickers() {
+  [teamListContainer, speedQuizTeamListContainer].forEach((container) => {
+    if (!container) return;
+    container.querySelectorAll(".team-picker.open").forEach((picker) => {
+      picker.classList.remove("open");
+      const toggle = picker.querySelector(".picker-button");
+      if (toggle) {
+        toggle.setAttribute("aria-expanded", "false");
+      }
+    });
+  });
 }
 
 function getSelectedBoardSize(source) {
@@ -970,16 +1030,6 @@ function syncBoardSizeControls(size) {
   if (boardSizeSelect) {
     boardSizeSelect.value = size;
   }
-}
-
-function closeAllTeamPickers() {
-  teamListContainer.querySelectorAll(".team-picker.open").forEach((picker) => {
-    picker.classList.remove("open");
-    const toggle = picker.querySelector(".picker-button");
-    if (toggle) {
-      toggle.setAttribute("aria-expanded", "false");
-    }
-  });
 }
 
 function updatePickerSelection(picker, value) {
@@ -1026,6 +1076,12 @@ function handleTeamListClick(event) {
     if (picker && value) {
       updatePickerSelection(picker, value);
       closeAllTeamPickers();
+      const sourceContainer = picker.closest("#team-list, #speedquiz-team-list");
+      if (sourceContainer?.id === "team-list") {
+        syncTeamsBetweenEditors(teamListContainer, speedQuizTeamListContainer);
+      } else if (sourceContainer?.id === "speedquiz-team-list") {
+        syncTeamsBetweenEditors(speedQuizTeamListContainer, teamListContainer);
+      }
     }
   }
 }
@@ -2899,20 +2955,38 @@ window.addEventListener("resize", () => {
   renderBoardPath();
   positionTokens();
 });
-teamListContainer.addEventListener("click", handleTeamListClick);
+teamListContainer?.addEventListener("click", handleTeamListClick);
+speedQuizTeamListContainer?.addEventListener("click", handleTeamListClick);
 document.addEventListener("click", (event) => {
-  if (!teamListContainer.contains(event.target)) {
+  const clickedInsideMain = teamListContainer?.contains(event.target);
+  const clickedInsideSpeedQuiz = speedQuizTeamListContainer?.contains(event.target);
+  if (!clickedInsideMain && !clickedInsideSpeedQuiz) {
     closeAllTeamPickers();
   }
 });
-teamCountInput.addEventListener("change", (event) => {
+teamCountInput?.addEventListener("change", (event) => {
   syncTeamCountControls(event.target.value);
 });
-teamCountDecrease.addEventListener("click", () => {
+speedQuizTeamCountInput?.addEventListener("change", (event) => {
+  syncTeamCountControls(event.target.value);
+});
+teamCountDecrease?.addEventListener("click", () => {
   syncTeamCountControls(Number.parseInt(teamCountInput.value, 10) - 1);
 });
-teamCountIncrease.addEventListener("click", () => {
+speedQuizTeamCountDecrease?.addEventListener("click", () => {
+  syncTeamCountControls(Number.parseInt(speedQuizTeamCountInput.value, 10) - 1);
+});
+teamCountIncrease?.addEventListener("click", () => {
   syncTeamCountControls(Number.parseInt(teamCountInput.value, 10) + 1);
+});
+speedQuizTeamCountIncrease?.addEventListener("click", () => {
+  syncTeamCountControls(Number.parseInt(speedQuizTeamCountInput.value, 10) + 1);
+});
+teamListContainer?.addEventListener("input", () => {
+  syncTeamsBetweenEditors(teamListContainer, speedQuizTeamListContainer);
+});
+speedQuizTeamListContainer?.addEventListener("input", () => {
+  syncTeamsBetweenEditors(speedQuizTeamListContainer, teamListContainer);
 });
 boardSizeInputs.forEach((input) => {
   input.addEventListener("change", () => {
