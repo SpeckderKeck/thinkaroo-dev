@@ -2351,25 +2351,33 @@ function renderSpeedQuizCategoryOptions() {
   speedQuizCategoriesContainer.innerHTML = "";
 
   ALLOWED_CARD_CATEGORIES.forEach((category) => {
-    const label = document.createElement("label");
-    label.className = "category-toggle";
+    const categoryButton = document.createElement("button");
+    const isSelected = state.speedQuiz.selectedCategories.includes(category);
+    const visuals = CATEGORY_VISUALS[category];
+    categoryButton.type = "button";
+    categoryButton.className = "speedquiz-category-button";
+    categoryButton.dataset.categoryLabel = category;
+    categoryButton.setAttribute("aria-label", category);
+    categoryButton.setAttribute("aria-pressed", String(isSelected));
+    categoryButton.classList.toggle("is-selected", isSelected);
+    categoryButton.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = category;
-    checkbox.checked = state.speedQuiz.selectedCategories.includes(category);
-    checkbox.addEventListener("change", () => {
-      const selectedCategories = [...speedQuizCategoriesContainer.querySelectorAll('input[type="checkbox"]:checked')]
-        .map((input) => input.value)
-        .filter((value) => ALLOWED_CARD_CATEGORIES.includes(value));
+    const icon = document.createElement("span");
+    icon.className = "category-icon";
+    applyCategoryIcon(icon, category, { allowFallback: true });
+    categoryButton.append(icon);
+
+    categoryButton.addEventListener("click", () => {
+      const selectedCategories = state.speedQuiz.selectedCategories.includes(category)
+        ? state.speedQuiz.selectedCategories.filter((item) => item !== category)
+        : [...state.speedQuiz.selectedCategories, category];
       state.speedQuiz.selectedCategories = selectedCategories.length > 0
         ? selectedCategories
         : [...ALLOWED_CARD_CATEGORIES];
       renderSpeedQuizCategoryOptions();
     });
 
-    label.append(checkbox, document.createTextNode(` ${category}`));
-    speedQuizCategoriesContainer.append(label);
+    speedQuizCategoriesContainer.append(categoryButton);
   });
 }
 
