@@ -43,7 +43,8 @@ loginActionButton?.addEventListener("click", () => {
 logoutActionButton?.addEventListener("click", async () => {
   try {
     await logout();
-    dispatchAuthMode(false);
+    setAuthUi(null);
+    navigateToLogin();
   } catch (error) {
     console.error(error);
     alert(error.message);
