@@ -77,16 +77,36 @@
 
       <section id="speedquiz-menu" class="panel" aria-label="SpeedQuiz Menü" aria-hidden="true" hidden>
         <div class="speedquiz-menu">
-          <div class="card speedquiz-menu__card">
-            <h2>SpeedQuiz Menü</h2>
-            <label class="field" for="speedquiz-dataset-select">
-              Kartensatz auswählen
-              <select id="speedquiz-dataset-select"></select>
-            </label>
-            <fieldset class="field speedquiz-menu__categories">
-              <legend>Kategorien auswählen</legend>
-              <div id="speedquiz-categories"></div>
-            </fieldset>
+          <div class="panel-grid speedquiz-menu__grid">
+            <div class="card speedquiz-menu__card card--teams">
+              <h2>Teams</h2>
+              <div class="field">
+                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                  <button type="button" class="count-button" id="speedquiz-team-count-decrease" aria-label="Teamanzahl verringern">
+                    –
+                  </button>
+                  <input id="speedquiz-team-count" type="number" min="2" max="4" step="1" value="2" />
+                  <button type="button" class="count-button" id="speedquiz-team-count-increase" aria-label="Teamanzahl erhöhen">
+                    +
+                  </button>
+                </div>
+              </div>
+              <div id="speedquiz-team-list" class="team-list"></div>
+            </div>
+            <div class="card speedquiz-menu__card">
+              <h2>Spieleinstellungen</h2>
+              <div class="field-group speedquiz-menu__categories">
+                <p>Kategorien</p>
+                <div id="speedquiz-categories" aria-label="Kategorien auswählen"></div>
+              </div>
+            </div>
+            <div class="card speedquiz-menu__card">
+              <h2>Kartensatz</h2>
+              <label class="field" for="speedquiz-dataset-select">
+                Kartensatz auswählen
+                <select id="speedquiz-dataset-select"></select>
+              </label>
+            </div>
           </div>
         </div>
       </section>
