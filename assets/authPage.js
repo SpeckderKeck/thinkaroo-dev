@@ -9,13 +9,17 @@ const hintText = document.querySelector("#auth-page-hint");
 
 function setStatus(session) {
   const isLoggedIn = Boolean(session?.user?.email);
-  statusText.textContent = isLoggedIn ? "Du bist eingeloggt." : "Du bist nicht eingeloggt.";
+  if (statusText) {
+    statusText.textContent = isLoggedIn ? "Du bist eingeloggt." : "Du bist nicht eingeloggt.";
+  }
 }
 
 async function handleOtp(email, shouldCreateUser) {
   try {
     await loginWithOtp(email, shouldCreateUser);
-    hintText.textContent = "Check deine E-Mail";
+    if (hintText) {
+      hintText.textContent = "Check deine E-Mail";
+    }
   } catch (error) {
     console.error(error);
     alert(error.message);
@@ -37,9 +41,9 @@ registerForm?.addEventListener("submit", async (event) => {
   const mode = query.get("mode");
 
   if (mode === "register") {
-    registerEmail.focus();
+    registerEmail?.focus();
   } else {
-    loginEmail.focus();
+    loginEmail?.focus();
   }
 })();
 
