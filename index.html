@@ -493,23 +493,40 @@
       $("logout").style.display = "none";
     }
   }
+$("login").addEventListener("click", async () => {
+  const email = $("email").value.trim();
+  if (!email) return alert("Bitte Email eingeben.");
 
-  $("login").addEventListener("click", async () => {
-    const email = $("email").value.trim();
-    if (!email) return alert("Bitte Email eingeben.");
+  const password = prompt("Passwort eingeben (oder ein neues wählen für Registrierung):");
+  if (!password) return;
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + window.location.pathname }
-    });
-
-    if (error) {
-      console.error(error);
-      alert(error.message);
-    } else {
-      setStatus("Mail gesendet – Link anklicken.");
-    }
+  // 1) Erst versuchen: Login
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email,
+    password
   });
+
+  if (!signInError) {
+    setStatus("Eingeloggt.");
+    await refresh();
+    return;
+  }
+
+  // 2) Wenn Login fehlschlägt: Registrierung versuchen
+  const { error: signUpError } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (signUpError) {
+    console.error(signUpError);
+    alert(signUpError.message);
+    return;
+  }
+
+  alert("Account erstellt. Falls Email-Bestätigung aktiv ist, bestätige bitte deine Mail und logge dich dann ein.");
+  await refresh();
+});
 
   $("logout").addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
