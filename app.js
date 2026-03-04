@@ -1576,15 +1576,12 @@ async function handleSinglechoiceAnswer(button) {
     button.classList.remove("blinkGreen", "blinkRed");
     button.classList.add(isCorrect ? "finalGreen" : "finalRed");
     state.singlechoiceAnimating = false;
+    setTurnButtons({ showCorrect: false, showWrong: false, showSwap: false, showContinue: true });
+    if (turnContinueButton) {
+      turnContinueButton.textContent = "Weiter";
+    }
     state.singlechoiceSubmitting = false;
     state.singlechoiceAnimationTimeoutId = null;
-
-    resetSinglechoiceState();
-    if (isCorrect) {
-      finishTurn(true);
-      return;
-    }
-    finishTurn(false, false, { returnToPrevious: true });
   }, 1080);
 }
 
