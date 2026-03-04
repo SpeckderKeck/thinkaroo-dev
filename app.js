@@ -492,6 +492,51 @@ const state = {
 };
 
 let isLoggedIn = Boolean(window.THINKAROO_AUTH?.isLoggedIn);
+let authSession = window.__authState?.session ?? null;
+
+function createAuthApiError(message, { shouldRedirect = true } = {}) {
+  const error = new Error(message);
+  error.isAuthError = true;
+  error.shouldRedirect = shouldRedirect;
+  return error;
+}
+
+async function getAuthHeaders({ includeContentType = false } = {}) {
+  let session = authSession ?? window.__authState?.session ?? null;
+  if (!session?.access_token && window.supabase?.auth?.getSession) {
+    try {
+      const {
+        data: { session: latestSession },
+      } = await window.supabase.auth.getSession();
+      session = latestSession;
+    } catch {
+      session = null;
+    }
+  }
+
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (includeContentType) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  if (session?.access_token) {
+    headers.Authorization = `Bearer ${session.access_token}`;
+  }
+
+  return headers;
+}
+
+function ensureAuthorizedResponse(response, actionLabel = "Anfrage") {
+  if (response.status !== 401 && response.status !== 403) {
+    return;
+  }
+  const loginHint = "Bitte melde dich erneut an.";
+  const message = `${actionLabel} fehlgeschlagen: Zugriff verweigert (HTTP ${response.status}). ${loginHint}`;
+  throw createAuthApiError(message, { shouldRedirect: true });
+}
 
 function redirectToLogin() {
   const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
@@ -702,10 +747,9 @@ async function readCustomDatasetsFromApi() {
   try {
     const response = await fetch(getCustomDatasetsApiEndpoint(), {
       method: "GET",
-      headers: {
-        Accept: "application/json",
-      },
+      headers: await getAuthHeaders(),
     });
+    ensureAuthorizedResponse(response, "Laden der eigenen Kartensätze");
 
     if (!response.ok) {
       return null;
@@ -723,7 +767,10 @@ async function readCustomDatasetsFromApi() {
       }
       return accumulator;
     }, {});
-  } catch {
+  } catch (error) {
+    if (error?.isAuthError) {
+      throw error;
+    }
     return null;
   }
 }
@@ -747,10 +794,7 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
       if (operation === "delete") {
         response = await fetch(`${getCustomDatasetsApiEndpoint()}/${encodeURIComponent(datasetId)}`, {
           method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
+          headers: await getAuthHeaders({ includeContentType: true }),
           body: JSON.stringify({
             expectedVersion: previousDataset?.version,
             expectedUpdatedAt: previousDataset?.updatedAt,
@@ -764,10 +808,7 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
             : getCustomDatasetsApiEndpoint(),
           {
             method: hasPreviousDataset ? "PATCH" : "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-            },
+            headers: await getAuthHeaders({ includeContentType: true }),
             body: JSON.stringify(
               hasPreviousDataset
                 ? {
@@ -783,6 +824,8 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
       } else {
         response = { ok: true, status: 200, json: async () => null };
       }
+
+      ensureAuthorizedResponse(response, "Speichern der eigenen Kartensätze");
 
       if (!response.ok) {
         if (response.status === 409) {
@@ -817,7 +860,10 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
 
       localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
       return { ok: true, mode: "remote" };
-    } catch {
+    } catch (error) {
+      if (error?.isAuthError) {
+        return { ok: false, mode: "remote", authRequired: true, message: error.message };
+      }
       state.datasetStorageMode = "local";
       localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
       return { ok: false, mode: "local", message: "Server nicht erreichbar, lokal gespeichert." };
@@ -829,7 +875,18 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
 }
 
 async function loadCustomDatasets() {
-  const remoteDatasets = await readCustomDatasetsFromApi();
+  let remoteDatasets = null;
+  try {
+    remoteDatasets = await readCustomDatasetsFromApi();
+  } catch (error) {
+    if (error?.isAuthError) {
+      if (csvStatus) {
+        csvStatus.textContent = error.message;
+      }
+      redirectToLogin();
+      return {};
+    }
+  }
   if (remoteDatasets) {
     state.datasetStorageMode = "remote";
     return remoteDatasets;
@@ -2077,6 +2134,18 @@ async function saveCardsAsCustomDataset({ cards, label, existingId = "" }) {
     datasetId,
     previousDataset: existingDataset,
   });
+  if (!persistenceResult.ok && persistenceResult.authRequired) {
+    if (existingDataset) {
+      state.customDatasets[datasetId] = existingDataset;
+    } else {
+      delete state.customDatasets[datasetId];
+    }
+    return {
+      ok: false,
+      message: persistenceResult.message,
+      persistenceResult,
+    };
+  }
   if (!persistenceResult.ok && persistenceResult.conflict) {
     if (persistenceResult.serverDataset) {
       state.customDatasets[datasetId] = persistenceResult.serverDataset;
@@ -2130,6 +2199,9 @@ async function saveEditorAsNewDataset() {
   const result = await saveCardsAsCustomDataset({ cards, label });
   if (!result.ok) {
     csvStatus.textContent = result.message;
+    if (result.persistenceResult?.authRequired) {
+      redirectToLogin();
+    }
     return;
   }
 
@@ -2162,6 +2234,9 @@ async function overwriteSelectedCustomDataset() {
   const result = await saveCardsAsCustomDataset({ cards, label: nextLabel, existingId: selectedId });
   if (!result.ok) {
     csvStatus.textContent = result.message;
+    if (result.persistenceResult?.authRequired) {
+      redirectToLogin();
+    }
     return;
   }
 
@@ -2195,6 +2270,15 @@ async function deleteSelectedCustomDataset() {
     datasetId: selectedId,
     previousDataset: dataset,
   });
+  if (!persistenceResult.ok && persistenceResult.authRequired) {
+    state.customDatasets[selectedId] = dataset;
+    csvStatus.textContent = persistenceResult.message;
+    redirectToLogin();
+    refreshEditorCustomDatasetSelect(selectedId);
+    refreshCsvDatasetOverwriteSelect(selectedId);
+    refreshDatasetSelections();
+    return;
+  }
   if (!persistenceResult.ok && persistenceResult.conflict) {
     csvStatus.textContent = "Löschen fehlgeschlagen: Kartensatz wurde bereits geändert.";
     refreshEditorCustomDatasetSelect(selectedId);
@@ -2616,7 +2700,11 @@ async function refreshPublicCsvList() {
   }
 
   try {
-    const response = await fetch(CSV_FILES_API_ENDPOINT, { cache: "no-store" });
+    const response = await fetch(CSV_FILES_API_ENDPOINT, {
+      cache: "no-store",
+      headers: await getAuthHeaders(),
+    });
+    ensureAuthorizedResponse(response, "Laden der Storage-Dateiliste");
     if (!response.ok) {
       throw new Error(`Dateiliste konnte nicht geladen werden (HTTP ${response.status}).`);
     }
@@ -2631,6 +2719,15 @@ async function refreshPublicCsvList() {
       csvStatus.textContent = `${sortedFiles.length} hochgeladene Datei(en) verfügbar.`;
     }
   } catch (error) {
+    if (error?.isAuthError) {
+      if (csvStatus) {
+        csvStatus.textContent = error.message;
+      }
+      if (error.shouldRedirect) {
+        redirectToLogin();
+      }
+      return;
+    }
     if (csvStatus) {
       csvStatus.textContent = `Fehler beim Laden der Dateiliste: ${error?.message || String(error)}`;
     }
@@ -2651,7 +2748,11 @@ async function loadStorageDataset(objectName) {
       csvStatus.textContent = `Lade Kartenset aus Storage: ${datasetLabel} ...`;
     }
 
-    const response = await fetch(`${CSV_FILES_API_ENDPOINT}/${encodeURIComponent(selectedName)}`, { cache: "no-store" });
+    const response = await fetch(`${CSV_FILES_API_ENDPOINT}/${encodeURIComponent(selectedName)}`, {
+      cache: "no-store",
+      headers: await getAuthHeaders(),
+    });
+    ensureAuthorizedResponse(response, "Laden eines Storage-Kartensets");
     if (!response.ok) {
       throw new Error(`CSV-Abruf fehlgeschlagen (HTTP ${response.status}).`);
     }
@@ -2682,6 +2783,15 @@ async function loadStorageDataset(objectName) {
       csvDatasetNameInput.value = datasetLabel;
     }
   } catch (error) {
+    if (error?.isAuthError) {
+      if (csvStatus) {
+        csvStatus.textContent = error.message;
+      }
+      if (error.shouldRedirect) {
+        redirectToLogin();
+      }
+      return;
+    }
     if (csvStatus) {
       csvStatus.textContent = `Fehler beim Laden des Storage-Kartensets: ${error?.message || String(error)}`;
     }
@@ -2717,14 +2827,13 @@ async function handleCsvUpload() {
     const csvText = await file.text();
     const response = await fetch(CSV_FILES_API_ENDPOINT, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: await getAuthHeaders({ includeContentType: true }),
       body: JSON.stringify({
         name: uploadName,
         content: csvText,
       }),
     });
+    ensureAuthorizedResponse(response, "CSV-Upload");
 
     if (!response.ok) {
       throw new Error(`Upload fehlgeschlagen (HTTP ${response.status}).`);
@@ -2746,6 +2855,15 @@ async function handleCsvUpload() {
     }
     await loadStorageDataset(uploadName);
   } catch (error) {
+    if (error?.isAuthError) {
+      if (csvStatus) {
+        csvStatus.textContent = error.message;
+      }
+      if (error.shouldRedirect) {
+        redirectToLogin();
+      }
+      return;
+    }
     if (csvStatus) {
       csvStatus.textContent = `Upload-Fehler: ${error?.message || String(error)}`;
     }
@@ -2760,6 +2878,9 @@ async function saveUploadedCsvAsNewDataset() {
   const result = await saveCardsAsCustomDataset({ cards: state.uploadedCsvCards, label });
   if (!result.ok) {
     csvStatus.textContent = result.message;
+    if (result.persistenceResult?.authRequired) {
+      redirectToLogin();
+    }
     return;
   }
   refreshCsvDatasetOverwriteSelect(result.datasetId);
@@ -2782,6 +2903,9 @@ async function overwriteDatasetWithUploadedCsv() {
   const result = await saveCardsAsCustomDataset({ cards: state.uploadedCsvCards, label, existingId: selectedId });
   if (!result.ok) {
     csvStatus.textContent = result.message;
+    if (result.persistenceResult?.authRequired) {
+      redirectToLogin();
+    }
     return;
   }
 
@@ -3271,6 +3395,7 @@ document.addEventListener("fullscreenchange", () => {
 
 window.addEventListener(AUTH_MODE_EVENT, async (event) => {
   const nextIsLoggedIn = Boolean(event.detail?.isLoggedIn);
+  authSession = event.detail?.session ?? null;
   if (nextIsLoggedIn === isLoggedIn) return;
   isLoggedIn = nextIsLoggedIn;
   if (isLoggedIn && Object.keys(state.customDatasets).length === 0) {
