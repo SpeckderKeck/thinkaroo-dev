@@ -2532,14 +2532,18 @@ body.landing-open {
 .settings-back-link {
   display: inline-flex;
   align-items: center;
-  width: fit-content;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   color: var(--color-text-on-dark);
   text-decoration: none;
   font-weight: 700;
   border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
   border-radius: 10px;
-  padding: 10px 12px;
+  padding: 6px;
   background: color-mix(in srgb, var(--color-bg) 35%, var(--color-surface));
+  font-size: 24px;
+  line-height: 1;
 }
 
 .settings-back-link--topbar {
