@@ -10,25 +10,12 @@ const logoutButton = document.querySelector("#auth-logout");
 const loggedInText = document.querySelector("#auth-user");
 const authStatus = document.querySelector("#auth-status");
 
-let isLoggedIn = false;
-
-function applyAuthMode(nextIsLoggedIn) {
-  document.querySelectorAll('[data-auth="full"]').forEach((element) => {
-    element.hidden = !nextIsLoggedIn;
-  });
-
-  document.querySelectorAll('[data-auth="lite"]').forEach((element) => {
-    element.hidden = nextIsLoggedIn;
-  });
-}
-
-function dispatchAuthMode(nextIsLoggedIn) {
-  window.THINKAROO_AUTH = { isLoggedIn: nextIsLoggedIn };
-  window.dispatchEvent(
-    new CustomEvent(AUTH_MODE_EVENT, {
-      detail: { isLoggedIn: nextIsLoggedIn },
-    }),
-  );
+function navigateToLogin() {
+  if (window.thinkarooRouter?.setRoute) {
+    window.thinkarooRouter.setRoute("#/login");
+    return;
+  }
+  window.location.hash = "#/login";
 }
 
 function setAuthUi(session) {

@@ -12,14 +12,12 @@ const landingPanel = document.getElementById("screen-landing");
 const menuPanel = document.getElementById("screen-settings-board");
 const modeSelectionPanel = document.getElementById("screen-select");
 const speedQuizMenuPanel = document.getElementById("screen-settings-speedquiz");
-const modeBoardButton = document.getElementById("mode-board");
-const modeSpeedQuizButton = document.getElementById("mode-speedquiz");
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
 const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
 const gamePanel = document.getElementById("screen-game-board");
 const loginPanel = document.getElementById("screen-login");
-const landingStartButton = document.getElementById("landing-start");
+const speedQuizStartButton = document.getElementById("start-speedquiz-game");
 const board = document.getElementById("board");
 const rollButton = document.getElementById("roll");
 const diceOverlay = document.getElementById("dice-overlay");
@@ -3105,18 +3103,21 @@ if (!window.location.hash) {
 updateMainMenuRequiredSelectionState();
 
 startButton.addEventListener("click", handleStartGame);
-modeBoardButton?.addEventListener("click", () => {
-  setRoute("#/settings-board");
-  updateMainMenuRequiredSelectionState();
+speedQuizStartButton?.addEventListener("click", () => {
+  setRoute("#/game-speedquiz");
 });
-modeSpeedQuizButton?.addEventListener("click", () => {
-  setRoute("#/settings-speedquiz");
+document.addEventListener("click", (event) => {
+  const routeButton = event.target.closest("[data-route]");
+  if (!routeButton) return;
+  const targetRoute = routeButton.getAttribute("data-route");
+  if (!targetRoute) return;
+  setRoute(targetRoute);
+  if (targetRoute === "#/settings-board") {
+    updateMainMenuRequiredSelectionState();
+  }
 });
 speedQuizDatasetSelect?.addEventListener("change", (event) => {
   state.speedQuiz.selectedDataset = event.target.value;
-});
-landingStartButton?.addEventListener("click", () => {
-  setRoute("#/select");
 });
 window.addEventListener("hashchange", () => {
   setRoute(window.location.hash);
