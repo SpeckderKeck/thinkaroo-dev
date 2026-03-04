@@ -431,6 +431,7 @@ const CUSTOM_DATASET_KEY_PREFIX = "custom:";
 const STORAGE_DATASET_KEY_PREFIX = "storage:";
 const REMOVED_PRESET_DATASET_KEYS = new Set(["umformen"]);
 const REMOVED_CUSTOM_DATASET_LABELS = new Set(["umformen"]);
+const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
 const fullscreenCardOverlay = createFullscreenCardOverlay({
   root: turnWord,
@@ -484,6 +485,51 @@ const state = {
   datasetStorageMode: "local",
   customDatasetsApiUrl: "",
 };
+
+let isLoggedIn = Boolean(window.THINKAROO_AUTH?.isLoggedIn);
+
+function redirectToLogin() {
+  const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  const loginUrl = new URL("./auth.html", window.location.href);
+  loginUrl.searchParams.set("mode", "login");
+  loginUrl.searchParams.set("returnTo", returnTo);
+  window.location.href = loginUrl.toString();
+}
+
+function requireFullAccess() {
+  if (isLoggedIn) {
+    return true;
+  }
+  redirectToLogin();
+  return false;
+}
+
+function clearRestrictedDatasetSelections() {
+  const allowedDatasetKeys = readSelectedDatasetKeys().filter((key) => {
+    const isCustomDataset = Boolean(fromCustomDatasetKey(key));
+    const isStorageDataset = Boolean(fromStorageDatasetKey(key));
+    return !isCustomDataset && !isStorageDataset;
+  });
+  if (allowedDatasetKeys.length > 0) {
+    state.selectedDatasets = allowedDatasetKeys.slice(0, MAX_DATASET_SELECTIONS);
+    return;
+  }
+  state.selectedDatasets = [DEFAULT_DATASET_KEY];
+}
+
+function applyDatasetAuthMode() {
+  if (!isLoggedIn) {
+    state.storageDatasets = {};
+    state.uploadedCsvCards = [];
+    clearRestrictedDatasetSelections();
+    closeCardEditor();
+  }
+
+  refreshDatasetSelections();
+  refreshCsvDatasetOverwriteSelect("");
+  updateCsvDatasetActionState();
+  updateMainMenuRequiredSelectionState();
+}
 
 const TEAM_ICONS = [
   "🐯",
@@ -797,6 +843,9 @@ function getAllDatasetEntries() {
       cards: dataset.cards,
       isCustom: false,
     }));
+  if (!isLoggedIn) {
+    return presetEntries;
+  }
   const customEntries = Object.values(state.customDatasets)
     .map((dataset) => normalizeStoredCustomDataset(dataset))
     .filter(Boolean)
@@ -1911,7 +1960,7 @@ function removeEditorRow(rowId) {
 }
 
 function openCardEditor() {
-  if (!cardEditorModal) return;
+  if (!requireFullAccess() || !cardEditorModal) return;
   renderCardEditorRows(cloneCards(state.cards));
   updateEditorValidationState();
   refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
@@ -2060,6 +2109,7 @@ function createCustomDatasetId() {
 }
 
 async function saveEditorAsNewDataset() {
+  if (!requireFullAccess()) return;
   const { cards, errors } = updateEditorValidationState();
   if (errors.length > 0) {
     csvStatus.textContent = "Editor enthält ungültige Zeilen.";
@@ -2089,6 +2139,7 @@ async function saveEditorAsNewDataset() {
 }
 
 async function overwriteSelectedCustomDataset() {
+  if (!requireFullAccess()) return;
   const { cards, errors } = updateEditorValidationState();
   if (errors.length > 0) {
     csvStatus.textContent = "Editor enthält ungültige Zeilen.";
@@ -2120,6 +2171,7 @@ async function overwriteSelectedCustomDataset() {
 }
 
 async function deleteSelectedCustomDataset() {
+  if (!requireFullAccess()) return;
   const selectedId = cardEditorDatasetSelect?.value ?? "";
   const dataset = state.customDatasets[selectedId];
   if (!dataset) {
@@ -2566,6 +2618,10 @@ function parseStorageCsvToCards(csvText) {
 
 
 async function refreshPublicCsvList() {
+  if (!isLoggedIn) {
+    setStorageSelectOptions([]);
+    return;
+  }
   if (csvStatus) {
     csvStatus.textContent = "Lade Dateiliste ...";
   }
@@ -2596,6 +2652,7 @@ async function refreshPublicCsvList() {
 }
 
 async function loadStorageDataset(objectName) {
+  if (!requireFullAccess()) return;
   const selectedName = String(objectName || "").trim();
   if (!selectedName) {
     return;
@@ -2653,6 +2710,7 @@ async function loadStorageDataset(objectName) {
 }
 
 async function handleCsvUpload() {
+  if (!requireFullAccess()) return;
   const file = csvUpload?.files?.[0];
   if (!file) {
     if (csvStatus) csvStatus.textContent = "Bitte zuerst eine CSV-Datei auswählen.";
@@ -2713,6 +2771,7 @@ async function handleCsvUpload() {
 }
 
 async function saveUploadedCsvAsNewDataset() {
+  if (!requireFullAccess()) return;
   const label = csvDatasetNameInput?.value?.trim() || "";
   const result = await saveCardsAsCustomDataset({ cards: state.uploadedCsvCards, label });
   if (!result.ok) {
@@ -2727,6 +2786,7 @@ async function saveUploadedCsvAsNewDataset() {
 }
 
 async function overwriteDatasetWithUploadedCsv() {
+  if (!requireFullAccess()) return;
   const selectedId = csvOverwriteSelect?.value ?? "";
   const existingDataset = state.customDatasets[selectedId];
   if (!existingDataset) {
@@ -2956,7 +3016,11 @@ function handleWinnerRestart() {
 
 async function setup() {
   state.customDatasetsApiUrl = resolveCustomDatasetsApiUrl();
-  state.customDatasets = await loadCustomDatasets();
+  if (isLoggedIn) {
+    state.customDatasets = await loadCustomDatasets();
+  } else {
+    state.customDatasets = {};
+  }
   menuCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   gameCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   syncTeamCountControls(teamCountInput.value);
@@ -2974,7 +3038,11 @@ async function setup() {
   refreshCsvDatasetOverwriteSelect("");
   applySelectedDatasets();
   updateCsvDatasetActionState();
-  refreshPublicCsvList();
+  if (isLoggedIn) {
+    refreshPublicCsvList();
+  } else {
+    setStorageSelectOptions([]);
+  }
 }
 
 window.addEventListener("resize", () => {
@@ -3207,6 +3275,16 @@ document.addEventListener("fullscreenchange", () => {
   updateFullscreenState();
   renderBoardPath();
   positionTokens();
+});
+
+window.addEventListener(AUTH_MODE_EVENT, async (event) => {
+  const nextIsLoggedIn = Boolean(event.detail?.isLoggedIn);
+  if (nextIsLoggedIn === isLoggedIn) return;
+  isLoggedIn = nextIsLoggedIn;
+  if (isLoggedIn && Object.keys(state.customDatasets).length === 0) {
+    state.customDatasets = await loadCustomDatasets();
+  }
+  applyDatasetAuthMode();
 });
 
 setup();

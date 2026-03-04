@@ -243,27 +243,28 @@
               <div class="field">
                 Kartensatz auswählen
                 <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
-                <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden>+</button>
+                <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
               </div>
-              <div class="field">
+              <div class="field" data-auth="full">
                 Kartenset aus Storage laden
                 <select id="storage-dataset-select" aria-label="Kartenset aus Storage laden">
                   <option value="">Lade Kartensets ...</option>
                 </select>
               </div>
-              <label class="field upload">
+              <label class="field upload" data-auth="full">
                 CSV Upload
                 <input id="csv-upload" type="file" accept=".csv,text/csv" />
               </label>
-              <div class="field">
+              <div class="field" data-auth="full">
                 <div class="dataset-upload-actions">
                   <button id="csv-upload-button" class="ghost" type="button">Hochladen</button>
                   <button id="csv-refresh-list" class="ghost" type="button">Dateiliste aktualisieren</button>
                 </div>
               </div>
-              <button id="open-card-editor" class="ghost" type="button">Karten bearbeiten</button>
-              <p class="hint" id="csv-status" hidden>Lade Dateiliste ...</p>
-              <div class="tooltip" id="csv-tooltip" role="dialog" aria-hidden="true">
+              <button id="open-card-editor" class="ghost" type="button" data-auth="full">Karten bearbeiten</button>
+              <p class="hint" data-auth="lite">Melde dich an, um eigene Kartensets zu laden oder zu verwalten.</p>
+              <p class="hint" id="csv-status" hidden data-auth="full">Lade Dateiliste ...</p>
+              <div class="tooltip" id="csv-tooltip" role="dialog" aria-hidden="true" data-auth="full">
                 <h3>CSV-Upload Hinweise</h3>
                 <ul>
                   <li>Nur Dateien mit Endung .csv und maximal 1 MB werden akzeptiert.</li>
@@ -446,7 +447,7 @@
     </div>
   </div>
 
-  <div id="card-editor-modal" class="card-editor-modal hidden" role="dialog" aria-modal="true" aria-label="Karteneditor">
+  <div id="card-editor-modal" class="card-editor-modal hidden" role="dialog" aria-modal="true" aria-label="Karteneditor" data-auth="full">
     <div class="card-editor-card">
       <div class="card-editor-header">
         <h2>Karteneditor</h2>
