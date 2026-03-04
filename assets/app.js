@@ -3,12 +3,14 @@ import { supabase } from "./supabaseClient.js";
 
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
-const loggedOutContainer = document.querySelector("#auth-left-logged-out");
-const loggedInContainer = document.querySelector("#auth-left-logged-in");
 const loginButton = document.querySelector("#auth-login");
 const logoutButton = document.querySelector("#auth-logout");
-const loggedInText = document.querySelector("#auth-user");
 const authStatus = document.querySelector("#auth-status");
+
+function dispatchAuthMode(isLoggedIn) {
+  window.THINKAROO_AUTH = { isLoggedIn };
+  window.dispatchEvent(new CustomEvent(AUTH_MODE_EVENT, { detail: { isLoggedIn } }));
+}
 
 function navigateToLogin() {
   if (window.thinkarooRouter?.setRoute) {
@@ -19,21 +21,18 @@ function navigateToLogin() {
 }
 
 function setAuthUi(session) {
-  isLoggedIn = Boolean(session?.user?.email);
-  applyAuthMode(isLoggedIn);
+  const isLoggedIn = Boolean(session?.user?.email);
   dispatchAuthMode(isLoggedIn);
 
   if (isLoggedIn) {
-    loggedOutContainer.hidden = true;
-    loggedInContainer.hidden = false;
-    loggedInText.textContent = `Eingeloggt als ${session.user.email}`;
-    authStatus.textContent = "Du bist eingeloggt.";
+    loginButton.hidden = true;
+    logoutButton.hidden = false;
+    authStatus.textContent = `Eingeloggt als ${session.user.email}`;
     return;
   }
 
-  loggedOutContainer.hidden = false;
-  loggedInContainer.hidden = true;
-  loggedInText.textContent = "";
+  loginButton.hidden = false;
+  logoutButton.hidden = true;
   authStatus.textContent = "Du bist nicht eingeloggt.";
 }
 
@@ -42,7 +41,6 @@ loginButton?.addEventListener("click", navigateToLogin);
 logoutButton?.addEventListener("click", async () => {
   try {
     await logout();
-    applyAuthMode(false);
     dispatchAuthMode(false);
   } catch (error) {
     console.error(error);

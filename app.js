@@ -297,6 +297,11 @@ function setRoute(hash) {
     setPanelState(panel, routeHash === nextHash);
   });
   document.body.classList.toggle("game-active", nextHash === "#/game-board" || nextHash === "#/game-speedquiz");
+  const settingsBackLink = document.getElementById("settings-back-topbar");
+  const showSettingsBackLink = nextHash === "#/settings-board" || nextHash === "#/settings-speedquiz";
+  if (settingsBackLink) {
+    settingsBackLink.hidden = !showSettingsBackLink;
+  }
 }
 
 function showMenuPanel() {
