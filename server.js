@@ -36,7 +36,7 @@ const MIME_TYPES = {
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Owner-Id, X-User-Id');
 }
 
 function sendJson(res, status, payload) {
@@ -220,19 +220,46 @@ function sanitizeCsvFileName(name) {
   return sanitized.toLowerCase().endsWith('.csv') ? sanitized : `${sanitized}.csv`;
 }
 
-function toCsvFilePath(fileName) {
-  return path.join(CSV_STORE_DIR, fileName);
+function sanitizeOwnerId(ownerId) {
+  const raw = String(ownerId ?? '').trim();
+  if (!raw) return '';
+  const sanitized = raw.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!sanitized || sanitized !== raw) return '';
+  return sanitized;
 }
 
-async function listStoredCsvFiles() {
+function getOwnerIdFromRequest(req) {
+  const ownerHeader = req.headers['x-owner-id'] ?? req.headers['x-user-id'] ?? '';
+  const ownerId = Array.isArray(ownerHeader) ? ownerHeader[0] : ownerHeader;
+  return sanitizeOwnerId(ownerId);
+}
+
+function toOwnerCsvStoreDir(ownerId) {
+  return path.join(CSV_STORE_DIR, ownerId);
+}
+
+function toCsvFilePath(ownerId, fileName) {
+  return path.join(toOwnerCsvStoreDir(ownerId), fileName);
+}
+
+async function listStoredCsvFiles(ownerId) {
   await ensureStorageInitialized();
-  const entries = await fs.readdir(CSV_STORE_DIR, { withFileTypes: true });
+  const ownerDir = toOwnerCsvStoreDir(ownerId);
+  let entries = [];
+  try {
+    entries = await fs.readdir(ownerDir, { withFileTypes: true });
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      return [];
+    }
+    throw error;
+  }
   const csvFiles = [];
 
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     if (!entry.name.toLowerCase().endsWith('.csv')) continue;
-    const stat = await fs.stat(toCsvFilePath(entry.name));
+    const stat = await fs.stat(toCsvFilePath(ownerId, entry.name));
     csvFiles.push({
       name: entry.name,
       size: stat.size,
@@ -252,13 +279,17 @@ async function handleCsvFilesApi(req, res, url) {
   }
 
   await ensureStorageInitialized();
+  const ownerId = getOwnerIdFromRequest(req);
+  if (!ownerId) {
+    return sendJson(res, 401, { error: 'unauthorized' });
+  }
 
   const listPathMatch = url.pathname === '/csv-files';
   const itemPathMatch = url.pathname.match(/^\/csv-files\/([^/]+)$/);
   const fileNameFromPath = itemPathMatch ? decodeURIComponent(itemPathMatch[1]) : '';
 
   if (req.method === 'GET' && listPathMatch) {
-    const files = await listStoredCsvFiles();
+    const files = await listStoredCsvFiles(ownerId);
     return sendJson(res, 200, files);
   }
 
@@ -268,7 +299,7 @@ async function handleCsvFilesApi(req, res, url) {
       return sendJson(res, 400, { error: 'invalid_filename' });
     }
 
-    const csvPath = toCsvFilePath(safeName);
+    const csvPath = toCsvFilePath(ownerId, safeName);
     try {
       const content = await fs.readFile(csvPath, 'utf8');
       setCorsHeaders(res);
@@ -306,13 +337,32 @@ async function handleCsvFilesApi(req, res, url) {
       return sendJson(res, 413, { error: 'file_too_large', maxSizeBytes: CSV_MAX_SIZE_BYTES });
     }
 
-    await fs.writeFile(toCsvFilePath(safeName), content, 'utf8');
-    const stat = await fs.stat(toCsvFilePath(safeName));
+    await fs.mkdir(toOwnerCsvStoreDir(ownerId), { recursive: true });
+    await fs.writeFile(toCsvFilePath(ownerId, safeName), content, 'utf8');
+    const stat = await fs.stat(toCsvFilePath(ownerId, safeName));
     return sendJson(res, 201, {
       name: safeName,
       size: stat.size,
       updatedAt: stat.mtime.toISOString(),
     });
+  }
+
+  if (req.method === 'DELETE' && itemPathMatch) {
+    const safeName = sanitizeCsvFileName(fileNameFromPath);
+    if (!safeName || safeName !== fileNameFromPath) {
+      return sendJson(res, 400, { error: 'invalid_filename' });
+    }
+
+    const csvPath = toCsvFilePath(ownerId, safeName);
+    try {
+      await fs.rm(csvPath, { force: false });
+      return sendJson(res, 200, { ok: true, name: safeName });
+    } catch (error) {
+      if (error && error.code === 'ENOENT') {
+        return sendJson(res, 404, { error: 'not_found' });
+      }
+      throw error;
+    }
   }
 
   return sendJson(res, 405, { error: 'method_not_allowed' });
