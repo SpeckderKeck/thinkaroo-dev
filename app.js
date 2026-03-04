@@ -303,6 +303,7 @@ const CATEGORY_CONFIG = {
   Zeichnen: { id: "draw", iconPath: "zeichnen_1.svg", fallbackIcon: "✏️" },
   Pantomime: { id: "pantomime", iconPath: "pantomime_1.svg", fallbackIcon: "🎭" },
   Quizfrage: { id: "quiz", iconPath: "quiz.svg", fallbackIcon: "?" },
+  "Single-Choice": { id: "singlechoice", iconPath: "singlechoice.svg", fallbackIcon: "☑️" },
 };
 
 const theme = globalThis.THINKAROO_THEME;
@@ -326,14 +327,26 @@ const CATEGORY_VISUALS = {
     color: getCardColor("Quizfrage"),
     iconColor: getReadableTextColor(getCardColor("Quizfrage")),
   },
+  "Single-Choice": {
+    color: getCardColor("Single-Choice"),
+    iconColor: getReadableTextColor(getCardColor("Single-Choice")),
+  },
 };
 
 const START_ICON_PATH = "start.svg";
 const GOAL_ICON_PATH = "ziel.svg";
-const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage"];
+const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Single-Choice"];
 
-function isQuizCardCategory(category) {
-  return category === "Quizfrage";
+function isAnswerCardCategory(category) {
+  return category === "Quizfrage" || category === "Single-Choice";
+}
+
+function normalizeCategoryInput(value) {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  if (normalized === "singlechoice") {
+    return "Single-Choice";
+  }
+  return String(value ?? "").trim();
 }
 
 function getCategoryIconPath(category) {
@@ -416,9 +429,10 @@ const state = {
     Zeichnen: 60,
     Pantomime: 60,
     Quizfrage: 60,
+    "Single-Choice": 60,
   },
   swapPenalty: 10,
-  categories: ["Erklären", "Zeichnen", "Pantomime", "Quizfrage"],
+  categories: ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Single-Choice"],
   cards: [...DEFAULT_DATA],
   history: [],
   boardCategories: [],
@@ -543,7 +557,10 @@ function isValidNormalizedCard(card) {
   if (!card || !ALLOWED_CARD_CATEGORIES.includes(card.category) || !card.term) {
     return false;
   }
-  if (isQuizCardCategory(card.category)) {
+  if (isAnswerCardCategory(card.category)) {
+    if (card.category === "Single-Choice") {
+      return Boolean(card.answer) && Array.isArray(card.wrongAnswers) && card.wrongAnswers.length >= 3;
+    }
     return Boolean(card.answer);
   }
   return true;
@@ -1271,7 +1288,7 @@ function showPenaltyToast(penalty) {
 function getCardByCategory(category) {
   const pool = state.cards.filter((card) => {
     if (category === "Quizfrage") {
-      return isQuizCardCategory(card.category);
+      return card.category === "Quizfrage";
     }
     return card.category === category;
   });
@@ -1499,19 +1516,21 @@ function handleStartGame() {
 }
 
 function normalizeCardInput(rawRow = {}) {
-  const category = String(rawRow.category ?? "").trim();
+  const category = normalizeCategoryInput(rawRow.category);
   const term = String(rawRow.term ?? "").trim();
   const tabooCandidates = Array.isArray(rawRow.taboo)
     ? rawRow.taboo
     : [rawRow.answer, rawRow.tabu2, rawRow.tabu3, rawRow.tabu4];
   const normalizedTaboo = tabooCandidates.map((entry) => String(entry ?? "").trim()).filter(Boolean);
 
-  if (isQuizCardCategory(category)) {
+  if (isAnswerCardCategory(category)) {
     const answer = String(rawRow.answer ?? normalizedTaboo[0] ?? "").trim();
+    const wrongAnswers = normalizedTaboo.slice(1, 4);
     return {
       category,
       term,
       answer,
+      wrongAnswers,
       taboo: [],
     };
   }
@@ -1545,6 +1564,7 @@ function cloneCards(cards) {
   return cards.map((card) => ({
     ...card,
     taboo: Array.isArray(card.taboo) ? [...card.taboo] : [],
+    wrongAnswers: Array.isArray(card.wrongAnswers) ? [...card.wrongAnswers] : [],
   }));
 }
 
@@ -1575,10 +1595,13 @@ function validateEditorCards(rows) {
       rowErrors.push("Begriff/Frage ist erforderlich");
     }
 
-    if (isQuizCardCategory(normalized.category) && !normalized.answer) {
-      rowErrors.push("Antwort ist für Quizfrage erforderlich");
+    if (isAnswerCardCategory(normalized.category) && !normalized.answer) {
+      rowErrors.push("Antwort ist für Quizfrage/Single-Choice erforderlich");
     }
 
+    if (normalized.category === "Single-Choice" && (!Array.isArray(normalized.wrongAnswers) || normalized.wrongAnswers.length < 3)) {
+      rowErrors.push("Für Single-Choice sind drei falsche Antworten erforderlich");
+    }
 
     if (rowErrors.length > 0) {
       errors.push({ row: index + 1, messages: rowErrors });
@@ -1656,15 +1679,16 @@ function createEditorRow(card = {}) {
 
   const category = ALLOWED_CARD_CATEGORIES.includes(card.category) ? card.category : "Erklären";
   const taboos = Array.isArray(card.taboo) ? card.taboo : [];
-  const answerOrTabu = category === "Quizfrage" ? card.answer ?? "" : taboos[0] ?? "";
+  const wrongAnswers = Array.isArray(card.wrongAnswers) ? card.wrongAnswers : [];
+  const answerOrTabu = isAnswerCardCategory(category) ? card.answer ?? "" : taboos[0] ?? "";
 
   const columns = [
     createCategorySelect(category),
     createEditorInput("term", card.term ?? ""),
     createEditorInput("answer", answerOrTabu),
-    createEditorInput("tabu2", taboos[1] ?? ""),
-    createEditorInput("tabu3", taboos[2] ?? ""),
-    createEditorInput("tabu4", taboos[3] ?? ""),
+    createEditorInput("tabu2", category === "Single-Choice" ? wrongAnswers[0] ?? "" : taboos[1] ?? ""),
+    createEditorInput("tabu3", category === "Single-Choice" ? wrongAnswers[1] ?? "" : taboos[2] ?? ""),
+    createEditorInput("tabu4", category === "Single-Choice" ? wrongAnswers[2] ?? "" : taboos[3] ?? ""),
   ];
 
   columns.forEach((element) => {
@@ -1975,8 +1999,16 @@ function exportEditorCardsAsCsv() {
 
   const lines = cards.map((card) => {
     const taboos = Array.isArray(card.taboo) ? [...card.taboo] : [];
-    const firstTabooOrAnswer = card.category === "Quizfrage" ? card.answer ?? "" : taboos[0] ?? "";
-    const values = [card.category, card.term, firstTabooOrAnswer, taboos[1] ?? "", taboos[2] ?? "", taboos[3] ?? ""];
+    const wrongAnswers = Array.isArray(card.wrongAnswers) ? [...card.wrongAnswers] : [];
+    const firstTabooOrAnswer = isAnswerCardCategory(card.category) ? card.answer ?? "" : taboos[0] ?? "";
+    const values = [
+      card.category,
+      card.term,
+      firstTabooOrAnswer,
+      card.category === "Single-Choice" ? wrongAnswers[0] ?? "" : taboos[1] ?? "",
+      card.category === "Single-Choice" ? wrongAnswers[1] ?? "" : taboos[2] ?? "",
+      card.category === "Single-Choice" ? wrongAnswers[2] ?? "" : taboos[3] ?? "",
+    ];
     return values.map(escapeCsvValue).join(";");
   });
 
@@ -2336,7 +2368,10 @@ function parseStorageCsvToCards(csvText) {
       if (!card.term || !ALLOWED_CARD_CATEGORIES.includes(card.category)) {
         return false;
       }
-      if (card.category === "Quizfrage") {
+      if (card.category === "Single-Choice") {
+        return Boolean(card.answer) && Array.isArray(card.wrongAnswers) && card.wrongAnswers.length >= 3;
+      }
+      if (isAnswerCardCategory(card.category)) {
         return Boolean(card.answer);
       }
       if (card.category === "Erklären") {
@@ -2670,7 +2705,7 @@ function showWordCard() {
   const card = getCardByCategory(state.pendingCategory);
   state.currentCard = card;
   state.timeLimit = state.categoryTimes[state.pendingCategory] ?? 60;
-  if (state.pendingCategory === "Quizfrage") {
+  if (isAnswerCardCategory(state.pendingCategory)) {
     state.quizPhase = "question";
     if (turnContinueButton) {
       turnContinueButton.textContent = "Lösen";
@@ -2704,7 +2739,7 @@ function handleSwapCard() {
   if (state.quizPhase === "answer") return;
   const card = getCardByCategory(state.pendingCategory);
   state.currentCard = card;
-  if (state.pendingCategory === "Quizfrage") {
+  if (isAnswerCardCategory(state.pendingCategory)) {
     setQuizQuestionCard(card);
   } else {
     setWordCard(card);
@@ -2873,13 +2908,13 @@ applySettingsButton.addEventListener("click", applySettingsFromPanel);
 mainMenuButton.addEventListener("click", handleMainMenu);
 turnWordHint?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
-  if (state.pendingCategory !== "Quizfrage" || state.quizPhase !== "question") return;
+  if (!isAnswerCardCategory(state.pendingCategory) || state.quizPhase !== "question") return;
   turnContinueButton.click();
 });
 
 turnContinueButton.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
-  if (state.pendingCategory === "Quizfrage" && state.quizPhase === "question") {
+  if (isAnswerCardCategory(state.pendingCategory) && state.quizPhase === "question") {
     stopTimer();
     state.quizPhase = "answer";
     setQuizAnswerCard(state.currentCard);
@@ -2890,12 +2925,12 @@ turnContinueButton.addEventListener("click", () => {
 });
 turnCorrectButton?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
-  if (state.pendingCategory === "Quizfrage" && state.quizPhase !== "answer") return;
+  if (isAnswerCardCategory(state.pendingCategory) && state.quizPhase !== "answer") return;
   finishTurn(true);
 });
 turnWrongButton?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
-  if (state.pendingCategory === "Quizfrage" && state.quizPhase !== "answer") return;
+  if (isAnswerCardCategory(state.pendingCategory) && state.quizPhase !== "answer") return;
   finishTurn(false, false, { returnToPrevious: true });
 });
 turnSwapButton?.addEventListener("click", handleSwapCard);

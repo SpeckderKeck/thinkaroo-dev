@@ -151,6 +151,15 @@
                   <select id="time-quiz" aria-label="Zeit pro Runde für Quizfrage"></select>
                 </div>
               </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-singlechoice" value="Single-Choice" checked />
+                  Single-Choice
+                </label>
+                <div class="category-time">
+                  <select id="time-singlechoice" aria-label="Zeit pro Runde für Single-Choice"></select>
+                </div>
+              </div>
             </div>
             <label class="field">
               Strafzeit beim Tauschen
@@ -198,6 +207,7 @@
                   <li>Dateinamen werden als UUID + Originalname gespeichert, damit nichts überschrieben wird.</li>
                   <li>Alle hochgeladenen Dateien sind öffentlich sichtbar und herunterladbar.</li>
                   <li>Der Karteneditor bleibt lokal für die Bearbeitung vorhandener Kartensätze nutzbar.</li>
+                  <li>Single-Choice CSV: <code>singlechoice;Frage;richtige Antwort;falsche Antwort 1;falsche Antwort 2;falsche Antwort 3</code></li>
                 </ul>
               </div>
             </div>
@@ -273,6 +283,15 @@
                 </label>
                 <div class="category-time">
                   <select id="time-quiz-game" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-singlechoice-game" value="Single-Choice" checked />
+                  Single-Choice
+                </label>
+                <div class="category-time">
+                  <select id="time-singlechoice-game" aria-label="Zeit pro Runde für Single-Choice"></select>
                 </div>
               </div>
             </div>
