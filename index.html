@@ -11,16 +11,15 @@
   <header class="global-header">
     <div class="global-header-inner">
       <div class="auth-topbar" aria-label="Authentifizierung">
-        <div class="auth-topbar-left" id="auth-left-logged-out">
-          <button id="auth-login" type="button" class="auth-split-button">Login</button>
-          <button id="auth-register" type="button" class="auth-split-button">Registrierung</button>
+        <div class="auth-topbar-left">
+          <a href="#/menu" id="topbar-logo" class="auth-back-link">Thinkaroo</a>
         </div>
-        <div class="auth-topbar-left" id="auth-left-logged-in" hidden>
-          <p id="auth-user"></p>
-          <button id="auth-logout" type="button">Logout</button>
-        </div>
-        <div class="auth-topbar-right" id="auth-status-wrapper">
-          <span id="auth-status">Du bist nicht eingeloggt.</span>
+        <div class="auth-topbar-right">
+          <button id="topbar-login" type="button" class="auth-split-button">Login</button>
+          <div id="topbar-user" hidden>
+            <span id="topbar-email"></span>
+            <button id="topbar-logout" type="button">Logout</button>
+          </div>
         </div>
       </div>
       <button
@@ -62,6 +61,7 @@
   <div id="app-root" class="app">
 
     <main>
+      <section id="screen-menu" aria-label="Menü Screen">
       <section id="mode-selection" class="panel" aria-label="Modus auswählen" aria-hidden="true" hidden>
         <div class="mode-selection">
           <div class="mode-selection__options" role="group" aria-label="Spielmodi">
@@ -256,10 +256,14 @@
           </div>
         </div>
         <footer class="menu-footer">
+          <button id="manage-cta" class="ghost" type="button">Eigene Kartensets wählen</button>
+          <p id="manage-cta-hint" class="hint">Bitte anmelden</p>
           <button id="start-game" class="primary menu-start-button">Spiel starten</button>
         </footer>
       </section>
+      </section>
 
+      <section id="screen-game" aria-label="Spiel Screen" hidden>
       <section id="game" class="panel" aria-label="Spielfeld" aria-hidden="true" hidden>
         <div class="game-top">
           <div class="board" id="board" aria-hidden="true"></div>
@@ -365,6 +369,19 @@
             <button id="apply-settings" class="primary">Einstellungen speichern</button>
           </div>
         </div>
+      </section>
+      </section>
+
+      <section id="screen-manage" aria-label="Verwalten Screen" hidden>
+        <section class="panel panel--active" aria-hidden="false">
+          <div class="panel-grid">
+            <div class="card">
+              <h2>Eigene Kartensets</h2>
+              <p>Kartensets verwalten (Upload/Storage folgt).</p>
+              <button id="manage-back-menu" class="ghost" type="button">Zurück zum Menü</button>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
   </div>
@@ -491,6 +508,6 @@
   <script src="landing-overlay.js"></script>
   <script src="src/theme/tokens.js"></script>
   <script src="app.js"></script>
-  <script type="module" src="./assets/app.js"></script>
+  <script type="module" src="./assets/appShell.js"></script>
 </body>
 </html>
