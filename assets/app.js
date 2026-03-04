@@ -3,9 +3,9 @@ import { initAuthState } from "./authState.js";
 
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
-const authActionButton = document.querySelector("#auth-action");
+const loginActionButton = document.querySelector("#auth-login-action");
+const logoutActionButton = document.querySelector("#auth-logout-action");
 const authStatus = document.querySelector("#auth-status");
-const authActionIcon = authActionButton?.querySelector("img");
 
 function dispatchAuthMode(isLoggedIn) {
   window.THINKAROO_AUTH = { isLoggedIn };
@@ -25,33 +25,22 @@ function setAuthUi(session) {
   dispatchAuthMode(isLoggedIn);
 
   if (isLoggedIn) {
-    authActionButton?.classList.remove("auth-icon-button--logged-out");
-    authActionButton?.classList.add("auth-icon-button--logged-in");
-    authActionButton?.setAttribute("aria-label", "Logout");
-    authActionButton?.setAttribute("title", "Logout");
-    authActionIcon?.setAttribute("src", "./logout.svg");
-    authActionIcon?.setAttribute("alt", "Logout");
+    loginActionButton?.setAttribute("hidden", "");
+    logoutActionButton?.removeAttribute("hidden");
     authStatus.textContent = `Vollmodus aktiv · Eingeloggt als ${session.user.email}`;
     return;
   }
 
-  authActionButton?.classList.add("auth-icon-button--logged-out");
-  authActionButton?.classList.remove("auth-icon-button--logged-in");
-  authActionButton?.setAttribute("aria-label", "Login öffnen");
-  authActionButton?.setAttribute("title", "Login");
-  authActionIcon?.setAttribute("src", "./login.svg");
-  authActionIcon?.setAttribute("alt", "Login");
+  logoutActionButton?.setAttribute("hidden", "");
+  loginActionButton?.removeAttribute("hidden");
   authStatus.textContent = "Lite-Modus aktiv · Du bist nicht eingeloggt.";
 }
 
-authActionButton?.addEventListener("click", async () => {
-  const isLoggedIn = Boolean(window.THINKAROO_AUTH?.isLoggedIn);
+loginActionButton?.addEventListener("click", () => {
+  navigateToLogin();
+});
 
-  if (!isLoggedIn) {
-    navigateToLogin();
-    return;
-  }
-
+logoutActionButton?.addEventListener("click", async () => {
   try {
     await logout();
     dispatchAuthMode(false);
