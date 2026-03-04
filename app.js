@@ -3319,8 +3319,16 @@ document.addEventListener("keydown", (event) => {
 });
 rollButton.addEventListener("click", handleRoll);
 undoButton.addEventListener("click", handleUndo);
-csvUploadButton?.addEventListener("click", handleCsvUpload);
-csvRefreshListButton?.addEventListener("click", refreshPublicCsvList);
+csvUploadButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  handleCsvUpload();
+});
+csvRefreshListButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  refreshPublicCsvList();
+});
 storageDatasetSelect?.addEventListener("change", (event) => {
   loadStorageDataset(event.target.value);
   updateMainMenuRequiredSelectionState();
