@@ -3,10 +3,15 @@
     Zeichnen: "#6B4E8A",
     Erklären: "#4F86A6",
     Quizfrage: "#E3B23C",
+    Vokabel: "#8FAF8F",
     "Single-Choice": "#D77FA1",
     Pantomime: "#C76A2A",
     Start: "#3F6B3A",
     Ziel: "#3F6B3A",
+  };
+
+  const cardCategoryBorderColors = {
+    Vokabel: "#6F8F6F",
   };
 
   const tokens = {
@@ -44,6 +49,10 @@
     return cardCategoryColors[category] ?? tokens.surface;
   }
 
+  function getCardBorderColor(category) {
+    return cardCategoryBorderColors[category] ?? tokens.border;
+  }
+
   function getReadableTextColor(bgColor) {
     if (!bgColor || typeof bgColor !== "string") {
       return tokens.textPrimary;
@@ -59,7 +68,7 @@
     return luminance > 0.58 ? tokens.textPrimary : tokens.textOnDark;
   }
 
-  const api = { tokens, cardCategoryColors, getCardColor, getReadableTextColor };
+  const api = { tokens, cardCategoryColors, cardCategoryBorderColors, getCardColor, getCardBorderColor, getReadableTextColor };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
