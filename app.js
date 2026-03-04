@@ -8,14 +8,18 @@ const speedQuizTeamCountDecrease = document.getElementById("speedquiz-team-count
 const speedQuizTeamCountIncrease = document.getElementById("speedquiz-team-count-increase");
 const speedQuizTeamListContainer = document.getElementById("speedquiz-team-list");
 const startButton = document.getElementById("start-game");
-const menuPanel = document.getElementById("menu");
-const modeSelectionPanel = document.getElementById("mode-selection");
-const speedQuizMenuPanel = document.getElementById("speedquiz-menu");
+const landingPanel = document.getElementById("screen-landing");
+const menuPanel = document.getElementById("screen-settings-board");
+const modeSelectionPanel = document.getElementById("screen-select");
+const speedQuizMenuPanel = document.getElementById("screen-settings-speedquiz");
 const modeBoardButton = document.getElementById("mode-board");
 const modeSpeedQuizButton = document.getElementById("mode-speedquiz");
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
-const gamePanel = document.getElementById("game");
+const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
+const gamePanel = document.getElementById("screen-game-board");
+const loginPanel = document.getElementById("screen-login");
+const landingStartButton = document.getElementById("landing-start");
 const board = document.getElementById("board");
 const rollButton = document.getElementById("roll");
 const diceOverlay = document.getElementById("dice-overlay");
@@ -271,36 +275,46 @@ function setPanelState(panel, isActive) {
   panel.setAttribute("aria-hidden", String(!isActive));
 }
 
+const screenPanels = {
+  "#/landing": landingPanel,
+  "#/select": modeSelectionPanel,
+  "#/settings-speedquiz": speedQuizMenuPanel,
+  "#/settings-board": menuPanel,
+  "#/game-speedquiz": speedQuizGamePanel,
+  "#/game-board": gamePanel,
+  "#/login": loginPanel,
+};
+
+function normalizeRouteHash(hash) {
+  return Object.hasOwn(screenPanels, hash) ? hash : "#/landing";
+}
+
+function setRoute(hash) {
+  const nextHash = normalizeRouteHash(hash);
+  if (window.location.hash !== nextHash) {
+    window.location.hash = nextHash;
+    return;
+  }
+  Object.entries(screenPanels).forEach(([routeHash, panel]) => {
+    setPanelState(panel, routeHash === nextHash);
+  });
+  document.body.classList.toggle("game-active", nextHash === "#/game-board" || nextHash === "#/game-speedquiz");
+}
+
 function showMenuPanel() {
-  setPanelState(modeSelectionPanel, false);
-  setPanelState(speedQuizMenuPanel, false);
-  setPanelState(menuPanel, true);
-  setPanelState(gamePanel, false);
-  document.body.classList.remove("game-active");
+  setRoute("#/settings-board");
 }
 
 function showModeSelectionPanel() {
-  setPanelState(modeSelectionPanel, true);
-  setPanelState(speedQuizMenuPanel, false);
-  setPanelState(menuPanel, false);
-  setPanelState(gamePanel, false);
-  document.body.classList.remove("game-active");
+  setRoute("#/select");
 }
 
 function showSpeedQuizMenuPanel() {
-  setPanelState(modeSelectionPanel, false);
-  setPanelState(speedQuizMenuPanel, true);
-  setPanelState(menuPanel, false);
-  setPanelState(gamePanel, false);
-  document.body.classList.remove("game-active");
+  setRoute("#/settings-speedquiz");
 }
 
 function showGamePanel() {
-  setPanelState(modeSelectionPanel, false);
-  setPanelState(speedQuizMenuPanel, false);
-  setPanelState(menuPanel, false);
-  setPanelState(gamePanel, true);
-  document.body.classList.add("game-active");
+  setRoute("#/game-board");
 }
 
 const CATEGORY_CONFIG = {
@@ -2780,7 +2794,7 @@ function handleCloseSettings() {
 function handleMainMenu() {
   stopTimer();
   hideTurnOverlay();
-  showMenuPanel();
+  setRoute("#/settings-board");
   updateMainMenuRequiredSelectionState();
 }
 
@@ -3015,22 +3029,29 @@ boardSizeSelect?.addEventListener("change", () => {
   applyBoardSize(selectedBoardSize);
 });
 
-showMenuPanel();
+if (!window.location.hash) {
+  setRoute("#/landing");
+} else {
+  setRoute(window.location.hash);
+}
 updateMainMenuRequiredSelectionState();
 
 startButton.addEventListener("click", handleStartGame);
 modeBoardButton?.addEventListener("click", () => {
-  showMenuPanel();
+  setRoute("#/settings-board");
   updateMainMenuRequiredSelectionState();
 });
 modeSpeedQuizButton?.addEventListener("click", () => {
-  showSpeedQuizMenuPanel();
+  setRoute("#/settings-speedquiz");
 });
 speedQuizDatasetSelect?.addEventListener("change", (event) => {
   state.speedQuiz.selectedDataset = event.target.value;
 });
-document.addEventListener("landing:start", () => {
-  showModeSelectionPanel();
+landingStartButton?.addEventListener("click", () => {
+  setRoute("#/select");
+});
+window.addEventListener("hashchange", () => {
+  setRoute(window.location.hash);
 });
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
@@ -3188,3 +3209,5 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 setup();
+
+window.thinkarooRouter = { setRoute };
