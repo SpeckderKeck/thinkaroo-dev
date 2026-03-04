@@ -2604,8 +2604,8 @@ function renderSpeedQuizCategoryOptions() {
   });
 }
 
-const CSV_FILES_API_ENDPOINT = "/csv-files";
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
+const USER_CSV_BUCKET = "user-csv";
 
 
 function setStorageSelectOptions(files = []) {
@@ -2661,6 +2661,28 @@ function sanitizeUploadFileName(name) {
   );
 }
 
+function getCurrentAuthUid() {
+  return String(authSession?.user?.id ?? window.__authState?.session?.user?.id ?? "").trim();
+}
+
+function getUserCsvStoragePath(fileName) {
+  const uid = getCurrentAuthUid();
+  if (!uid) {
+    throw createAuthApiError("Kein gültiger Benutzer gefunden. Bitte melde dich erneut an.", {
+      shouldRedirect: true,
+    });
+  }
+  return `${uid}/${sanitizeUploadFileName(fileName)}`;
+}
+
+function getSupabaseStorageOrThrow() {
+  const storageApi = window.supabase?.storage;
+  if (!storageApi?.from) {
+    throw new Error("Supabase Storage ist derzeit nicht verfügbar.");
+  }
+  return storageApi;
+}
+
 function isValidCsvUpload(file) {
   const lowerName = file?.name?.toLowerCase?.() ?? "";
   const hasCsvExtension = lowerName.endsWith(".csv");
@@ -2700,19 +2722,19 @@ async function refreshPublicCsvList() {
   }
 
   try {
-    const response = await fetch(CSV_FILES_API_ENDPOINT, {
-      cache: "no-store",
-      headers: await getAuthHeaders(),
-    });
-    ensureAuthorizedResponse(response, "Laden der Storage-Dateiliste");
-    if (!response.ok) {
-      throw new Error(`Dateiliste konnte nicht geladen werden (HTTP ${response.status}).`);
+    const storageApi = getSupabaseStorageOrThrow();
+    const userPrefix = getCurrentAuthUid();
+    const { data, error } = await storageApi
+      .from(USER_CSV_BUCKET)
+      .list(userPrefix, { sortBy: { column: "updated_at", order: "desc" } });
+
+    if (error) {
+      throw new Error(error.message || "Dateiliste konnte nicht geladen werden.");
     }
-    const data = await response.json();
 
     const sortedFiles = [...(data || [])]
       .filter((item) => isSelectableStorageDataset(item))
-      .sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      .sort((a, b) => new Date(b.updated_at || 0) - new Date(a.updated_at || 0));
 
     setStorageSelectOptions(sortedFiles);
     if (csvStatus) {
@@ -2748,16 +2770,14 @@ async function loadStorageDataset(objectName) {
       csvStatus.textContent = `Lade Kartenset aus Storage: ${datasetLabel} ...`;
     }
 
-    const response = await fetch(`${CSV_FILES_API_ENDPOINT}/${encodeURIComponent(selectedName)}`, {
-      cache: "no-store",
-      headers: await getAuthHeaders(),
-    });
-    ensureAuthorizedResponse(response, "Laden eines Storage-Kartensets");
-    if (!response.ok) {
-      throw new Error(`CSV-Abruf fehlgeschlagen (HTTP ${response.status}).`);
+    const storageApi = getSupabaseStorageOrThrow();
+    const storagePath = getUserCsvStoragePath(selectedName);
+    const { data, error } = await storageApi.from(USER_CSV_BUCKET).download(storagePath);
+    if (error) {
+      throw new Error(error.message || "CSV-Abruf fehlgeschlagen.");
     }
 
-    const csvText = await response.text();
+    const csvText = await data.text();
     const cards = parseStorageCsvToCards(csvText);
 
     if (cards.length === 0) {
@@ -2825,19 +2845,21 @@ async function handleCsvUpload() {
     if (csvStatus) csvStatus.textContent = "Upload läuft ...";
 
     const csvText = await file.text();
-    const response = await fetch(CSV_FILES_API_ENDPOINT, {
-      method: "POST",
-      headers: await getAuthHeaders({ includeContentType: true }),
-      body: JSON.stringify({
-        name: uploadName,
-        content: csvText,
-      }),
-    });
-    ensureAuthorizedResponse(response, "CSV-Upload");
+    const storageApi = getSupabaseStorageOrThrow();
+    const storagePath = getUserCsvStoragePath(uploadName);
+    const { error: uploadError } = await storageApi
+      .from(USER_CSV_BUCKET)
+      .upload(storagePath, file, { upsert: true });
 
-    if (!response.ok) {
-      throw new Error(`Upload fehlgeschlagen (HTTP ${response.status}).`);
+    if (uploadError) {
+      throw new Error(`Upload fehlgeschlagen: ${uploadError.message || "unbekannter Fehler"}`);
     }
+
+    const cards = parseStorageCsvToCards(csvText);
+    if (cards.length === 0) {
+      throw new Error("CSV enthält keine gültigen Karten.");
+    }
+    state.uploadedCsvCards = cloneCards(cards);
 
     if (csvUpload) {
       csvUpload.value = "";
@@ -2846,7 +2868,7 @@ async function handleCsvUpload() {
       csvDatasetNameInput.value = derivedLabel;
     }
     if (csvStatus) {
-      csvStatus.textContent = `Upload erfolgreich: ${derivedLabel}`;
+      csvStatus.textContent = `Upload erfolgreich: ${derivedLabel} (${cards.length} Karten erkannt)`;
     }
 
     await refreshPublicCsvList();

@@ -21,19 +21,29 @@ Danach im Browser öffnen:
 Die Daten werden serverseitig in `data/custom-datasets.json` abgelegt.
 Falls die API nicht erreichbar ist, nutzt die App automatisch den lokalen Browser-Speicher als Fallback.
 
-### CSV-Storage (benutzerbezogen)
-CSV-Uploads unter `/csv-files` werden benutzerbezogen gespeichert in:
+### CSV-Storage (Supabase, benutzerbezogen)
+CSV-Uploads laufen im Frontend direkt über Supabase Storage in den Bucket `user-csv`.
+Die Pfadkonvention ist:
 
 ```text
-data/csv-store/<ownerId>/<dateiname>.csv
+${auth.uid()}/${safeFileName}
 ```
 
-`<ownerId>` wird aus dem Request-Header `x-owner-id` (Fallback: `x-user-id`) gelesen.
+Die Datei wird beim Upload zusätzlich lokal im Browser geparst, sodass die Karten direkt als Dataset gespeichert werden können (`custom_datasets.cards`).
 
-#### Übergang von altem globalem CSV-Store
-Frühere globale Dateien unter `data/csv-store/*.csv` werden nicht mehr automatisch gelistet.
-Für eine Migration müssen vorhandene CSV-Dateien manuell in einen Benutzerordner verschoben werden,
-z. B. nach `data/csv-store/<ownerId>/...`.
+#### Supabase-Setup
+Die SQL für Bucket + Policies liegt in `supabase-user-csv-storage.sql`.
+
+```bash
+# in Supabase SQL Editor ausführen
+supabase-user-csv-storage.sql
+```
+
+Die enthaltenen Policies erlauben lesen/schreiben/updaten/löschen nur im eigenen Prefix.
+
+#### Legacy `/csv-files`
+Die alten Server-Endpunkte unter `/csv-files` bleiben vorerst für Legacy-Migrationen bestehen,
+werden aber im aktuellen Frontend nicht mehr verwendet.
 
 
 ## Zugriff von anderen Browsern/Geräten
