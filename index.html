@@ -10,6 +10,19 @@
 <body>
   <header class="global-header">
     <div class="global-header-inner">
+      <div class="auth-topbar" aria-label="Authentifizierung">
+        <div class="auth-topbar-left" id="auth-left-logged-out">
+          <button id="auth-login" type="button" class="auth-split-button">Login</button>
+          <button id="auth-register" type="button" class="auth-split-button">Registrierung</button>
+        </div>
+        <div class="auth-topbar-left" id="auth-left-logged-in" hidden>
+          <p id="auth-user"></p>
+          <button id="auth-logout" type="button">Logout</button>
+        </div>
+        <div class="auth-topbar-right" id="auth-status-wrapper">
+          <span id="auth-status">Du bist nicht eingeloggt.</span>
+        </div>
+      </div>
       <button
         id="qr-toggle"
         class="icon-button"
@@ -440,5 +453,6 @@
   <script src="landing-overlay.js"></script>
   <script src="src/theme/tokens.js"></script>
   <script src="app.js"></script>
+  <script type="module" src="./assets/app.js"></script>
 </body>
 </html>
