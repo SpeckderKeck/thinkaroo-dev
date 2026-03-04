@@ -3,9 +3,9 @@ import { initAuthState } from "./authState.js";
 
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
 
-const loginButton = document.querySelector("#auth-login");
-const logoutButton = document.querySelector("#auth-logout");
+const authActionButton = document.querySelector("#auth-action");
 const authStatus = document.querySelector("#auth-status");
+const authActionIcon = authActionButton?.querySelector("img");
 
 function dispatchAuthMode(isLoggedIn) {
   window.THINKAROO_AUTH = { isLoggedIn };
@@ -25,20 +25,33 @@ function setAuthUi(session) {
   dispatchAuthMode(isLoggedIn);
 
   if (isLoggedIn) {
-    loginButton.hidden = true;
-    logoutButton.hidden = false;
+    authActionButton?.classList.remove("auth-icon-button--logged-out");
+    authActionButton?.classList.add("auth-icon-button--logged-in");
+    authActionButton?.setAttribute("aria-label", "Logout");
+    authActionButton?.setAttribute("title", "Logout");
+    authActionIcon?.setAttribute("src", "./logout.svg");
+    authActionIcon?.setAttribute("alt", "Logout");
     authStatus.textContent = `Eingeloggt als ${session.user.email}`;
     return;
   }
 
-  loginButton.hidden = false;
-  logoutButton.hidden = true;
+  authActionButton?.classList.add("auth-icon-button--logged-out");
+  authActionButton?.classList.remove("auth-icon-button--logged-in");
+  authActionButton?.setAttribute("aria-label", "Login öffnen");
+  authActionButton?.setAttribute("title", "Login");
+  authActionIcon?.setAttribute("src", "./login.svg");
+  authActionIcon?.setAttribute("alt", "Login");
   authStatus.textContent = "Du bist nicht eingeloggt.";
 }
 
-loginButton?.addEventListener("click", navigateToLogin);
+authActionButton?.addEventListener("click", async () => {
+  const isLoggedIn = Boolean(window.THINKAROO_AUTH?.isLoggedIn);
 
-logoutButton?.addEventListener("click", async () => {
+  if (!isLoggedIn) {
+    navigateToLogin();
+    return;
+  }
+
   try {
     await logout();
     dispatchAuthMode(false);
