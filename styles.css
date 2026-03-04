@@ -182,7 +182,8 @@ body.fullscreen .board {
   display: block;
 }
 
-#game.panel--active {
+#game.panel--active,
+#screen-game-board.panel--active {
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -210,17 +211,21 @@ body.fullscreen .board {
   box-shadow: 0 10px 30px var(--shadow);
 }
 
-#menu.panel--active {
+#menu.panel--active,
+#screen-settings-board.panel--active {
   min-height: calc(100dvh - var(--header-height) - clamp(32px, 5vh, 72px));
 }
 
-#menu {
+#menu,
+#screen-settings-board {
   position: relative;
   isolation: isolate;
 }
 
 #mode-selection.panel--active,
-#speedquiz-menu.panel--active {
+#speedquiz-menu.panel--active,
+#screen-select.panel--active,
+#screen-settings-speedquiz.panel--active {
   min-height: calc(100dvh - var(--header-height) - clamp(32px, 5vh, 72px));
 }
 
@@ -415,7 +420,8 @@ body.fullscreen .board {
   transform: translate(-50%, 0);
 }
 
-#menu > *:not(.menu-background) {
+#menu > *:not(.menu-background),
+#screen-settings-board > *:not(.menu-background) {
   position: relative;
   z-index: 1;
 }
@@ -434,7 +440,8 @@ body.fullscreen .board {
     linear-gradient(160deg, color-mix(in srgb, var(--color-bg) 88%, #000000) 0%, color-mix(in srgb, var(--color-primary) 68%, var(--color-bg)) 48%, color-mix(in srgb, var(--card-pantomime) 30%, var(--color-bg)) 100%);
 }
 
-#menu .card h2 {
+#menu .card h2,
+#screen-settings-board .card h2 {
   font-size: clamp(1.05rem, 1.1vw + 0.65rem, 1.5rem);
 }
 
@@ -444,11 +451,19 @@ body.fullscreen .board {
 #menu label,
 #menu input,
 #menu select,
-#menu button {
+#menu button,
+#screen-settings-board .field,
+#screen-settings-board .hint,
+#screen-settings-board .team-name,
+#screen-settings-board label,
+#screen-settings-board input,
+#screen-settings-board select,
+#screen-settings-board button {
   font-size: clamp(0.82rem, 0.45vw + 0.6rem, 1rem);
 }
 
-#menu .team-row {
+#menu .team-row,
+#screen-settings-board .team-row {
   padding: clamp(8px, 1.2vh, 12px);
 }
 
@@ -915,7 +930,8 @@ body.fullscreen .board {
   padding: var(--game-top-spacing) 0 calc(var(--game-bottom-total-space) + var(--game-board-gap));
 }
 
-body.fullscreen #game.panel--active {
+body.fullscreen #game.panel--active,
+body.fullscreen #screen-game-board.panel--active {
   --game-bottom-height: clamp(4rem, 10vh, 6.5rem);
 }
 
@@ -2401,7 +2417,14 @@ button:disabled {
   #menu label,
   #menu input,
   #menu select,
-  #menu button {
+  #menu button,
+  #screen-settings-board .field,
+  #screen-settings-board .hint,
+  #screen-settings-board .team-name,
+  #screen-settings-board label,
+  #screen-settings-board input,
+  #screen-settings-board select,
+  #screen-settings-board button {
     font-size: 0.95rem;
   }
 
@@ -2507,8 +2530,30 @@ body.landing-open {
   flex-shrink: 1;
 }
 
-.auth-split-button {
-  flex: 1;
+
+.settings-back-link {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 10px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.auth-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 6px;
+}
+
+.auth-icon-button img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 #auth-user {

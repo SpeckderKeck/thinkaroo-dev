@@ -3,10 +3,17 @@ import { getSession, listenAuthChanges, logout } from "./auth.js";
 const loggedOutContainer = document.querySelector("#auth-left-logged-out");
 const loggedInContainer = document.querySelector("#auth-left-logged-in");
 const loginButton = document.querySelector("#auth-login");
-const registerButton = document.querySelector("#auth-register");
 const logoutButton = document.querySelector("#auth-logout");
 const loggedInText = document.querySelector("#auth-user");
 const authStatus = document.querySelector("#auth-status");
+
+function navigateToLogin() {
+  if (window.thinkarooRouter?.setRoute) {
+    window.thinkarooRouter.setRoute("#/login");
+    return;
+  }
+  window.location.hash = "#/login";
+}
 
 function setAuthUi(session) {
   const isLoggedIn = Boolean(session?.user?.email);
@@ -25,13 +32,7 @@ function setAuthUi(session) {
   authStatus.textContent = "Du bist nicht eingeloggt.";
 }
 
-loginButton?.addEventListener("click", () => {
-  window.location.href = "./auth.html?mode=login";
-});
-
-registerButton?.addEventListener("click", () => {
-  window.location.href = "./auth.html?mode=register";
-});
+loginButton?.addEventListener("click", navigateToLogin);
 
 logoutButton?.addEventListener("click", async () => {
   try {
