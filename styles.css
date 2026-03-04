@@ -2043,26 +2043,54 @@ button:disabled {
 }
 
 .single-choice-option-button.is-animating {
-  animation: single-choice-blink 1.05s ease-in-out 3;
+  animation-duration: 520ms;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-fill-mode: both;
 }
 
 .single-choice-option-button.is-correct {
   background: color-mix(in srgb, #2bb673 86%, #ffffff 14%);
   color: #0f2f1f;
+  animation-name: single-choice-correct-pop;
 }
 
 .single-choice-option-button.is-wrong {
   background: color-mix(in srgb, #e44747 86%, #ffffff 14%);
   color: #3d1212;
+  animation-name: single-choice-wrong-pop;
 }
 
-@keyframes single-choice-blink {
-  0%,
-  100% {
-    filter: brightness(1);
+@keyframes single-choice-correct-pop {
+  0% {
+    background: color-mix(in srgb, var(--fullscreen-card-text, var(--text)) 14%, transparent);
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(43, 182, 115, 0);
   }
-  50% {
-    filter: brightness(1.55);
+  45% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 10px rgba(43, 182, 115, 0.2);
+  }
+  100% {
+    background: color-mix(in srgb, #2bb673 86%, #ffffff 14%);
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(43, 182, 115, 0);
+  }
+}
+
+@keyframes single-choice-wrong-pop {
+  0% {
+    background: color-mix(in srgb, var(--fullscreen-card-text, var(--text)) 14%, transparent);
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(228, 71, 71, 0);
+  }
+  45% {
+    transform: scale(1.04);
+    box-shadow: 0 0 0 10px rgba(228, 71, 71, 0.2);
+  }
+  100% {
+    background: color-mix(in srgb, #e44747 86%, #ffffff 14%);
+    transform: scale(1);
+    box-shadow: 0 0 0 rgba(228, 71, 71, 0);
   }
 }
 
