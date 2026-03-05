@@ -1264,8 +1264,15 @@ function toggleTeamPicker(picker, toggleButton) {
   }
 }
 
+function getEventTargetElement(event) {
+  return event.target instanceof Element ? event.target : null;
+}
+
 function handleTeamListClick(event) {
-  const iconToggle = event.target.closest("[data-team-icon-toggle]");
+  const targetElement = getEventTargetElement(event);
+  if (!targetElement) return;
+
+  const iconToggle = targetElement.closest("[data-team-icon-toggle]");
   if (iconToggle) {
     const picker = iconToggle.closest(".team-picker");
     if (picker) {
@@ -1273,7 +1280,7 @@ function handleTeamListClick(event) {
     }
     return;
   }
-  const iconOption = event.target.closest("[data-team-icon-option]");
+  const iconOption = targetElement.closest("[data-team-icon-option]");
   if (iconOption) {
     const picker = iconOption.closest(".team-picker");
     const value = iconOption.dataset.iconValue;
@@ -3371,7 +3378,9 @@ speedQuizStartButton?.addEventListener("click", () => {
   setRoute("#/game-speedquiz");
 });
 document.addEventListener("click", (event) => {
-  const routeButton = event.target.closest("[data-route]");
+  const targetElement = getEventTargetElement(event);
+  if (!targetElement) return;
+  const routeButton = targetElement.closest("[data-route]");
   if (!routeButton) return;
   const targetRoute = routeButton.getAttribute("data-route");
   if (!targetRoute) return;
@@ -3512,7 +3521,9 @@ turnSingleChoiceOptions?.addEventListener("click", (event) => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
   if (state.pendingCategory !== "Single-Choice") return;
   if (state.quizPhase !== "question") return;
-  const optionButton = event.target.closest(".single-choice-option-button");
+  const targetElement = getEventTargetElement(event);
+  if (!targetElement) return;
+  const optionButton = targetElement.closest(".single-choice-option-button");
   if (!optionButton || optionButton.disabled) return;
   const selectedOption = normalizeAnswerOption(optionButton.dataset.option ?? optionButton.textContent);
   const correctAnswer = normalizeAnswerOption(state.currentCard?.answer);
