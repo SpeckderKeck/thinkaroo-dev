@@ -1735,6 +1735,13 @@ button:disabled {
   min-height: 0;
 }
 
+.cardsets-upload-column {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  align-content: start;
+}
+
 .cardsets-editor-column .card-editor-table-wrap {
   max-height: min(58dvh, 680px);
 }
