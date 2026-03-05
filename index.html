@@ -10,7 +10,7 @@
 <body>
   <header class="global-header">
     <div class="global-header-inner">
-      <a id="settings-back-topbar" href="#/select" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zur Spielauswahl" title="Zurück" hidden>←</a>
+      <a id="settings-back-topbar" href="#/landing" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zum Start" title="Zurück" hidden>←</a>
       <div class="auth-topbar" aria-label="Authentifizierung">
         <div class="auth-topbar-left" id="auth-left-actions">
           <button id="auth-login-action" type="button" class="auth-icon-button auth-icon-button--logged-out" data-route="#/login" aria-label="Login öffnen" title="Login">
@@ -73,81 +73,51 @@
             <img src="landingpc.png" alt="Thinkaroo Landing Page" />
           </picture>
           <div class="landing-overlay__actions">
-            <button id="landing-start" type="button" class="landing-overlay__start-button" data-route="#/select">Spiel starten</button>
+            <button id="landing-start" type="button" class="landing-overlay__start-button" data-route="#/settings-board">Spiel starten</button>
           </div>
-        </div>
-      </section>
-
-      <section id="screen-select" class="panel" aria-label="Modus auswählen" aria-hidden="true" hidden>
-        <div class="mode-selection">
-          <div class="mode-selection__options" role="group" aria-label="Spielmodi">
-            <div class="mode-option">
-              <button id="mode-speedquiz" class="mode-option__button" type="button" data-route="#/settings-speedquiz" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
-            </div>
-            <div class="mode-option">
-              <button id="mode-board" class="mode-option__button" type="button" data-route="#/settings-board" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="screen-settings-speedquiz" class="panel" aria-label="SpeedQuiz Menü" aria-hidden="true" hidden>
-        <div class="speedquiz-menu">
-          <div class="panel-grid speedquiz-menu__grid">
-            <div class="card speedquiz-menu__card card--teams">
-              <h2>Teams</h2>
-              <div class="field">
-                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
-                  <button type="button" class="count-button" id="speedquiz-team-count-decrease" aria-label="Teamanzahl verringern">
-                    –
-                  </button>
-                  <input id="speedquiz-team-count" type="number" min="2" max="4" step="1" value="2" />
-                  <button type="button" class="count-button" id="speedquiz-team-count-increase" aria-label="Teamanzahl erhöhen">
-                    +
-                  </button>
-                </div>
-              </div>
-              <div id="speedquiz-team-list" class="team-list"></div>
-            </div>
-            <div class="card speedquiz-menu__card">
-              <h2>Kategorien</h2>
-              <div class="field-group speedquiz-menu__categories">
-                <div id="speedquiz-categories" aria-label="Kategorien auswählen"></div>
-              </div>
-            </div>
-            <div class="card speedquiz-menu__card">
-              <h2>Kartensatz</h2>
-              <label class="field" for="speedquiz-dataset-select">
-                Kartensatz auswählen
-                <select id="speedquiz-dataset-select"></select>
-              </label>
-            </div>
-          </div>
-          <footer class="menu-footer">
-            <button id="start-speedquiz-game" class="primary menu-start-button" type="button">Spiel starten</button>
-          </footer>
         </div>
       </section>
 
       <section id="screen-settings-board" class="panel" aria-label="Hauptmenü" aria-hidden="true" hidden>
         <div class="panel-grid">
           <div class="card-stack">
-            <div class="card card--teams">
+            <div class="card settings-mode-card">
+              <h2>Spielauswahl</h2>
+              <div class="mode-selection__options settings-mode-selection" role="group" aria-label="Spielmodi auswählen">
+                <div class="mode-option">
+                  <button id="mode-speedquiz" class="mode-option__button" type="button" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
+                </div>
+                <div class="mode-option">
+                  <button id="mode-board" class="mode-option__button" type="button" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card card--teams" data-settings-mode="board">
               <h2>Teams</h2>
               <div class="field">
                 <div class="team-count-control" role="group" aria-label="Anzahl Teams">
-                  <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">
-                    –
-                  </button>
+                  <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">–</button>
                   <input id="team-count" type="number" min="2" max="4" step="1" value="2" />
-                  <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">
-                    +
-                  </button>
+                  <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
                 </div>
               </div>
               <div id="team-list" class="team-list"></div>
             </div>
-            <div class="card">
+
+            <div class="card card--teams hidden" data-settings-mode="speedquiz">
+              <h2>Teams</h2>
+              <div class="field">
+                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                  <button type="button" class="count-button" id="speedquiz-team-count-decrease" aria-label="Teamanzahl verringern">–</button>
+                  <input id="speedquiz-team-count" type="number" min="2" max="4" step="1" value="2" />
+                  <button type="button" class="count-button" id="speedquiz-team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+                </div>
+              </div>
+              <div id="speedquiz-team-list" class="team-list"></div>
+            </div>
+
+            <div class="card" data-settings-mode="board">
               <h2>Spiellänge</h2>
               <label class="field">
                 <select id="board-size-select">
@@ -159,7 +129,7 @@
             </div>
           </div>
 
-          <div class="card" id="menu-settings-card">
+          <div class="card" id="menu-settings-card" data-settings-mode="board">
             <h2>Kategorien</h2>
             <div class="field-group speedquiz-menu__categories board-menu__categories">
               <div id="board-categories" aria-label="Kategorien auswählen"></div>
@@ -174,11 +144,18 @@
             </label>
           </div>
 
-          <div class="card-stack">
+          <div class="card hidden" data-settings-mode="speedquiz">
+            <h2>Kategorien</h2>
+            <div class="field-group speedquiz-menu__categories">
+              <div id="speedquiz-categories" aria-label="Kategorien auswählen"></div>
+            </div>
+          </div>
+
+          <div class="card-stack" data-settings-mode="board">
             <div class="card">
               <div class="card-row">
-              <h2>Kartensatz</h2>
-                          </div>
+                <h2>Kartensatz</h2>
+              </div>
               <div class="field">
                 Kartensatz auswählen
                 <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
@@ -225,18 +202,29 @@
               <p id="csv-status" class="hint" aria-live="polite"></p>
             </div>
           </div>
+
+          <div class="card-stack hidden" data-settings-mode="speedquiz">
+            <div class="card speedquiz-menu__card">
+              <h2>Kartensatz</h2>
+              <label class="field" for="speedquiz-dataset-select">
+                Kartensatz auswählen
+                <select id="speedquiz-dataset-select"></select>
+              </label>
+            </div>
+          </div>
         </div>
         <footer class="menu-footer">
-          <button id="start-game" class="primary menu-start-button">Spiel starten</button>
+          <button id="start-game" class="primary menu-start-button" data-settings-mode="board">Spiel starten</button>
+          <button id="start-speedquiz-game" class="primary menu-start-button hidden" type="button" data-settings-mode="speedquiz">Spiel starten</button>
         </footer>
       </section>
 
       
-      <section id="screen-game-speedquiz" class="panel" aria-label="SpeedQuiz Spiel" aria-hidden="true" hidden>
+<section id="screen-game-speedquiz" class="panel" aria-label="SpeedQuiz Spiel" aria-hidden="true" hidden>
         <div class="card">
           <h2>SpeedQuiz Game</h2>
           <p class="hint">Die bestehende SpeedQuiz-Spielansicht wird hier angezeigt.</p>
-          <button id="speedquiz-back-select" class="ghost" type="button" data-route="#/select">Zurück zur Spielauswahl</button>
+          <button id="speedquiz-back-select" class="ghost" type="button" data-route="#/settings-board">Zurück zu den Einstellungen</button>
         </div>
       </section>
 
