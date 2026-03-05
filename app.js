@@ -18,6 +18,7 @@ const boardCategoriesContainer = document.getElementById("board-categories");
 const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
 const gamePanel = document.getElementById("screen-game-board");
 const loginPanel = document.getElementById("screen-login");
+const cardsetsPanel = document.getElementById("screen-cardsets");
 const speedQuizStartButton = document.getElementById("start-speedquiz-game");
 const board = document.getElementById("board");
 const rollButton = document.getElementById("roll");
@@ -73,6 +74,7 @@ const cardEditorBody = document.getElementById("card-editor-body");
 const cardEditorAddRowButton = document.getElementById("card-editor-add-row");
 const cardEditorSaveButton = document.getElementById("card-editor-save");
 const cardEditorExportButton = document.getElementById("card-editor-export");
+const cardEditorUploadCsvButton = document.getElementById("card-editor-upload-csv");
 const cardEditorDatasetLabelInput = document.getElementById("card-editor-dataset-label");
 const cardEditorSaveNewButton = document.getElementById("card-editor-save-new");
 const cardEditorDatasetSelect = document.getElementById("card-editor-dataset-select");
@@ -284,6 +286,7 @@ const screenPanels = {
   "#/game-speedquiz": speedQuizGamePanel,
   "#/game-board": gamePanel,
   "#/login": loginPanel,
+  "#/cardsets": cardsetsPanel,
 };
 
 function normalizeRouteHash(hash) {
@@ -305,6 +308,12 @@ function setRoute(hash) {
   if (settingsBackLink) {
     settingsBackLink.hidden = !showSettingsBackLink;
   }
+
+  if (nextHash === "#/cardsets" && cardEditorBody && !cardEditorBody.querySelector("tr[data-row-id]")) {
+    renderCardEditorRows(cloneCards(state.cards));
+    updateEditorValidationState();
+    refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
+  }
 }
 
 function showMenuPanel() {
@@ -321,6 +330,10 @@ function showSpeedQuizMenuPanel() {
 
 function showGamePanel() {
   setRoute("#/game-board");
+}
+
+function showCardsetsPanel() {
+  setRoute("#/cardsets");
 }
 
 const CATEGORY_CONFIG = {
@@ -2037,6 +2050,57 @@ function createEditorInput(field, value = "") {
   input.value = value;
   return input;
 }
+function getEditorRowCells(row) {
+  return row ? [...row.querySelectorAll('select[data-field], input[data-field]')] : [];
+}
+
+function handleEditorTablePaste(event) {
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement) || target.dataset.field == null) {
+    return;
+  }
+
+  const pasted = event.clipboardData?.getData("text/plain") ?? "";
+  if (!pasted.includes("\t") && !pasted.includes("\n")) {
+    return;
+  }
+
+  const currentRow = target.closest("tr[data-row-id]");
+  if (!currentRow || !cardEditorBody) return;
+  event.preventDefault();
+
+  const rows = pasted
+    .split(/\r?\n/)
+    .map((line) => line.replace(/\r/g, ""))
+    .filter((line) => line.length > 0)
+    .map((line) => line.split("\t"));
+
+  if (rows.length === 0) return;
+
+  const rowElements = [...cardEditorBody.querySelectorAll("tr[data-row-id]")];
+  const startRowIndex = rowElements.indexOf(currentRow);
+  const startCells = getEditorRowCells(currentRow);
+  const startColumnIndex = startCells.indexOf(target);
+  if (startRowIndex < 0 || startColumnIndex < 0) return;
+
+  while (rowElements.length < startRowIndex + rows.length) {
+    const newRow = createEditorRow({ category: "Erklären", term: "", taboo: [] });
+    cardEditorBody.append(newRow);
+    rowElements.push(newRow);
+  }
+
+  rows.forEach((values, rowOffset) => {
+    const row = rowElements[startRowIndex + rowOffset];
+    const cells = getEditorRowCells(row);
+    values.forEach((value, colOffset) => {
+      const field = cells[startColumnIndex + colOffset];
+      if (!field) return;
+      field.value = value.trim();
+    });
+  });
+
+  updateEditorValidationState();
+}
 
 function createEditorRow(card = {}) {
   const rowId = `card-row-${cardEditorRowCounter++}`;
@@ -2102,16 +2166,14 @@ function removeEditorRow(rowId) {
 }
 
 function openCardEditor() {
-  if (!requireFullAccess() || !cardEditorModal) return;
+  if (!requireFullAccess()) return;
   renderCardEditorRows(cloneCards(state.cards));
   updateEditorValidationState();
   refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
-  cardEditorModal.classList.remove("hidden");
+  showCardsetsPanel();
 }
 
 function closeCardEditor() {
-  if (!cardEditorModal) return;
-  cardEditorModal.classList.add("hidden");
   renderEditorValidationErrors([]);
 }
 
@@ -2123,7 +2185,6 @@ function saveCardEditor() {
   }
   state.cards = cards;
   csvStatus.textContent = `Editor: ${cards.length} Karten.`;
-  closeCardEditor();
 }
 
 function refreshEditorCustomDatasetSelect(selectedId = "") {
@@ -2386,13 +2447,7 @@ function escapeCsvValue(value) {
   return normalized;
 }
 
-function exportEditorCardsAsCsv() {
-  const { cards, errors } = updateEditorValidationState();
-  if (errors.length > 0) {
-    csvStatus.textContent = "Export nicht möglich: Editor enthält ungültige Zeilen.";
-    return;
-  }
-
+function buildCsvContentFromCards(cards) {
   const lines = cards.map((card) => {
     const taboos = Array.isArray(card.taboo) ? [...card.taboo] : [];
     const wrongAnswers = Array.isArray(card.wrongAnswers) ? [...card.wrongAnswers] : [];
@@ -2408,7 +2463,17 @@ function exportEditorCardsAsCsv() {
     return values.map(escapeCsvValue).join(";");
   });
 
-  const csvContent = `\uFEFF${lines.join("\n")}`;
+  return `\uFEFF${lines.join("\n")}`;
+}
+
+function exportEditorCardsAsCsv() {
+  const { cards, errors } = updateEditorValidationState();
+  if (errors.length > 0) {
+    csvStatus.textContent = "Export nicht möglich: Editor enthält ungültige Zeilen.";
+    return;
+  }
+
+  const csvContent = buildCsvContentFromCards(cards);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
@@ -2419,6 +2484,31 @@ function exportEditorCardsAsCsv() {
   link.remove();
   URL.revokeObjectURL(link.href);
   csvStatus.textContent = `CSV exportiert: ${cards.length} Karten.`;
+}
+
+async function uploadEditorCardsAsCsv() {
+  if (!requireFullAccess()) return;
+  const { cards, errors } = updateEditorValidationState();
+  if (errors.length > 0) {
+    csvStatus.textContent = "Speichern nicht möglich: Editor enthält ungültige Zeilen.";
+    return;
+  }
+
+  const filenameBase = cardEditorDatasetLabelInput?.value?.trim() || "wissivity-kartensatz";
+  const uploadName = sanitizeUploadFileName(`${filenameBase.replace(/\s+/g, "-").toLowerCase()}.csv`);
+  const csvContent = buildCsvContentFromCards(cards);
+  const csvFile = new File([csvContent], uploadName, { type: "text/csv;charset=utf-8" });
+
+  try {
+    await uploadCsvFileToStorage(csvFile, uploadName);
+    await refreshPublicCsvList();
+    if (storageDatasetSelect) {
+      storageDatasetSelect.value = uploadName;
+    }
+    csvStatus.textContent = `CSV in Supabase gespeichert: ${getDisplayDatasetName(uploadName)} (${cards.length} Karten).`;
+  } catch (error) {
+    csvStatus.textContent = `CSV-Speichern fehlgeschlagen: ${error?.message || String(error)}`;
+  }
 }
 
 function createDatasetSelect(currentKey = "") {
@@ -2799,6 +2889,15 @@ async function uploadCsvFileToStorage(file, uploadName) {
   return data;
 }
 
+async function deleteStoredCsvFile(objectName) {
+  const { userId } = await getAuthenticatedSupabaseUser();
+  const filePath = `${getUserCsvFolderPath(userId)}/${objectName}`;
+  const { error } = await window.supabase.storage.from(USER_CSV_BUCKET).remove([filePath]);
+  if (error) {
+    throw new Error(`Löschen fehlgeschlagen (${error.message}).`);
+  }
+}
+
 function setStorageSelectOptions(files = []) {
   if (!storageDatasetSelect) return;
 
@@ -2815,7 +2914,7 @@ function setStorageSelectOptions(files = []) {
     return;
   }
 
-  placeholderOption.textContent = "Kartenset aus Storage auswählen";
+  placeholderOption.textContent = "Kartensatz auswählen";
   placeholderOption.selected = true;
   storageDatasetSelect.append(placeholderOption);
 
@@ -2843,30 +2942,36 @@ function renderStorageDatasetList(files = []) {
     const objectName = String(file?.name || "").trim();
     if (!objectName) return;
 
-    const item = document.createElement("label");
+    const item = document.createElement("div");
     item.className = "storage-dataset-item";
-
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.value = objectName;
-    checkbox.dataset.storageDatasetToggle = "true";
-    checkbox.checked = readSelectedDatasetKeys().includes(toStorageDatasetKey(objectName));
 
     const name = document.createElement("span");
     name.textContent = getDisplayDatasetName(objectName);
 
-    item.append(checkbox, name);
+    const actions = document.createElement("div");
+    actions.className = "storage-dataset-item-actions";
+
+    const loadButton = document.createElement("button");
+    loadButton.type = "button";
+    loadButton.className = "ghost";
+    loadButton.textContent = "Laden";
+    loadButton.dataset.storageAction = "load";
+    loadButton.dataset.objectName = objectName;
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "ghost";
+    deleteButton.textContent = "Entfernen";
+    deleteButton.dataset.storageAction = "delete";
+    deleteButton.dataset.objectName = objectName;
+
+    actions.append(loadButton, deleteButton);
+    item.append(name, actions);
     storageDatasetList.append(item);
   });
 }
 
 function syncStorageDatasetListSelectionState() {
-  if (!storageDatasetList) return;
-  const selected = new Set(readSelectedDatasetKeys());
-  storageDatasetList.querySelectorAll('input[data-storage-dataset-toggle="true"]').forEach((input) => {
-    const objectName = String(input.value || "").trim();
-    input.checked = selected.has(toStorageDatasetKey(objectName));
-  });
 }
 
 function sanitizeUploadFileName(name) {
@@ -3371,7 +3476,7 @@ boardSizeSelect?.addEventListener("change", () => {
 });
 
 if (!window.location.hash) {
-  setRoute("#/landing");
+  setRoute(window.location.pathname === "/cardsets" ? "#/cardsets" : "#/landing");
 } else {
   setRoute(window.location.hash);
 }
@@ -3425,24 +3530,36 @@ storageDatasetSelect?.addEventListener("change", (event) => {
   loadStorageDataset(event.target.value);
   updateMainMenuRequiredSelectionState();
 });
-storageDatasetList?.addEventListener("change", async (event) => {
-  const input = event.target;
-  if (!(input instanceof HTMLInputElement) || input.dataset.storageDatasetToggle !== "true") {
+storageDatasetList?.addEventListener("click", async (event) => {
+  const target = event.target;
+  if (!(target instanceof HTMLElement)) return;
+  const actionButton = target.closest("button[data-storage-action]");
+  if (!actionButton) return;
+
+  const objectName = String(actionButton.dataset.objectName || "").trim();
+  if (!objectName) return;
+
+  if (actionButton.dataset.storageAction === "load") {
+    await loadStorageDataset(objectName);
+    updateMainMenuRequiredSelectionState();
     return;
   }
 
-  const objectName = String(input.value || "").trim();
-  const storageKey = toStorageDatasetKey(objectName);
+  if (actionButton.dataset.storageAction === "delete") {
+    const shouldDelete = window.confirm(`CSV-Datei „${getDisplayDatasetName(objectName)}“ wirklich entfernen?`);
+    if (!shouldDelete) return;
 
-  if (input.checked) {
-    await loadStorageDataset(objectName);
-  } else {
-    state.selectedDatasets = readSelectedDatasetKeys().filter((key) => key !== storageKey);
-    refreshDatasetSelections();
-    syncStorageDatasetListSelectionState();
+    try {
+      await deleteStoredCsvFile(objectName);
+      delete state.storageDatasets[objectName];
+      state.selectedDatasets = readSelectedDatasetKeys().filter((key) => key !== toStorageDatasetKey(objectName));
+      refreshDatasetSelections();
+      await refreshPublicCsvList();
+      setCsvStatus(`CSV-Datei entfernt: ${getDisplayDatasetName(objectName)}.`);
+    } catch (error) {
+      setCsvStatus(`Löschen fehlgeschlagen: ${error?.message || String(error)}`, { isError: true });
+    }
   }
-
-  updateMainMenuRequiredSelectionState();
 });
 csvSaveNewButton?.addEventListener("click", saveUploadedCsvAsNewDataset);
 csvOverwriteButton?.addEventListener("click", overwriteDatasetWithUploadedCsv);
@@ -3452,6 +3569,7 @@ closeCardEditorButton?.addEventListener("click", closeCardEditor);
 cardEditorAddRowButton?.addEventListener("click", addEditorRow);
 cardEditorSaveButton?.addEventListener("click", saveCardEditor);
 cardEditorExportButton?.addEventListener("click", exportEditorCardsAsCsv);
+cardEditorUploadCsvButton?.addEventListener("click", uploadEditorCardsAsCsv);
 cardEditorSaveNewButton?.addEventListener("click", saveEditorAsNewDataset);
 cardEditorOverwriteButton?.addEventListener("click", overwriteSelectedCustomDataset);
 cardEditorDeleteButton?.addEventListener("click", deleteSelectedCustomDataset);
@@ -3464,6 +3582,7 @@ cardEditorDatasetSelect?.addEventListener("change", () => {
 });
 cardEditorBody?.addEventListener("input", updateEditorValidationState);
 cardEditorBody?.addEventListener("change", updateEditorValidationState);
+cardEditorBody?.addEventListener("paste", handleEditorTablePaste);
 cardEditorModal?.addEventListener("click", (event) => {
   if (event.target === cardEditorModal) {
     closeCardEditor();

@@ -186,42 +186,13 @@
               </div>
             </div>
 
-            <div id="csv-management-card" class="card" data-auth="full" hidden>
+            <div id="csv-management-card" class="card" data-auth="full" >
               <h2>Eigene Kartensätze</h2>
-              <label class="field" for="csv-upload">
-                CSV-Datei hochladen
-                <input id="csv-upload" type="file" accept=".csv,text/csv" />
-              </label>
-              <div class="dataset-upload-actions">
-                <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
-                <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
-              </div>
-
               <label class="field" for="storage-dataset-select">
-                Hochgeladene Kartensätze laden
-                <select id="storage-dataset-select" aria-label="Kartenset aus Storage auswählen"></select>
+                Kartensatz auswählen
+                <select id="storage-dataset-select" aria-label="Kartensatz auswählen"></select>
               </label>
-              <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
-
-              <div class="card-row">
-                <h3>Datensatz verwalten</h3>
-                <button id="csv-info" class="info-button" type="button" aria-label="Hinweise anzeigen">i</button>
-              </div>
-              <p id="csv-tooltip" class="tooltip" aria-hidden="true">
-                Lade eine CSV hoch, speichere sie als eigenen Kartensatz und bearbeite Begriffe direkt im Karteneditor.
-              </p>
-              <div class="csv-dataset-actions">
-                <label class="field" for="csv-dataset-name">
-                  Name des Kartensatzes
-                  <input id="csv-dataset-name" type="text" placeholder="z. B. Prüfungsvorbereitung" />
-                </label>
-                <div class="csv-dataset-buttons">
-                  <button id="csv-save-new" class="ghost" type="button">Als neuen Kartensatz speichern</button>
-                  <select id="csv-overwrite-select" aria-label="Bestehenden Kartensatz auswählen"></select>
-                  <button id="csv-overwrite" class="ghost" type="button">Bestehenden Kartensatz überschreiben</button>
-                  <button id="open-card-editor" class="primary" type="button">Datensätze ansehen & Begriffe bearbeiten</button>
-                </div>
-              </div>
+              <button class="primary" type="button" data-route="#/cardsets">Kartensätze bearbeiten</button>
               <p id="csv-status" class="hint" aria-live="polite"></p>
             </div>
           </div>
@@ -271,6 +242,61 @@
           </div>
           <p id="auth-page-hint" class="hint" aria-live="polite"></p>
         </section>
+      </section>
+
+      <section id="screen-cardsets" class="panel" aria-label="Kartensätze verwalten" aria-hidden="true" hidden data-auth="full">
+        <div class="cardsets-layout">
+          <section class="card cardsets-upload-column">
+            <h2>CSV-Dateien</h2>
+            <label class="field" for="csv-upload">
+              CSV-Datei hochladen
+              <input id="csv-upload" type="file" accept=".csv,text/csv" />
+            </label>
+            <div class="dataset-upload-actions">
+              <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
+              <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
+            </div>
+            <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
+          </section>
+
+          <section class="card cardsets-editor-column">
+            <div class="card-editor-header">
+              <h2>Kartensätze bearbeiten</h2>
+            </div>
+            <div class="card-editor-table-wrap">
+              <table class="card-editor-table">
+                <thead>
+                  <tr>
+                    <th>Kategorie</th>
+                    <th>Begriff/Frage</th>
+                    <th>Antwort/Tabu1</th>
+                    <th>Tabu2</th>
+                    <th>Tabu3</th>
+                    <th>Tabu4</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="card-editor-body"></tbody>
+              </table>
+            </div>
+            <div id="card-editor-errors" class="card-editor-errors hidden" aria-live="polite"></div>
+            <div class="card-editor-actions">
+              <div class="card-editor-actions-left">
+                <button id="card-editor-add-row" class="ghost" type="button">+ Zeile</button>
+                <button id="card-editor-save" class="primary" type="button">Übernehmen</button>
+                <button id="card-editor-export" class="ghost" type="button">Als CSV exportieren</button>
+                <button id="card-editor-upload-csv" class="ghost" type="button">Als CSV in Supabase speichern</button>
+              </div>
+              <div class="card-editor-actions-right">
+                <input id="card-editor-dataset-label" type="text" placeholder="Name für neuen Kartensatz" />
+                <button id="card-editor-save-new" class="ghost" type="button">Als neuen Kartensatz speichern</button>
+                <select id="card-editor-dataset-select" aria-label="Eigenen Kartensatz auswählen"></select>
+                <button id="card-editor-overwrite" class="ghost" type="button">Bestehenden Kartensatz überschreiben</button>
+                <button id="card-editor-delete" class="ghost" type="button">Kartensatz löschen</button>
+              </div>
+            </div>
+          </section>
+        </div>
       </section>
 
       <section id="screen-game-board" class="panel" aria-label="Spielfeld" aria-hidden="true" hidden>
@@ -393,46 +419,6 @@
         <button id="close-qr-modal" class="ghost" type="button">Schließen</button>
       </div>
       <img id="qr-image" class="qr-modal-image" alt="QR-Code für diese Seite" loading="lazy" />
-    </div>
-  </div>
-
-  <div id="card-editor-modal" class="card-editor-modal hidden" role="dialog" aria-modal="true" aria-label="Karteneditor" data-auth="full">
-    <div class="card-editor-card">
-      <div class="card-editor-header">
-        <h2>Karteneditor</h2>
-        <button id="close-card-editor" class="ghost" type="button">Schließen</button>
-      </div>
-      <div class="card-editor-table-wrap">
-        <table class="card-editor-table">
-          <thead>
-            <tr>
-              <th>Kategorie</th>
-              <th>Begriff/Frage</th>
-              <th>Antwort/Tabu1</th>
-              <th>Tabu2</th>
-              <th>Tabu3</th>
-              <th>Tabu4</th>
-              <th>Aktion</th>
-            </tr>
-          </thead>
-          <tbody id="card-editor-body"></tbody>
-        </table>
-      </div>
-      <div id="card-editor-errors" class="card-editor-errors hidden" aria-live="polite"></div>
-      <div class="card-editor-actions">
-        <div class="card-editor-actions-left">
-          <button id="card-editor-add-row" class="ghost" type="button">+ Zeile</button>
-          <button id="card-editor-save" class="primary" type="button">Übernehmen</button>
-          <button id="card-editor-export" class="ghost" type="button">Als CSV exportieren</button>
-        </div>
-        <div class="card-editor-actions-right">
-          <input id="card-editor-dataset-label" type="text" placeholder="Name für neuen Kartensatz" />
-          <button id="card-editor-save-new" class="ghost" type="button">Als neuen Kartensatz speichern</button>
-          <select id="card-editor-dataset-select" aria-label="Eigenen Kartensatz auswählen"></select>
-          <button id="card-editor-overwrite" class="ghost" type="button">Bestehenden Kartensatz überschreiben</button>
-          <button id="card-editor-delete" class="ghost" type="button">Kartensatz löschen</button>
-        </div>
-      </div>
     </div>
   </div>
 
