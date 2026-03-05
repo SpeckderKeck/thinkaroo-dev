@@ -39,11 +39,19 @@ export function getAuthState() {
 }
 
 export async function initAuthState() {
-  if (window.__authInitialized) {
+  if (window.__authUiInit) {
     return getAuthState();
   }
 
-  window.__authInitialized = true;
+  window.__authUiInit = true;
+
+  const goLoginButton = document.querySelector("#go-login");
+  if (goLoginButton && !goLoginButton.dataset.authNavBound) {
+    goLoginButton.addEventListener("click", () => {
+      window.location.href = "./auth.html";
+    });
+    goLoginButton.dataset.authNavBound = "true";
+  }
 
   try {
     const {
@@ -51,8 +59,8 @@ export async function initAuthState() {
     } = await supabase.auth.getSession();
 
     session = initialSession;
-    isLoggedIn = Boolean(session?.user?.email);
-    applyAuthMode(isLoggedIn);
+    isLoggedIn = !!session;
+    window.applyAuthMode(!!session);
     dispatchAuthMode(isLoggedIn, session);
   } catch (error) {
     console.error(error);
@@ -62,8 +70,8 @@ export async function initAuthState() {
 
   const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
     session = nextSession;
-    isLoggedIn = Boolean(nextSession?.user?.email);
-    applyAuthMode(isLoggedIn);
+    isLoggedIn = !!nextSession;
+    window.applyAuthMode(!!nextSession);
     dispatchAuthMode(isLoggedIn, nextSession);
     window.__authState = getAuthState();
   });

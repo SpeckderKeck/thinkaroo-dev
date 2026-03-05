@@ -259,6 +259,19 @@
                 </div>
               </div>
               <button id="open-card-editor" class="ghost" type="button" data-auth="full">Karten bearbeiten</button>
+              <section id="my-datasets" data-auth="full" hidden>
+                <h2>Meine Datensätze</h2>
+                <div>
+                  <input id="csv-file" type="file" accept=".csv,text/csv" />
+                  <button id="upload-csv">CSV hochladen</button>
+                </div>
+                <ul id="my-datasets-list"></ul>
+              </section>
+
+              <section id="my-datasets-locked" data-auth="lite">
+                <button id="go-login">Eigene Datensätze verwalten</button>
+                <p>Um eigene Datensätze hochzuladen oder zu verwalten musst du dich anmelden.</p>
+              </section>
               <p class="hint" data-auth="lite">Melde dich an, um eigene Kartensets zu laden oder zu verwalten.</p>
               <p class="hint" id="csv-status" hidden data-auth="full">Lade Dateiliste ...</p>
               <div class="tooltip" id="csv-tooltip" role="dialog" aria-hidden="true" data-auth="full">
