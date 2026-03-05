@@ -213,6 +213,45 @@ body.fullscreen .board {
   align-items: start;
 }
 
+
+.settings-three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.settings-column {
+  min-width: 0;
+}
+
+.settings-column--right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-column--right .card-stack {
+  flex: 1;
+}
+
+.settings-advanced-button {
+  margin-top: auto;
+  width: 100%;
+  min-height: 52px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.settings-advanced-button:hover:not(:disabled) {
+  background: var(--color-secondary-hover);
+}
+
+.settings-advanced-button:active:not(:disabled) {
+  background: color-mix(in srgb, var(--color-secondary) 78%, #000000);
+  transform: translateY(1px);
+}
+
 .card {
   background: var(--panel);
   padding: clamp(12px, 1.8vw, 20px);
@@ -2823,6 +2862,13 @@ body.landing-open {
   }
 
   .auth-page-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 1100px) {
+  .settings-three-columns {
     grid-template-columns: 1fr;
   }
 }

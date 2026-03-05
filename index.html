@@ -79,96 +79,89 @@
       </section>
 
       <section id="screen-settings-board" class="panel" aria-label="Hauptmenü" aria-hidden="true" hidden>
-        <div class="panel-grid">
-          <div class="card-stack">
-            <div class="card settings-mode-card">
-              <h2>Spielauswahl</h2>
-              <div class="mode-selection__options settings-mode-selection" role="group" aria-label="Spielmodi auswählen">
-                <div class="mode-option">
-                  <button id="mode-speedquiz" class="mode-option__button" type="button" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
+        <div class="panel-grid settings-three-columns">
+          <div class="settings-column">
+            <div class="card-stack">
+              <div class="card settings-mode-card">
+                <h2>Spielauswahl</h2>
+                <div class="mode-selection__options settings-mode-selection" role="group" aria-label="Spielmodi auswählen">
+                  <div class="mode-option">
+                    <button id="mode-speedquiz" class="mode-option__button" type="button" aria-label="SpeedQuiz auswählen" data-mode-label="SpeedQuiz"></button>
+                  </div>
+                  <div class="mode-option">
+                    <button id="mode-board" class="mode-option__button" type="button" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
+                  </div>
                 </div>
-                <div class="mode-option">
-                  <button id="mode-board" class="mode-option__button" type="button" aria-label="Spielbrett-Modus auswählen" data-mode-label="Spielbrett-Modus"></button>
+              </div>
+
+              <div class="card card--teams" data-settings-mode="board">
+                <h2>Teams</h2>
+                <div class="field">
+                  <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                    <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">–</button>
+                    <input id="team-count" type="number" min="2" max="4" step="1" value="2" />
+                    <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+                  </div>
                 </div>
+                <div id="team-list" class="team-list"></div>
+              </div>
+
+              <div class="card card--teams hidden" data-settings-mode="speedquiz">
+                <h2>Teams</h2>
+                <div class="field">
+                  <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                    <button type="button" class="count-button" id="speedquiz-team-count-decrease" aria-label="Teamanzahl verringern">–</button>
+                    <input id="speedquiz-team-count" type="number" min="2" max="4" step="1" value="2" />
+                    <button type="button" class="count-button" id="speedquiz-team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+                  </div>
+                </div>
+                <div id="speedquiz-team-list" class="team-list"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-column">
+            <div class="card" id="menu-settings-card" data-settings-mode="board">
+              <h2>Kategorien</h2>
+              <div class="field-group speedquiz-menu__categories board-menu__categories">
+                <div id="board-categories" aria-label="Kategorien auswählen"></div>
               </div>
             </div>
 
-            <div class="card card--teams" data-settings-mode="board">
-              <h2>Teams</h2>
-              <div class="field">
-                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
-                  <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">–</button>
-                  <input id="team-count" type="number" min="2" max="4" step="1" value="2" />
-                  <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
-                </div>
+            <div class="card hidden" data-settings-mode="speedquiz">
+              <h2>Kategorien</h2>
+              <div class="field-group speedquiz-menu__categories">
+                <div id="speedquiz-categories" aria-label="Kategorien auswählen"></div>
               </div>
-              <div id="team-list" class="team-list"></div>
             </div>
+          </div>
 
-            <div class="card card--teams hidden" data-settings-mode="speedquiz">
-              <h2>Teams</h2>
-              <div class="field">
-                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
-                  <button type="button" class="count-button" id="speedquiz-team-count-decrease" aria-label="Teamanzahl verringern">–</button>
-                  <input id="speedquiz-team-count" type="number" min="2" max="4" step="1" value="2" />
-                  <button type="button" class="count-button" id="speedquiz-team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+          <div class="settings-column settings-column--right" data-settings-mode="board">
+            <div class="card-stack">
+              <div class="card">
+                <div class="card-row">
+                  <h2>Kartensatz</h2>
                 </div>
+                <div class="field">
+                  Kartensatz auswählen
+                  <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
+                  <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
+                </div>
+                <button class="primary" type="button" data-route="#/cardsets">Kartensätze bearbeiten</button>
               </div>
-              <div id="speedquiz-team-list" class="team-list"></div>
             </div>
-
+            <button class="settings-advanced-button" type="button" data-route="/advancedsettings">Erweiterte Einstellungen</button>
           </div>
 
-          <div class="card" id="menu-settings-card" data-settings-mode="board">
-            <h2>Kategorien</h2>
-            <div class="field-group speedquiz-menu__categories board-menu__categories">
-              <div id="board-categories" aria-label="Kategorien auswählen"></div>
-            </div>
-          </div>
-
-          <div class="card" data-settings-mode="board">
-            <h2>Erweiterte Einstellungen</h2>
-            <p class="hint">Hier kannst du Spiellänge, Zeit pro Kategorie und Strafzeit anpassen.</p>
-            <button class="primary" type="button" data-route="/advancedsettings">Erweiterte Einstellungen öffnen</button>
-          </div>
-
-          <div class="card hidden" data-settings-mode="speedquiz">
-            <h2>Kategorien</h2>
-            <div class="field-group speedquiz-menu__categories">
-              <div id="speedquiz-categories" aria-label="Kategorien auswählen"></div>
-            </div>
-          </div>
-
-          <div class="card-stack" data-settings-mode="board">
-            <div class="card">
-              <div class="card-row">
+          <div class="settings-column hidden" data-settings-mode="speedquiz">
+            <div class="card-stack">
+              <div class="card speedquiz-menu__card">
                 <h2>Kartensatz</h2>
+                <label class="field" for="speedquiz-dataset-select">
+                  Kartensatz auswählen
+                  <select id="speedquiz-dataset-select"></select>
+                </label>
               </div>
-              <div class="field">
-                Kartensatz auswählen
-                <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
-                <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
-              </div>
-            </div>
-
-            <div id="csv-management-card" class="card" data-auth="full" >
-              <h2>Eigene Kartensätze</h2>
-              <label class="field" for="storage-dataset-select">
-                Kartensatz auswählen
-                <select id="storage-dataset-select" aria-label="Kartensatz auswählen"></select>
-              </label>
-              <button class="primary" type="button" data-route="#/cardsets">Kartensätze bearbeiten</button>
-              <p id="csv-status" class="hint" aria-live="polite"></p>
-            </div>
-          </div>
-
-          <div class="card-stack hidden" data-settings-mode="speedquiz">
-            <div class="card speedquiz-menu__card">
-              <h2>Kartensatz</h2>
-              <label class="field" for="speedquiz-dataset-select">
-                Kartensatz auswählen
-                <select id="speedquiz-dataset-select"></select>
-              </label>
             </div>
           </div>
         </div>
@@ -321,6 +314,9 @@
               <div class="dataset-upload-actions">
                 <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
               </div>
+              <label class="visually-hidden" for="storage-dataset-select">Kartensatz auswählen</label>
+              <select id="storage-dataset-select" aria-label="Kartensatz auswählen" hidden></select>
+              <p id="csv-status" class="hint" aria-live="polite"></p>
               <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
             </section>
 
