@@ -29,13 +29,13 @@ function setAuthUi(session, { emit = true } = {}) {
   if (isLoggedIn) {
     loginActionButton?.setAttribute("hidden", "");
     logoutActionButton?.removeAttribute("hidden");
-    authStatus.textContent = `Vollmodus aktiv · Eingeloggt als ${session.user.email}`;
+    authStatus.textContent = `${session.user.email}`;
     return;
   }
 
   logoutActionButton?.setAttribute("hidden", "");
   loginActionButton?.removeAttribute("hidden");
-  authStatus.textContent = "Lite-Modus aktiv · Du bist nicht eingeloggt.";
+  authStatus.textContent = "";
 }
 
 loginActionButton?.addEventListener("click", () => {
