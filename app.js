@@ -442,7 +442,7 @@ const menuCategoryControls = Object.entries(CATEGORY_CONFIG).map(([category, con
   category,
   checkbox: document.getElementById(`category-${config.id}`),
   timeSelect: document.getElementById(`time-${config.id}`),
-})).filter((control) => control.checkbox && control.timeSelect);
+})).filter((control) => control.timeSelect);
 
 const gameCategoryControls = Object.entries(CATEGORY_CONFIG).map(([category, config]) => ({
   category,
@@ -1070,7 +1070,9 @@ function populateTimeSelect(selectEl, defaultValue = 60) {
 }
 
 function getSelectedCategories(controls) {
-  return controls.filter((control) => control.checkbox.checked).map((control) => control.category);
+  return controls
+    .filter((control) => !control.checkbox || control.checkbox.checked)
+    .map((control) => control.category);
 }
 
 function setDatasetSelectionInvalidState(isInvalid) {
@@ -1081,7 +1083,7 @@ function setDatasetSelectionInvalidState(isInvalid) {
 
 function setCategorySelectionInvalidState(controls, isInvalid) {
   controls.forEach((control) => {
-    const row = control.checkbox?.closest(".category-setting");
+    const row = control.checkbox?.closest(".category-setting") ?? control.timeSelect?.closest(".category-setting");
     row?.classList.toggle("selection-invalid", isInvalid);
   });
 }
@@ -1113,7 +1115,9 @@ function readCategoryTimes(controls) {
 
 function syncCategoryControls(controls, selectedCategories, categoryTimes) {
   controls.forEach((control) => {
-    control.checkbox.checked = selectedCategories.includes(control.category);
+    if (control.checkbox) {
+      control.checkbox.checked = selectedCategories.includes(control.category);
+    }
     if (categoryTimes[control.category] && control.timeSelect) {
       control.timeSelect.value = categoryTimes[control.category];
     }
@@ -1864,12 +1868,7 @@ function handleUndo() {
 }
 
 function applyAdvancedSettingsAndReturn() {
-  const selectedCategories = getSelectedCategories(menuCategoryControls);
-  if (selectedCategories.length === 0) {
-    setCategorySelectionInvalidState(menuCategoryControls, true);
-    return;
-  }
-
+  const selectedCategories = [...ALLOWED_CARD_CATEGORIES];
   setCategorySelectionInvalidState(menuCategoryControls, false);
 
   const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
@@ -3458,6 +3457,7 @@ async function setup() {
   } else {
     state.customDatasets = filterCustomDatasetsForAuthMode(readCustomDatasetsFromStorage());
   }
+  menuCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   gameCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   syncTeamCountControls(teamCountInput.value);
   const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
