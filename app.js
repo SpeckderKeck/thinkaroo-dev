@@ -2953,13 +2953,6 @@ function renderStorageDatasetList(files = []) {
     const actions = document.createElement("div");
     actions.className = "storage-dataset-item-actions";
 
-    const loadButton = document.createElement("button");
-    loadButton.type = "button";
-    loadButton.className = "ghost";
-    loadButton.textContent = "Laden";
-    loadButton.dataset.storageAction = "load";
-    loadButton.dataset.objectName = objectName;
-
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "ghost";
@@ -2967,7 +2960,7 @@ function renderStorageDatasetList(files = []) {
     deleteButton.dataset.storageAction = "delete";
     deleteButton.dataset.objectName = objectName;
 
-    actions.append(loadButton, deleteButton);
+    actions.append(deleteButton);
     item.append(name, actions);
     storageDatasetList.append(item);
   });
@@ -3017,11 +3010,35 @@ function parseStorageCsvToCards(csvText) {
     });
 }
 
+async function loadAllStoredCsvDatasets(files = []) {
+  const loadedDatasets = {};
+
+  await Promise.all(
+    (Array.isArray(files) ? files : []).map(async (file) => {
+      const objectName = String(file?.name || "").trim();
+      if (!objectName) return;
+      try {
+        const csvText = await downloadStoredCsvFile(objectName);
+        const cards = parseStorageCsvToCards(csvText);
+        if (cards.length > 0) {
+          loadedDatasets[objectName] = cloneCards(cards);
+        }
+      } catch (error) {
+        console.warn(`Storage-Kartenset konnte nicht geladen werden (${objectName}):`, error);
+      }
+    }),
+  );
+
+  state.storageDatasets = loadedDatasets;
+}
+
 async function refreshPublicCsvList() {
   if (!isLoggedIn) {
     state.storageDatasetFiles = [];
+    state.storageDatasets = {};
     setStorageSelectOptions([]);
     renderStorageDatasetList([]);
+    refreshDatasetSelections();
     return;
   }
   setCsvStatus("Lade Dateiliste ...");
@@ -3030,9 +3047,11 @@ async function refreshPublicCsvList() {
     const sortedFiles = await listStoredCsvFiles();
 
     state.storageDatasetFiles = sortedFiles;
+    await loadAllStoredCsvDatasets(sortedFiles);
     setStorageSelectOptions(sortedFiles);
     renderStorageDatasetList(sortedFiles);
-    setCsvStatus(`${sortedFiles.length} hochgeladene Datei(en) verfügbar.`);
+    refreshDatasetSelections();
+    setCsvStatus(`${Object.keys(state.storageDatasets).length} Kartensatz/Kartensätze aus Supabase geladen.`);
   } catch (error) {
     if (error?.isAuthError) {
       setCsvStatus(error.message, { isError: true });
@@ -3425,6 +3444,7 @@ async function setup() {
   renderSpeedQuizCategoryOptions();
   renderBoardCategoryOptions();
   applySelectedDatasets();
+  await refreshPublicCsvList();
 }
 
 window.addEventListener("resize", () => {
@@ -3551,12 +3571,6 @@ storageDatasetList?.addEventListener("click", async (event) => {
 
   const objectName = String(actionButton.dataset.objectName || "").trim();
   if (!objectName) return;
-
-  if (actionButton.dataset.storageAction === "load") {
-    await loadStorageDataset(objectName);
-    updateMainMenuRequiredSelectionState();
-    return;
-  }
 
   if (actionButton.dataset.storageAction === "delete") {
     const shouldDelete = window.confirm(`CSV-Datei „${getDisplayDatasetName(objectName)}“ wirklich entfernen?`);
@@ -3737,6 +3751,7 @@ window.addEventListener(AUTH_MODE_EVENT, async (event) => {
     state.customDatasets = { ...publicDatasets, ...loadedDatasets };
   }
   applyDatasetAuthMode();
+  await refreshPublicCsvList();
 });
 
 setup();

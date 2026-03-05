@@ -234,17 +234,26 @@
 
       <section id="screen-cardsets" class="panel" aria-label="Kartensätze verwalten" aria-hidden="true" hidden data-auth="full">
         <div class="cardsets-layout">
-          <section class="card cardsets-upload-column">
-            <h2>CSV-Dateien</h2>
-            <label class="field" for="csv-upload">
-              CSV-Datei hochladen
-              <input id="csv-upload" type="file" accept=".csv,text/csv" />
-            </label>
-            <div class="dataset-upload-actions">
-              <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
-              <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
-            </div>
-            <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
+          <section class="cardsets-upload-column">
+            <section class="card">
+              <h2>Vorhandene Listen</h2>
+              <p class="hint">Aus Supabase geladen. Hier kannst du vorhandene Listen einsehen und löschen.</p>
+              <div class="dataset-upload-actions">
+                <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
+              </div>
+              <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
+            </section>
+
+            <section class="card">
+              <h2>CSV-Dateien</h2>
+              <label class="field" for="csv-upload">
+                CSV-Datei hochladen
+                <input id="csv-upload" type="file" accept=".csv,text/csv" />
+              </label>
+              <div class="dataset-upload-actions">
+                <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
+              </div>
+            </section>
           </section>
 
           <section class="card cardsets-editor-column">
