@@ -417,7 +417,7 @@ body.fullscreen .board {
   left: 50%;
   top: calc(100% + 8px);
   transform: translate(-50%, -4px);
-  background: transparent;
+  background: color-mix(in srgb, var(--category-color, var(--panel)) 88%, white 12%);
   border: 1px solid color-mix(in srgb, var(--category-color, var(--border)) 66%, transparent);
   border-radius: 10px;
   padding: 6px 10px;
@@ -432,7 +432,7 @@ body.fullscreen .board {
 }
 
 .speedquiz-category-button:is(:hover, :focus-visible)::after {
-  opacity: 0.8;
+  opacity: 1;
   transform: translate(-50%, 0);
 }
 
