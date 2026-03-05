@@ -26,7 +26,7 @@ CSV-Uploads laufen im Frontend direkt über Supabase Storage in den Bucket `user
 Die Pfadkonvention ist:
 
 ```text
-${auth.uid()}/${safeFileName}
+${auth.uid()}/cardsets/${safeFileName}
 ```
 
 Die Datei wird beim Upload zusätzlich lokal im Browser geparst, sodass die Karten direkt als Dataset gespeichert werden können (`custom_datasets.cards`).
