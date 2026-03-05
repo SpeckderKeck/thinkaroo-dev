@@ -7,9 +7,9 @@ const loginActionButton = document.querySelector("#auth-login-action");
 const logoutActionButton = document.querySelector("#auth-logout-action");
 const authStatus = document.querySelector("#auth-status");
 
-function dispatchAuthMode(isLoggedIn) {
+function dispatchAuthMode(isLoggedIn, session = null) {
   window.THINKAROO_AUTH = { isLoggedIn };
-  window.dispatchEvent(new CustomEvent(AUTH_MODE_EVENT, { detail: { isLoggedIn, session: null } }));
+  window.dispatchEvent(new CustomEvent(AUTH_MODE_EVENT, { detail: { isLoggedIn, session } }));
 }
 
 function navigateToLogin() {
@@ -20,9 +20,11 @@ function navigateToLogin() {
   window.location.hash = "#/login";
 }
 
-function setAuthUi(session) {
+function setAuthUi(session, { emit = true } = {}) {
   const isLoggedIn = Boolean(session?.user?.email);
-  dispatchAuthMode(isLoggedIn);
+  if (emit) {
+    dispatchAuthMode(isLoggedIn, session ?? null);
+  }
 
   if (isLoggedIn) {
     loginActionButton?.setAttribute("hidden", "");
@@ -61,6 +63,6 @@ logoutActionButton?.addEventListener("click", async () => {
   }
 
   window.addEventListener(AUTH_MODE_EVENT, (event) => {
-    setAuthUi(event.detail?.session ?? null);
+    setAuthUi(event.detail?.session ?? null, { emit: false });
   });
 })();
