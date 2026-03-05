@@ -8,8 +8,7 @@ const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const LEGACY_DATA_FILE = path.join(DATA_DIR, 'custom-datasets.json');
 const DATASET_STORE_DIR = path.join(DATA_DIR, 'custom-datasets-store');
-const USER_CSV_BUCKET = String(process.env.USER_CSV_BUCKET || 'user-csv').trim() || 'user-csv';
-const USER_CSV_FOLDER = String(process.env.USER_CSV_FOLDER || 'cardsets').trim().replace(/^\/+|\/+$/g, '') || 'cardsets';
+const USER_CSV_BUCKET = 'cardsets';
 const MANIFEST_VERSION = 3;
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
@@ -242,7 +241,7 @@ async function supabaseStorageRequest(pathname, { method = 'GET', headers = {}, 
 
 
 async function listStoredCsvFiles(ownerId) {
-  const ownerPrefix = `${ownerId}/${USER_CSV_FOLDER}/`;
+  const ownerPrefix = `${ownerId}/`;
   const response = await supabaseStorageRequest(`/storage/v1/object/list/${encodeURIComponent(USER_CSV_BUCKET)}`, {
     method: 'POST',
     headers: {
@@ -268,9 +267,7 @@ async function listStoredCsvFiles(ownerId) {
       return name.endsWith('.csv');
     })
     .map((entry) => ({
-      name: String(entry.name || '').startsWith(`${USER_CSV_FOLDER}/`)
-        ? String(entry.name || '').slice(USER_CSV_FOLDER.length + 1)
-        : String(entry.name || ''),
+      name: String(entry.name || ''),
       size: Number(entry?.metadata?.size ?? 0),
       updatedAt: new Date(entry.updated_at || entry.last_accessed_at || Date.now()).toISOString(),
     }))
@@ -306,7 +303,7 @@ async function handleCsvFilesApi(req, res, url) {
 
     try {
       const response = await supabaseStorageRequest(
-        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(USER_CSV_FOLDER)}/${encodeURIComponent(safeName)}`,
+        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
         {
           method: 'GET',
           headers: { Accept: 'text/csv' },
@@ -360,7 +357,7 @@ async function handleCsvFilesApi(req, res, url) {
     }
 
     const uploadResponse = await supabaseStorageRequest(
-      `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(USER_CSV_FOLDER)}/${encodeURIComponent(safeName)}`,
+      `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
       {
         method: 'POST',
         headers: {
@@ -390,7 +387,7 @@ async function handleCsvFilesApi(req, res, url) {
 
     try {
       const response = await supabaseStorageRequest(
-        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(USER_CSV_FOLDER)}/${encodeURIComponent(safeName)}`,
+        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
         { method: 'DELETE' },
       );
       if (response.status === 404) {
