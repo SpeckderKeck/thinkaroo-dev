@@ -741,6 +741,10 @@ body.fullscreen .board {
   font-size: 0.9rem;
 }
 
+.hint.is-error {
+  color: var(--danger);
+}
+
 .team-list {
   display: grid;
   gap: 12px;
