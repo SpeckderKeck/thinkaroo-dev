@@ -689,16 +689,11 @@ body.fullscreen .board {
 }
 
 
-.category-toggle {
+.category-label {
   display: flex;
   align-items: center;
-  gap: 8px;
   color: var(--text);
   font-weight: 600;
-}
-
-.category-toggle input {
-  accent-color: var(--accent);
 }
 
 .category-time {
