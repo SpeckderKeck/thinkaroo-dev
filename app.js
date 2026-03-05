@@ -2724,11 +2724,10 @@ function renderBoardCategoryOptions() {
 }
 
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
-const USER_CSV_BUCKET = "user-csv";
-const USER_CSV_FOLDER = "cardsets";
+const USER_CSV_BUCKET = "cardsets";
 
 function getUserCsvFolderPath(userId) {
-  return `${userId}/${USER_CSV_FOLDER}`;
+  return `${userId}`;
 }
 
 function setCsvStatus(message, { isError = false } = {}) {
@@ -2738,20 +2737,20 @@ function setCsvStatus(message, { isError = false } = {}) {
 }
 
 async function getAuthenticatedSupabaseUser() {
-  if (!window.supabase?.auth?.getSession) {
+  if (!window.supabase?.auth?.getUser) {
     throw createAuthApiError("CSV-Zugriff fehlgeschlagen: Keine aktive Supabase-Session.", { shouldRedirect: true });
   }
 
   const {
-    data: { session },
-  } = await window.supabase.auth.getSession();
+    data: { user },
+  } = await window.supabase.auth.getUser();
 
-  const userId = session?.user?.id;
+  const userId = user?.id;
   if (!userId) {
     throw createAuthApiError("CSV-Zugriff fehlgeschlagen: Keine aktive Anmeldung gefunden.", { shouldRedirect: true });
   }
 
-  return { session, userId };
+  return { user, userId };
 }
 
 async function listStoredCsvFiles() {
