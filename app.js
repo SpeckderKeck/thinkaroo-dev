@@ -2512,7 +2512,9 @@ function applySelectedDatasets() {
       .map((key) => getDatasetEntryByKey(key)?.label)
       .filter(Boolean)
       .join(" + ");
-    csvStatus.textContent = `${labels}: ${state.cards.length} Karten.`;
+    if (csvStatus) {
+      csvStatus.textContent = `${labels}: ${state.cards.length} Karten.`;
+    }
   } else if (csvStatus?.textContent === "Bitte mindestens einen Kartensatz wählen.") {
     csvStatus.textContent = "";
   }
@@ -3258,14 +3260,7 @@ async function setup() {
   setupDatasetSelects();
   renderSpeedQuizDatasetOptions();
   renderSpeedQuizCategoryOptions();
-  refreshCsvDatasetOverwriteSelect("");
   applySelectedDatasets();
-  updateCsvDatasetActionState();
-  if (isLoggedIn) {
-    refreshPublicCsvList();
-  } else {
-    setStorageSelectOptions([]);
-  }
 }
 
 window.addEventListener("resize", () => {
@@ -3499,7 +3494,10 @@ turnPenalty?.addEventListener("animationend", () => {
   turnPenalty.classList.remove("show");
 });
 
-csvInfo.addEventListener("click", () => {
+csvInfo?.addEventListener("click", () => {
+  if (!csvTooltip) {
+    return;
+  }
   const isHidden = csvTooltip.getAttribute("aria-hidden") === "true";
   csvTooltip.setAttribute("aria-hidden", isHidden ? "false" : "true");
 });

@@ -235,55 +235,11 @@
             <div class="card">
               <div class="card-row">
               <h2>Kartensatz</h2>
-              <button class="info-button" id="csv-info" aria-label="CSV Info">i</button>
-            </div>
+                          </div>
               <div class="field">
                 Kartensatz auswählen
                 <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
                 <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
-              </div>
-              <div class="field" data-auth="full">
-                Kartenset aus Storage laden
-                <select id="storage-dataset-select" aria-label="Kartenset aus Storage laden">
-                  <option value="">Lade Kartensets ...</option>
-                </select>
-                <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
-              </div>
-              <label class="field upload" data-auth="full">
-                CSV Upload
-                <input id="csv-upload" type="file" accept=".csv,text/csv" />
-              </label>
-              <div class="field" data-auth="full">
-                <div class="dataset-upload-actions">
-                  <button id="csv-upload-button" class="ghost" type="button">Hochladen</button>
-                  <button id="csv-refresh-list" class="ghost" type="button">Dateiliste aktualisieren</button>
-                </div>
-              </div>
-              <button id="open-card-editor" class="ghost" type="button" data-auth="full">Karten bearbeiten</button>
-              <section id="my-datasets" data-auth="full" hidden>
-                <h2>Meine Datensätze</h2>
-                <div>
-                  <input id="csv-file" type="file" accept=".csv,text/csv" />
-                  <button id="upload-csv">CSV hochladen</button>
-                </div>
-                <ul id="my-datasets-list"></ul>
-              </section>
-
-              <section id="my-datasets-locked" data-auth="lite">
-                <button id="go-login">Eigene Datensätze verwalten</button>
-                <p>Um eigene Datensätze hochzuladen oder zu verwalten musst du dich anmelden.</p>
-              </section>
-              <p class="hint" data-auth="lite">Melde dich an, um eigene Kartensets zu laden oder zu verwalten.</p>
-              <p class="hint" id="csv-status" hidden data-auth="full">Lade Dateiliste ...</p>
-              <div class="tooltip" id="csv-tooltip" role="dialog" aria-hidden="true" data-auth="full">
-                <h3>CSV-Upload Hinweise</h3>
-                <ul>
-                  <li>Nur Dateien mit Endung .csv und maximal 1 MB werden akzeptiert.</li>
-                  <li>Dateinamen werden als UUID + Originalname gespeichert, damit nichts überschrieben wird.</li>
-                  <li>Alle hochgeladenen Dateien sind öffentlich sichtbar und herunterladbar.</li>
-                  <li>Der Karteneditor bleibt lokal für die Bearbeitung vorhandener Kartensätze nutzbar.</li>
-                  <li>Single-Choice CSV: <code>singlechoice;Frage;richtige Antwort;falsche Antwort 1;falsche Antwort 2;falsche Antwort 3</code></li>
-                </ul>
               </div>
             </div>
           </div>
