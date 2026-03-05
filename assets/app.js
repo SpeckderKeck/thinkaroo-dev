@@ -20,8 +20,16 @@ function navigateToLogin() {
   window.location.hash = "#/login";
 }
 
+function navigateToSettings() {
+  if (window.thinkarooRouter?.setRoute) {
+    window.thinkarooRouter.setRoute("#/settings-board");
+    return;
+  }
+  window.location.hash = "#/settings-board";
+}
+
 function setAuthUi(session, { emit = true } = {}) {
-  const isLoggedIn = Boolean(session?.user?.email);
+  const isLoggedIn = Boolean(session?.user);
   if (emit) {
     dispatchAuthMode(isLoggedIn, session ?? null);
   }
@@ -46,7 +54,7 @@ logoutActionButton?.addEventListener("click", async () => {
   try {
     await logout();
     setAuthUi(null);
-    navigateToLogin();
+    navigateToSettings();
   } catch (error) {
     console.error(error);
     alert(error.message);
