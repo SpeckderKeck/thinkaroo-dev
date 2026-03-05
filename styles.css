@@ -328,6 +328,25 @@ body.fullscreen .board {
   transform: translate(-50%, 0);
 }
 
+
+.settings-mode-card .mode-selection__options {
+  position: static;
+  transform: none;
+  top: auto;
+  left: auto;
+  justify-content: flex-start;
+  gap: clamp(12px, 2vw, 18px);
+}
+
+.settings-mode-card .mode-option__button {
+  width: clamp(92px, 10vw, 132px);
+}
+
+.settings-mode-card .mode-option__button[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 65%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 28%, transparent);
+  filter: brightness(1.04);
+}
 @keyframes mode-float {
   0%,
   100% {

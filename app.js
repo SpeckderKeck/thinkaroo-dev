@@ -10,8 +10,6 @@ const speedQuizTeamListContainer = document.getElementById("speedquiz-team-list"
 const startButton = document.getElementById("start-game");
 const landingPanel = document.getElementById("screen-landing");
 const menuPanel = document.getElementById("screen-settings-board");
-const modeSelectionPanel = document.getElementById("screen-select");
-const speedQuizMenuPanel = document.getElementById("screen-settings-speedquiz");
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
 const boardCategoriesContainer = document.getElementById("board-categories");
@@ -19,6 +17,8 @@ const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
 const gamePanel = document.getElementById("screen-game-board");
 const loginPanel = document.getElementById("screen-login");
 const speedQuizStartButton = document.getElementById("start-speedquiz-game");
+const modeSpeedQuizButton = document.getElementById("mode-speedquiz");
+const modeBoardButton = document.getElementById("mode-board");
 const board = document.getElementById("board");
 const rollButton = document.getElementById("roll");
 const diceOverlay = document.getElementById("dice-overlay");
@@ -278,8 +278,6 @@ function setPanelState(panel, isActive) {
 
 const screenPanels = {
   "#/landing": landingPanel,
-  "#/select": modeSelectionPanel,
-  "#/settings-speedquiz": speedQuizMenuPanel,
   "#/settings-board": menuPanel,
   "#/game-speedquiz": speedQuizGamePanel,
   "#/game-board": gamePanel,
@@ -301,7 +299,7 @@ function setRoute(hash) {
   });
   document.body.classList.toggle("game-active", nextHash === "#/game-board" || nextHash === "#/game-speedquiz");
   const settingsBackLink = document.getElementById("settings-back-topbar");
-  const showSettingsBackLink = nextHash === "#/settings-board" || nextHash === "#/settings-speedquiz";
+  const showSettingsBackLink = nextHash === "#/settings-board";
   if (settingsBackLink) {
     settingsBackLink.hidden = !showSettingsBackLink;
   }
@@ -311,16 +309,21 @@ function showMenuPanel() {
   setRoute("#/settings-board");
 }
 
-function showModeSelectionPanel() {
-  setRoute("#/select");
-}
-
-function showSpeedQuizMenuPanel() {
-  setRoute("#/settings-speedquiz");
-}
-
 function showGamePanel() {
   setRoute("#/game-board");
+}
+
+
+let selectedSettingsMode = "board";
+
+function applySettingsMode(mode) {
+  selectedSettingsMode = mode === "speedquiz" ? "speedquiz" : "board";
+  document.querySelectorAll("[data-settings-mode]").forEach((element) => {
+    const shouldShow = element.dataset.settingsMode === selectedSettingsMode;
+    element.classList.toggle("hidden", !shouldShow);
+  });
+  modeBoardButton?.setAttribute("aria-pressed", String(selectedSettingsMode === "board"));
+  modeSpeedQuizButton?.setAttribute("aria-pressed", String(selectedSettingsMode === "speedquiz"));
 }
 
 const CATEGORY_CONFIG = {
@@ -3369,6 +3372,17 @@ boardSizeSelect?.addEventListener("change", () => {
   syncBoardSizeControls(selectedBoardSize);
   applyBoardSize(selectedBoardSize);
 });
+
+modeBoardButton?.addEventListener("click", () => {
+  applySettingsMode("board");
+  updateMainMenuRequiredSelectionState();
+});
+
+modeSpeedQuizButton?.addEventListener("click", () => {
+  applySettingsMode("speedquiz");
+});
+
+applySettingsMode(selectedSettingsMode);
 
 if (!window.location.hash) {
   setRoute("#/landing");
