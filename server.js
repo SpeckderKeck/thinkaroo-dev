@@ -8,7 +8,7 @@ const ROOT_DIR = __dirname;
 const DATA_DIR = path.join(ROOT_DIR, 'data');
 const LEGACY_DATA_FILE = path.join(DATA_DIR, 'custom-datasets.json');
 const DATASET_STORE_DIR = path.join(DATA_DIR, 'custom-datasets-store');
-const CSV_STORE_DIR = path.join(DATA_DIR, 'csv-store');
+const USER_CSV_BUCKET = String(process.env.USER_CSV_BUCKET || 'user-csv').trim() || 'user-csv';
 const MANIFEST_VERSION = 3;
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
 const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
@@ -36,7 +36,7 @@ const MIME_TYPES = {
 function setCorsHeaders(res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PATCH,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, X-Owner-Id, X-User-Id');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept, Authorization, X-Owner-Id, X-User-Id');
 }
 
 function sendJson(res, status, payload) {
@@ -160,7 +160,6 @@ async function authenticateApiRequest(req, res) {
 async function ensureStorageInitialized() {
   await fs.mkdir(DATA_DIR, { recursive: true });
   await fs.mkdir(DATASET_STORE_DIR, { recursive: true });
-  await fs.mkdir(CSV_STORE_DIR, { recursive: true });
 
 
   try {
@@ -220,54 +219,58 @@ function sanitizeCsvFileName(name) {
   return sanitized.toLowerCase().endsWith('.csv') ? sanitized : `${sanitized}.csv`;
 }
 
-function sanitizeOwnerId(ownerId) {
-  const raw = String(ownerId ?? '').trim();
-  if (!raw) return '';
-  const sanitized = raw.replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!sanitized || sanitized !== raw) return '';
-  return sanitized;
+function requireSupabaseStorageConfig() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('missing_supabase_storage_config');
+  }
 }
 
-function getOwnerIdFromRequest(req) {
-  const ownerHeader = req.headers['x-owner-id'] ?? req.headers['x-user-id'] ?? '';
-  const ownerId = Array.isArray(ownerHeader) ? ownerHeader[0] : ownerHeader;
-  return sanitizeOwnerId(ownerId);
+async function supabaseStorageRequest(pathname, { method = 'GET', headers = {}, body } = {}) {
+  requireSupabaseStorageConfig();
+  const response = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}${pathname}`, {
+    method,
+    headers: {
+      apikey: SUPABASE_SERVICE_ROLE_KEY,
+      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      ...headers,
+    },
+    body,
+  });
+  return response;
 }
 
-function toOwnerCsvStoreDir(ownerId) {
-  return path.join(CSV_STORE_DIR, ownerId);
-}
-
-function toCsvFilePath(ownerId, fileName) {
-  return path.join(toOwnerCsvStoreDir(ownerId), fileName);
-}
 
 async function listStoredCsvFiles(ownerId) {
-  await ensureStorageInitialized();
-  const ownerDir = toOwnerCsvStoreDir(ownerId);
-  let entries = [];
-  try {
-    entries = await fs.readdir(ownerDir, { withFileTypes: true });
-  } catch (error) {
-    if (error && error.code === 'ENOENT') {
-      return [];
-    }
-    throw error;
-  }
-  const csvFiles = [];
+  const response = await supabaseStorageRequest(`/storage/v1/object/list/${encodeURIComponent(USER_CSV_BUCKET)}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({
+      prefix: `${ownerId}/`,
+      limit: 100,
+      offset: 0,
+      sortBy: { column: 'updated_at', order: 'desc' },
+    }),
+  });
 
-  for (const entry of entries) {
-    if (!entry.isFile()) continue;
-    if (!entry.name.toLowerCase().endsWith('.csv')) continue;
-    const stat = await fs.stat(toCsvFilePath(ownerId, entry.name));
-    csvFiles.push({
-      name: entry.name,
-      size: stat.size,
-      updatedAt: stat.mtime.toISOString(),
-    });
+  if (!response.ok) {
+    throw new Error(`supabase_storage_list_error_${response.status}`);
   }
 
-  return csvFiles.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  const entries = await response.json();
+  return (Array.isArray(entries) ? entries : [])
+    .filter((entry) => {
+      const name = String(entry?.name || '').toLowerCase();
+      return name.endsWith('.csv');
+    })
+    .map((entry) => ({
+      name: String(entry.name || ''),
+      size: Number(entry?.metadata?.size ?? 0),
+      updatedAt: new Date(entry.updated_at || entry.last_accessed_at || Date.now()).toISOString(),
+    }))
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 }
 
 async function handleCsvFilesApi(req, res, url) {
@@ -278,11 +281,9 @@ async function handleCsvFilesApi(req, res, url) {
     return;
   }
 
-  await ensureStorageInitialized();
-  const ownerId = getOwnerIdFromRequest(req);
-  if (!ownerId) {
-    return sendJson(res, 401, { error: 'unauthorized' });
-  }
+  const authUser = await authenticateApiRequest(req, res);
+  if (!authUser) return;
+  const ownerId = authUser.id;
 
   const listPathMatch = url.pathname === '/csv-files';
   const itemPathMatch = url.pathname.match(/^\/csv-files\/([^/]+)$/);
@@ -299,9 +300,23 @@ async function handleCsvFilesApi(req, res, url) {
       return sendJson(res, 400, { error: 'invalid_filename' });
     }
 
-    const csvPath = toCsvFilePath(ownerId, safeName);
     try {
-      const content = await fs.readFile(csvPath, 'utf8');
+      const response = await supabaseStorageRequest(
+        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
+        {
+          method: 'GET',
+          headers: { Accept: 'text/csv' },
+        },
+      );
+
+      if (response.status === 404) {
+        return sendJson(res, 404, { error: 'not_found' });
+      }
+      if (!response.ok) {
+        throw new Error(`supabase_storage_download_error_${response.status}`);
+      }
+
+      const content = await response.text();
       setCorsHeaders(res);
       res.writeHead(200, {
         'Content-Type': 'text/csv; charset=utf-8',
@@ -309,8 +324,11 @@ async function handleCsvFilesApi(req, res, url) {
       });
       res.end(content);
       return;
-    } catch {
-      return sendJson(res, 404, { error: 'not_found' });
+    } catch (error) {
+      if (String(error?.message || '').includes('missing_supabase_storage_config')) {
+        return sendJson(res, 500, { error: 'storage_unavailable' });
+      }
+      throw error;
     }
   }
 
@@ -337,14 +355,27 @@ async function handleCsvFilesApi(req, res, url) {
       return sendJson(res, 413, { error: 'file_too_large', maxSizeBytes: CSV_MAX_SIZE_BYTES });
     }
 
-    await fs.mkdir(toOwnerCsvStoreDir(ownerId), { recursive: true });
-    await fs.writeFile(toCsvFilePath(ownerId, safeName), content, 'utf8');
-    const stat = await fs.stat(toCsvFilePath(ownerId, safeName));
-    return sendJson(res, 201, {
-      name: safeName,
-      size: stat.size,
-      updatedAt: stat.mtime.toISOString(),
-    });
+    const uploadResponse = await supabaseStorageRequest(
+      `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'x-upsert': 'true',
+        },
+        body: content,
+      },
+    );
+
+    if (!uploadResponse.ok) {
+      const errorText = await uploadResponse.text();
+      return sendJson(res, 502, {
+        error: 'storage_upload_failed',
+        details: errorText.slice(0, 300),
+      });
+    }
+
+    return sendJson(res, 201, { name: safeName, size: byteSize, updatedAt: new Date().toISOString() });
   }
 
   if (req.method === 'DELETE' && itemPathMatch) {
@@ -353,13 +384,21 @@ async function handleCsvFilesApi(req, res, url) {
       return sendJson(res, 400, { error: 'invalid_filename' });
     }
 
-    const csvPath = toCsvFilePath(ownerId, safeName);
     try {
-      await fs.rm(csvPath, { force: false });
+      const response = await supabaseStorageRequest(
+        `/storage/v1/object/${encodeURIComponent(USER_CSV_BUCKET)}/${encodeURIComponent(ownerId)}/${encodeURIComponent(safeName)}`,
+        { method: 'DELETE' },
+      );
+      if (response.status === 404) {
+        return sendJson(res, 404, { error: 'not_found' });
+      }
+      if (!response.ok) {
+        throw new Error(`supabase_storage_delete_error_${response.status}`);
+      }
       return sendJson(res, 200, { ok: true, name: safeName });
     } catch (error) {
-      if (error && error.code === 'ENOENT') {
-        return sendJson(res, 404, { error: 'not_found' });
+      if (String(error?.message || '').includes('missing_supabase_storage_config')) {
+        return sendJson(res, 500, { error: 'storage_unavailable' });
       }
       throw error;
     }
