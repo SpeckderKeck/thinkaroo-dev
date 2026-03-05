@@ -389,7 +389,7 @@ body.fullscreen .board {
 #board-categories {
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: start;
   justify-items: center;
@@ -469,7 +469,8 @@ body.fullscreen .board {
 }
 
 #menu > *:not(.menu-background),
-#screen-settings-board > *:not(.menu-background) {
+#screen-settings-board > *:not(.menu-background),
+#screen-advancedsettings > *:not(.menu-background) {
   position: relative;
   z-index: 1;
 }
@@ -489,7 +490,8 @@ body.fullscreen .board {
 }
 
 #menu .card h2,
-#screen-settings-board .card h2 {
+#screen-settings-board .card h2,
+#screen-advancedsettings .card h2 {
   font-size: clamp(1.05rem, 1.1vw + 0.65rem, 1.5rem);
 }
 
@@ -506,13 +508,71 @@ body.fullscreen .board {
 #screen-settings-board label,
 #screen-settings-board input,
 #screen-settings-board select,
-#screen-settings-board button {
+#screen-settings-board button,
+#screen-advancedsettings .field,
+#screen-advancedsettings .hint,
+#screen-advancedsettings .team-name,
+#screen-advancedsettings label,
+#screen-advancedsettings input,
+#screen-advancedsettings select,
+#screen-advancedsettings button {
   font-size: clamp(0.82rem, 0.45vw + 0.6rem, 1rem);
 }
 
 #menu .team-row,
 #screen-settings-board .team-row {
   padding: clamp(8px, 1.2vh, 12px);
+}
+
+.advanced-settings-shell {
+  position: relative;
+  width: min(980px, 100%);
+  margin-inline: auto;
+}
+
+.advanced-settings-card {
+  display: grid;
+  gap: 16px;
+  backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--panel) 84%, white 16%);
+  border: 1px solid color-mix(in srgb, var(--card-quizfrage) 28%, var(--border));
+  box-shadow: 0 24px 50px color-mix(in srgb, var(--color-bg) 55%, transparent);
+}
+
+.advanced-settings-header {
+  align-items: center;
+}
+
+.advanced-settings-floating {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(2px);
+  opacity: 0.7;
+  pointer-events: none;
+  animation: floating-orb 8s ease-in-out infinite;
+}
+
+.advanced-settings-floating--one {
+  width: clamp(120px, 18vw, 220px);
+  height: clamp(120px, 18vw, 220px);
+  left: -50px;
+  top: -30px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--card-zeichnen) 72%, transparent) 0%, transparent 70%);
+}
+
+.advanced-settings-floating--two {
+  width: clamp(100px, 16vw, 180px);
+  height: clamp(100px, 16vw, 180px);
+  right: -30px;
+  bottom: -20px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--card-pantomime) 62%, transparent) 0%, transparent 70%);
+  animation-delay: 1.6s;
+}
+
+@keyframes floating-orb {
+  0%,
+  100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -10px, 0); }
 }
 
 .card--teams {
@@ -708,7 +768,7 @@ body.fullscreen .board {
 
 .dataset-upload-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 

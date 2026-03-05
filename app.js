@@ -10,6 +10,7 @@ const speedQuizTeamListContainer = document.getElementById("speedquiz-team-list"
 const startButton = document.getElementById("start-game");
 const landingPanel = document.getElementById("screen-landing");
 const menuPanel = document.getElementById("screen-settings-board");
+const advancedSettingsPanel = document.getElementById("screen-advancedsettings");
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
 const boardCategoriesContainer = document.getElementById("board-categories");
@@ -228,6 +229,7 @@ function attachMenuBackground(menuElement) {
 }
 
 attachMenuBackground(menuPanel);
+attachMenuBackground(advancedSettingsPanel);
 
 function setStatusMessage(message, { pulseDice = false } = {}) {
   if (statusText) {
@@ -281,6 +283,7 @@ function setPanelState(panel, isActive) {
 const screenPanels = {
   "#/landing": landingPanel,
   "#/settings-board": menuPanel,
+  "#/advancedsettings": advancedSettingsPanel,
   "#/game-speedquiz": speedQuizGamePanel,
   "#/game-board": gamePanel,
   "#/login": loginPanel,
@@ -290,6 +293,9 @@ const screenPanels = {
 function normalizeRouteHash(hash) {
   if (hash === "#/select" || hash === "#/settings-speedquiz") {
     return "#/settings-board";
+  }
+  if (hash === "/advancedsettings") {
+    return "#/advancedsettings";
   }
   return Object.hasOwn(screenPanels, hash) ? hash : "#/landing";
 }
@@ -3489,7 +3495,7 @@ modeSpeedQuizButton?.addEventListener("click", () => {
 applySettingsMode(selectedSettingsMode);
 
 if (!window.location.hash) {
-  setRoute(window.location.pathname === "/cardsets" ? "#/cardsets" : "#/landing");
+  setRoute(window.location.pathname === "/cardsets" ? "#/cardsets" : window.location.pathname === "/advancedsettings" ? "#/advancedsettings" : "#/landing");
 } else {
   setRoute(window.location.hash);
 }

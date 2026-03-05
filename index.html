@@ -117,16 +117,6 @@
               <div id="speedquiz-team-list" class="team-list"></div>
             </div>
 
-            <div class="card" data-settings-mode="board">
-              <h2>Spiellänge</h2>
-              <label class="field">
-                <select id="board-size-select">
-                  <option value="short">Kurzes Spiel · 24 Felder (6 × 4)</option>
-                  <option value="normal" selected>Normales Spiel · 30 Felder (6 × 5)</option>
-                  <option value="long">Langes Spiel · 42 Felder (7 × 6)</option>
-                </select>
-              </label>
-            </div>
           </div>
 
           <div class="card" id="menu-settings-card" data-settings-mode="board">
@@ -134,14 +124,12 @@
             <div class="field-group speedquiz-menu__categories board-menu__categories">
               <div id="board-categories" aria-label="Kategorien auswählen"></div>
             </div>
-            <label class="field">
-              Strafzeit beim Tauschen
-              <select id="swap-select">
-                <option value="5">5s</option>
-                <option value="10" selected>10s</option>
-                <option value="15">15s</option>
-              </select>
-            </label>
+          </div>
+
+          <div class="card" data-settings-mode="board">
+            <h2>Erweiterte Einstellungen</h2>
+            <p class="hint">Hier kannst du Spiellänge, Zeit pro Kategorie und Strafzeit anpassen.</p>
+            <button class="primary" type="button" data-route="/advancedsettings">Erweiterte Einstellungen öffnen</button>
           </div>
 
           <div class="card hidden" data-settings-mode="speedquiz">
@@ -188,6 +176,98 @@
           <button id="start-game" class="primary menu-start-button" data-settings-mode="board">Spiel starten</button>
           <button id="start-speedquiz-game" class="primary menu-start-button hidden" type="button" data-settings-mode="speedquiz">Spiel starten</button>
         </footer>
+      </section>
+
+      <section id="screen-advancedsettings" class="panel" aria-label="Erweiterte Spieleinstellungen" aria-hidden="true" hidden>
+        <div class="advanced-settings-shell">
+          <div class="advanced-settings-floating advanced-settings-floating--one" aria-hidden="true"></div>
+          <div class="advanced-settings-floating advanced-settings-floating--two" aria-hidden="true"></div>
+          <div class="card advanced-settings-card">
+            <div class="card-row advanced-settings-header">
+              <h1>Erweiterte Einstellungen</h1>
+              <button class="ghost" type="button" data-route="#/settings-board">Zurück</button>
+            </div>
+            <div class="field-group category-settings">
+              <p>Kategorien & Zeit pro Kategorie</p>
+              <div class="category-settings-head" aria-hidden="true">
+                <span>Kategorie</span>
+                <span>Zeit pro Runde</span>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-explain" value="Erklären" checked />
+                  Erklären
+                </label>
+                <div class="category-time">
+                  <select id="time-explain" aria-label="Zeit pro Runde für Erklären"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-draw" value="Zeichnen" checked />
+                  Zeichnen
+                </label>
+                <div class="category-time">
+                  <select id="time-draw" aria-label="Zeit pro Runde für Zeichnen"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-pantomime" value="Pantomime" checked />
+                  Pantomime
+                </label>
+                <div class="category-time">
+                  <select id="time-pantomime" aria-label="Zeit pro Runde für Pantomime"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-quiz" value="Quizfrage" checked />
+                  Quizfrage
+                </label>
+                <div class="category-time">
+                  <select id="time-quiz" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-vocab" value="Vokabel" checked />
+                  Vokabel
+                </label>
+                <div class="category-time">
+                  <select id="time-vocab" aria-label="Zeit pro Runde für Vokabel"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-singlechoice" value="Single-Choice" checked />
+                  Single-Choice
+                </label>
+                <div class="category-time">
+                  <select id="time-singlechoice" aria-label="Zeit pro Runde für Single-Choice"></select>
+                </div>
+              </div>
+            </div>
+
+            <label class="field">
+              Spiellänge
+              <select id="board-size-select">
+                <option value="short">Kurzes Spiel · 24 Felder (6 × 4)</option>
+                <option value="normal" selected>Normales Spiel · 30 Felder (6 × 5)</option>
+                <option value="long">Langes Spiel · 42 Felder (7 × 6)</option>
+              </select>
+            </label>
+
+            <label class="field">
+              Strafzeit beim Tauschen
+              <select id="swap-select">
+                <option value="5">5s</option>
+                <option value="10" selected>10s</option>
+                <option value="15">15s</option>
+              </select>
+            </label>
+          </div>
+        </div>
       </section>
 
       
