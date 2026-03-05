@@ -84,6 +84,7 @@ const qrToggle = document.getElementById("qr-toggle");
 const qrModal = document.getElementById("qr-modal");
 const qrImage = document.getElementById("qr-image");
 const closeQrModalButton = document.getElementById("close-qr-modal");
+const fullAccessElements = [...document.querySelectorAll('[data-auth="full"]')];
 
 const GAME_PHASES = {
   IDLE: "idle",
@@ -573,6 +574,10 @@ function clearRestrictedDatasetSelections() {
 }
 
 function applyDatasetAuthMode() {
+  fullAccessElements.forEach((element) => {
+    element.hidden = !isLoggedIn;
+  });
+
   if (!isLoggedIn) {
     state.customDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
     state.storageDatasets = {};
