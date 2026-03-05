@@ -2665,6 +2665,11 @@ function renderSpeedQuizCategoryOptions() {
 
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
 const USER_CSV_BUCKET = "user-csv";
+const USER_CSV_FOLDER = "cardsets";
+
+function getUserCsvFolderPath(userId) {
+  return `${userId}/${USER_CSV_FOLDER}`;
+}
 
 function setCsvStatus(message, { isError = false } = {}) {
   if (!csvStatus) return;
@@ -2691,9 +2696,10 @@ async function getAuthenticatedSupabaseUser() {
 
 async function listStoredCsvFiles() {
   const { userId } = await getAuthenticatedSupabaseUser();
+  const folderPath = getUserCsvFolderPath(userId);
   const { data, error } = await window.supabase.storage
     .from(USER_CSV_BUCKET)
-    .list(userId, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
+    .list(folderPath, { limit: 100, sortBy: { column: "updated_at", order: "desc" } });
 
   if (error) {
     throw new Error(`Dateiliste konnte nicht geladen werden (${error.message}).`);
@@ -2711,7 +2717,7 @@ async function listStoredCsvFiles() {
 
 async function downloadStoredCsvFile(objectName) {
   const { userId } = await getAuthenticatedSupabaseUser();
-  const filePath = `${userId}/${objectName}`;
+  const filePath = `${getUserCsvFolderPath(userId)}/${objectName}`;
   const { data, error } = await window.supabase.storage.from(USER_CSV_BUCKET).download(filePath);
   if (error) {
     throw new Error(`CSV-Abruf fehlgeschlagen (${error.message}).`);
@@ -2721,7 +2727,7 @@ async function downloadStoredCsvFile(objectName) {
 
 async function uploadCsvFileToStorage(file, uploadName) {
   const { userId } = await getAuthenticatedSupabaseUser();
-  const filePath = `${userId}/${uploadName}`;
+  const filePath = `${getUserCsvFolderPath(userId)}/${uploadName}`;
   const { data, error } = await window.supabase.storage.from(USER_CSV_BUCKET).upload(filePath, file, {
     upsert: true,
     contentType: "text/csv; charset=utf-8",
