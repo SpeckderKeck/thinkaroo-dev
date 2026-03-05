@@ -369,6 +369,22 @@ body.fullscreen .board {
   justify-items: center;
 }
 
+
+#board-categories {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+  justify-items: center;
+}
+
+#board-categories.selection-invalid {
+  outline: 2px solid #dc2626;
+  border-radius: 12px;
+  padding: 8px;
+}
+
 .speedquiz-category-button {
   width: clamp(62px, 7vw, 88px);
   aspect-ratio: 1;

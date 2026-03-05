@@ -14,6 +14,7 @@ const modeSelectionPanel = document.getElementById("screen-select");
 const speedQuizMenuPanel = document.getElementById("screen-settings-speedquiz");
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
+const boardCategoriesContainer = document.getElementById("board-categories");
 const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
 const gamePanel = document.getElementById("screen-game-board");
 const loginPanel = document.getElementById("screen-login");
@@ -418,7 +419,7 @@ const menuCategoryControls = Object.entries(CATEGORY_CONFIG).map(([category, con
   category,
   checkbox: document.getElementById(`category-${config.id}`),
   timeSelect: document.getElementById(`time-${config.id}`),
-}));
+})).filter((control) => control.checkbox && control.timeSelect);
 
 const gameCategoryControls = Object.entries(CATEGORY_CONFIG).map(([category, config]) => ({
   category,
@@ -1031,6 +1032,7 @@ function refreshDatasetSelections() {
 
 
 function populateTimeSelect(selectEl, defaultValue = 60) {
+  if (!selectEl) return;
   for (let i = 10; i <= 120; i += 10) {
     const option = document.createElement("option");
     option.value = i;
@@ -1060,16 +1062,22 @@ function setCategorySelectionInvalidState(controls, isInvalid) {
 function updateMainMenuRequiredSelectionState() {
   const selectedDatasetKeys = readSelectedDatasetKeys();
   const hasSelectedDatasets = selectedDatasetKeys.length > 0;
-  const selectedCategories = getSelectedCategories(menuCategoryControls);
+  const selectedCategories = state.categories.filter((category) => ALLOWED_CARD_CATEGORIES.includes(category));
   const hasSelectedCategories = selectedCategories.length > 0;
 
   setDatasetSelectionInvalidState(!hasSelectedDatasets);
-  setCategorySelectionInvalidState(menuCategoryControls, !hasSelectedCategories);
+  if (menuCategoryControls.length > 0) {
+    setCategorySelectionInvalidState(menuCategoryControls, !hasSelectedCategories);
+  }
+  boardCategoriesContainer?.classList.toggle("selection-invalid", !hasSelectedCategories);
 
   return hasSelectedDatasets && hasSelectedCategories;
 }
 
 function readCategoryTimes(controls) {
+  if (controls.length === 0) {
+    return Object.fromEntries(ALLOWED_CARD_CATEGORIES.map((category) => [category, 60]));
+  }
   return controls.reduce((times, control) => {
     times[control.category] = Number.parseInt(control.timeSelect.value, 10);
     return times;
@@ -1079,10 +1087,11 @@ function readCategoryTimes(controls) {
 function syncCategoryControls(controls, selectedCategories, categoryTimes) {
   controls.forEach((control) => {
     control.checkbox.checked = selectedCategories.includes(control.category);
-    if (categoryTimes[control.category]) {
+    if (categoryTimes[control.category] && control.timeSelect) {
       control.timeSelect.value = categoryTimes[control.category];
     }
   });
+  renderBoardCategoryOptions();
 }
 
 function renderTeamRows(container, count) {
@@ -1828,7 +1837,7 @@ function handleStartGame() {
 
   applySelectedDatasets();
 
-  const selectedCategories = getSelectedCategories(menuCategoryControls);
+  const selectedCategories = state.categories.filter((category) => ALLOWED_CARD_CATEGORIES.includes(category));
   const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
   syncBoardSizeControls(selectedBoardSize);
   state.categories = selectedCategories;
@@ -2665,6 +2674,43 @@ function renderSpeedQuizCategoryOptions() {
   });
 }
 
+function renderBoardCategoryOptions() {
+  if (!boardCategoriesContainer) return;
+
+  boardCategoriesContainer.innerHTML = "";
+
+  ALLOWED_CARD_CATEGORIES.forEach((category) => {
+    const categoryButton = document.createElement("button");
+    const isSelected = state.categories.includes(category);
+    const visuals = CATEGORY_VISUALS[category];
+    categoryButton.type = "button";
+    categoryButton.className = "speedquiz-category-button";
+    categoryButton.dataset.categoryLabel = category;
+    categoryButton.setAttribute("aria-label", category);
+    categoryButton.setAttribute("aria-pressed", String(isSelected));
+    categoryButton.classList.toggle("is-selected", isSelected);
+    categoryButton.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
+
+    const icon = document.createElement("span");
+    icon.className = "category-icon";
+    applyCategoryIcon(icon, category, { allowFallback: true });
+    categoryButton.append(icon);
+
+    categoryButton.addEventListener("click", () => {
+      const selectedCategories = state.categories.includes(category)
+        ? state.categories.filter((item) => item !== category)
+        : [...state.categories, category];
+      state.categories = selectedCategories.length > 0
+        ? selectedCategories
+        : [...ALLOWED_CARD_CATEGORIES];
+      renderBoardCategoryOptions();
+      updateMainMenuRequiredSelectionState();
+    });
+
+    boardCategoriesContainer.append(categoryButton);
+  });
+}
+
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
 const USER_CSV_BUCKET = "user-csv";
 const USER_CSV_FOLDER = "cardsets";
@@ -3246,7 +3292,6 @@ async function setup() {
   } else {
     state.customDatasets = filterCustomDatasetsForAuthMode(readCustomDatasetsFromStorage());
   }
-  menuCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   gameCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   syncTeamCountControls(teamCountInput.value);
   const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
@@ -3260,6 +3305,7 @@ async function setup() {
   setupDatasetSelects();
   renderSpeedQuizDatasetOptions();
   renderSpeedQuizCategoryOptions();
+  renderBoardCategoryOptions();
   applySelectedDatasets();
 }
 
