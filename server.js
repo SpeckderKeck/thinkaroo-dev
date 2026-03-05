@@ -720,7 +720,8 @@ async function handleDatasetsApi(req, res, url) {
 
 async function serveStatic(req, res) {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const requestPath = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
+  const isAppPath = url.pathname === '/' || url.pathname === '/cardsets';
+  const requestPath = decodeURIComponent(isAppPath ? '/index.html' : url.pathname);
   const filePath = path.join(ROOT_DIR, requestPath);
   const normalizedPath = path.normalize(filePath);
 
