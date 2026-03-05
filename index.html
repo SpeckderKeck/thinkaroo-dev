@@ -126,10 +126,8 @@
             </div>
           </div>
 
-          <div class="card" data-settings-mode="board">
-            <h2>Erweiterte Einstellungen</h2>
-            <p class="hint">Hier kannst du Spiellänge, Zeit pro Kategorie und Strafzeit anpassen.</p>
-            <button class="primary" type="button" data-route="/advancedsettings">Erweiterte Einstellungen öffnen</button>
+          <div data-settings-mode="board">
+            <button class="primary" type="button" data-route="/advancedsettings">Erweiterte Einstellungen</button>
           </div>
 
           <div class="card hidden" data-settings-mode="speedquiz">
@@ -149,16 +147,7 @@
                 <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
                 <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
               </div>
-            </div>
-
-            <div id="csv-management-card" class="card" data-auth="full" >
-              <h2>Eigene Kartensätze</h2>
-              <label class="field" for="storage-dataset-select">
-                Kartensatz auswählen
-                <select id="storage-dataset-select" aria-label="Kartensatz auswählen"></select>
-              </label>
               <button class="primary" type="button" data-route="#/cardsets">Kartensätze bearbeiten</button>
-              <p id="csv-status" class="hint" aria-live="polite"></p>
             </div>
           </div>
 
@@ -321,6 +310,9 @@
               <div class="dataset-upload-actions">
                 <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
               </div>
+              <label class="visually-hidden" for="storage-dataset-select">Kartensatz auswählen</label>
+              <select id="storage-dataset-select" aria-label="Kartensatz auswählen" hidden></select>
+              <p id="csv-status" class="hint" aria-live="polite"></p>
               <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
             </section>
 
