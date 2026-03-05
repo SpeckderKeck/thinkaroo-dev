@@ -232,10 +232,7 @@ body.fullscreen .board {
   isolation: isolate;
 }
 
-#mode-selection.panel--active,
-#speedquiz-menu.panel--active,
-#screen-select.panel--active,
-#screen-settings-speedquiz.panel--active {
+#screen-settings-board.panel--active {
   min-height: calc(100dvh - var(--header-height) - clamp(32px, 5vh, 72px));
 }
 

@@ -288,6 +288,9 @@ const screenPanels = {
 };
 
 function normalizeRouteHash(hash) {
+  if (hash === "#/select" || hash === "#/settings-speedquiz") {
+    return "#/settings-board";
+  }
   return Object.hasOwn(screenPanels, hash) ? hash : "#/landing";
 }
 
@@ -333,10 +336,6 @@ function applySettingsMode(mode) {
   });
   modeBoardButton?.setAttribute("aria-pressed", String(selectedSettingsMode === "board"));
   modeSpeedQuizButton?.setAttribute("aria-pressed", String(selectedSettingsMode === "speedquiz"));
-}
-
-function showCardsetsPanel() {
-  setRoute("#/cardsets");
 }
 
 const CATEGORY_CONFIG = {
