@@ -185,6 +185,45 @@
                 <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
               </div>
             </div>
+
+            <div id="csv-management-card" class="card" data-auth="full" hidden>
+              <h2>Eigene Kartensätze</h2>
+              <label class="field" for="csv-upload">
+                CSV-Datei hochladen
+                <input id="csv-upload" type="file" accept=".csv,text/csv" />
+              </label>
+              <div class="dataset-upload-actions">
+                <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
+                <button id="csv-refresh-list" class="ghost" type="button">Liste aktualisieren</button>
+              </div>
+
+              <label class="field" for="storage-dataset-select">
+                Hochgeladene Kartensätze laden
+                <select id="storage-dataset-select" aria-label="Kartenset aus Storage auswählen"></select>
+              </label>
+              <div id="storage-dataset-list" class="storage-dataset-list" aria-live="polite"></div>
+
+              <div class="card-row">
+                <h3>Datensatz verwalten</h3>
+                <button id="csv-info" class="info-button" type="button" aria-label="Hinweise anzeigen">i</button>
+              </div>
+              <p id="csv-tooltip" class="tooltip" aria-hidden="true">
+                Lade eine CSV hoch, speichere sie als eigenen Kartensatz und bearbeite Begriffe direkt im Karteneditor.
+              </p>
+              <div class="csv-dataset-actions">
+                <label class="field" for="csv-dataset-name">
+                  Name des Kartensatzes
+                  <input id="csv-dataset-name" type="text" placeholder="z. B. Prüfungsvorbereitung" />
+                </label>
+                <div class="csv-dataset-buttons">
+                  <button id="csv-save-new" class="ghost" type="button">Als neuen Kartensatz speichern</button>
+                  <select id="csv-overwrite-select" aria-label="Bestehenden Kartensatz auswählen"></select>
+                  <button id="csv-overwrite" class="ghost" type="button">Bestehenden Kartensatz überschreiben</button>
+                  <button id="open-card-editor" class="primary" type="button">Datensätze ansehen & Begriffe bearbeiten</button>
+                </div>
+              </div>
+              <p id="csv-status" class="hint" aria-live="polite"></p>
+            </div>
           </div>
         </div>
         <footer class="menu-footer">
