@@ -59,6 +59,7 @@ const csvStatus = document.getElementById("csv-status");
 const csvUploadButton = document.getElementById("csv-upload-button");
 const csvRefreshListButton = document.getElementById("csv-refresh-list");
 const storageDatasetSelect = document.getElementById("storage-dataset-select");
+const storageDatasetList = document.getElementById("storage-dataset-list");
 const csvInfo = document.getElementById("csv-info");
 const csvTooltip = document.getElementById("csv-tooltip");
 const datasetSelect = document.getElementById("dataset-select");
@@ -483,6 +484,7 @@ const state = {
   selectedDatasets: [],
   customDatasets: {},
   storageDatasets: {},
+  storageDatasetFiles: [],
   speedQuiz: {
     selectedDataset: "",
     selectedCategories: [...ALLOWED_CARD_CATEGORIES],
@@ -573,6 +575,7 @@ function applyDatasetAuthMode() {
   if (!isLoggedIn) {
     state.customDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
     state.storageDatasets = {};
+    state.storageDatasetFiles = [];
     state.uploadedCsvCards = [];
     clearRestrictedDatasetSelections();
     closeCardEditor();
@@ -1023,6 +1026,7 @@ function refreshDatasetSelections() {
   setupDatasetSelects();
   renderSpeedQuizDatasetOptions();
   applySelectedDatasets();
+  syncStorageDatasetListSelectionState();
 }
 
 
@@ -2758,6 +2762,48 @@ function setStorageSelectOptions(files = []) {
   });
 }
 
+function renderStorageDatasetList(files = []) {
+  if (!storageDatasetList) return;
+
+  storageDatasetList.innerHTML = "";
+  if (!Array.isArray(files) || files.length === 0) {
+    const emptyHint = document.createElement("p");
+    emptyHint.className = "hint";
+    emptyHint.textContent = "Noch keine hochgeladenen CSV-Kartensets verfügbar.";
+    storageDatasetList.append(emptyHint);
+    return;
+  }
+
+  files.forEach((file) => {
+    const objectName = String(file?.name || "").trim();
+    if (!objectName) return;
+
+    const item = document.createElement("label");
+    item.className = "storage-dataset-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = objectName;
+    checkbox.dataset.storageDatasetToggle = "true";
+    checkbox.checked = readSelectedDatasetKeys().includes(toStorageDatasetKey(objectName));
+
+    const name = document.createElement("span");
+    name.textContent = getDisplayDatasetName(objectName);
+
+    item.append(checkbox, name);
+    storageDatasetList.append(item);
+  });
+}
+
+function syncStorageDatasetListSelectionState() {
+  if (!storageDatasetList) return;
+  const selected = new Set(readSelectedDatasetKeys());
+  storageDatasetList.querySelectorAll('input[data-storage-dataset-toggle="true"]').forEach((input) => {
+    const objectName = String(input.value || "").trim();
+    input.checked = selected.has(toStorageDatasetKey(objectName));
+  });
+}
+
 function sanitizeUploadFileName(name) {
   return (
     name
@@ -2801,7 +2847,9 @@ function parseStorageCsvToCards(csvText) {
 
 async function refreshPublicCsvList() {
   if (!isLoggedIn) {
+    state.storageDatasetFiles = [];
     setStorageSelectOptions([]);
+    renderStorageDatasetList([]);
     return;
   }
   setCsvStatus("Lade Dateiliste ...");
@@ -2809,7 +2857,9 @@ async function refreshPublicCsvList() {
   try {
     const sortedFiles = await listStoredCsvFiles();
 
+    state.storageDatasetFiles = sortedFiles;
     setStorageSelectOptions(sortedFiles);
+    renderStorageDatasetList(sortedFiles);
     setCsvStatus(`${sortedFiles.length} hochgeladene Datei(en) verfügbar.`);
   } catch (error) {
     if (error?.isAuthError) {
@@ -2849,6 +2899,7 @@ async function loadStorageDataset(objectName) {
     state.uploadedCsvCards = cloneCards(cards);
 
     refreshDatasetSelections();
+    syncStorageDatasetListSelectionState();
     updateDatasetAddButtonVisibility();
 
     console.log("Storage CSV Vorschau (erste 200 Zeichen):", csvText.slice(0, 200));
@@ -3312,6 +3363,25 @@ csvRefreshListButton?.addEventListener("click", (event) => {
 });
 storageDatasetSelect?.addEventListener("change", (event) => {
   loadStorageDataset(event.target.value);
+  updateMainMenuRequiredSelectionState();
+});
+storageDatasetList?.addEventListener("change", async (event) => {
+  const input = event.target;
+  if (!(input instanceof HTMLInputElement) || input.dataset.storageDatasetToggle !== "true") {
+    return;
+  }
+
+  const objectName = String(input.value || "").trim();
+  const storageKey = toStorageDatasetKey(objectName);
+
+  if (input.checked) {
+    await loadStorageDataset(objectName);
+  } else {
+    state.selectedDatasets = readSelectedDatasetKeys().filter((key) => key !== storageKey);
+    refreshDatasetSelections();
+    syncStorageDatasetListSelectionState();
+  }
+
   updateMainMenuRequiredSelectionState();
 });
 csvSaveNewButton?.addEventListener("click", saveUploadedCsvAsNewDataset);

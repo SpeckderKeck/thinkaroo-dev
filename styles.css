@@ -680,6 +680,25 @@ body.fullscreen .board {
   gap: 10px;
 }
 
+.storage-dataset-list {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+  max-height: 210px;
+  overflow: auto;
+}
+
+.storage-dataset-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.storage-dataset-item input[type="checkbox"] {
+  margin: 0;
+}
+
 #open-card-editor {
   width: 100%;
   text-align: center;
