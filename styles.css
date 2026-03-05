@@ -544,6 +544,12 @@ body.fullscreen .board {
   align-items: center;
 }
 
+.advanced-settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .advanced-settings-floating {
   position: absolute;
   border-radius: 999px;

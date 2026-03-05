@@ -206,6 +206,7 @@ if (qrToggle) {
 const swapSelectGame = document.getElementById("swap-select-game");
 const boardSizeSelect = document.getElementById("board-size-select");
 const boardSizeSelectGame = document.getElementById("board-size-select-game");
+const saveAdvancedSettingsButton = document.getElementById("save-advanced-settings");
 const settingsPanel = document.getElementById("settings-panel");
 const openSettingsButton = document.getElementById("open-settings");
 const closeSettingsButton = document.getElementById("close-settings");
@@ -1860,6 +1861,28 @@ function handleUndo() {
   positionTokens();
   setStatusMessage(`Zug zurück: ${formatTeamLabel(state.currentTeam)} ist dran.`, { pulseDice: true });
   renderTeamStatus();
+}
+
+function applyAdvancedSettingsAndReturn() {
+  const selectedCategories = getSelectedCategories(menuCategoryControls);
+  if (selectedCategories.length === 0) {
+    setCategorySelectionInvalidState(menuCategoryControls, true);
+    return;
+  }
+
+  setCategorySelectionInvalidState(menuCategoryControls, false);
+
+  const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
+  syncBoardSizeControls(selectedBoardSize);
+  applyBoardSize(selectedBoardSize);
+
+  state.categories = selectedCategories;
+  state.categoryTimes = readCategoryTimes(menuCategoryControls);
+  state.timeLimit = state.categoryTimes[selectedCategories[0]] ?? 60;
+  state.swapPenalty = Number.parseInt(swapSelect.value, 10);
+
+  setRoute("#/settings-board");
+  updateMainMenuRequiredSelectionState();
 }
 
 function handleStartGame() {
@@ -3636,6 +3659,7 @@ datasetSelect?.addEventListener("change", () => {
 });
 menuCategoryControls.forEach((control) => {
   control.checkbox?.addEventListener("change", () => {
+    setCategorySelectionInvalidState(menuCategoryControls, false);
     updateMainMenuRequiredSelectionState();
   });
 });
@@ -3647,6 +3671,7 @@ gameCategoryControls.forEach((control) => {
 openSettingsButton.addEventListener("click", handleOpenSettings);
 closeSettingsButton.addEventListener("click", handleCloseSettings);
 applySettingsButton.addEventListener("click", applySettingsFromPanel);
+saveAdvancedSettingsButton?.addEventListener("click", applyAdvancedSettingsAndReturn);
 mainMenuButton.addEventListener("click", handleMainMenu);
 turnWordHint?.addEventListener("click", () => {
   if (state.phase !== GAME_PHASES.FULLSCREEN_CARD) return;
