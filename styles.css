@@ -491,6 +491,7 @@ body.fullscreen .board {
 #menu .card h2,
 #screen-settings-board .card h2 {
   font-size: clamp(1.05rem, 1.1vw + 0.65rem, 1.5rem);
+  margin: -4px 0 14px;
 }
 
 #menu .field,
