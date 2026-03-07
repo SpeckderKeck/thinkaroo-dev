@@ -200,9 +200,6 @@ body.fullscreen .board {
   min-height: calc(100dvh - var(--header-height));
   --game-top-spacing: clamp(12px, 1.8vmin, 20px);
   --game-board-gap: clamp(10px, 1.6vmin, 18px);
-  --game-board-margin-inline: 10vw;
-  --game-board-margin-block: 10vh;
-  --board-card-scale: 0.9;
   --game-bottom-height: clamp(4.5rem, 12vh, 7.5rem);
   --game-bottom-offset: max(8px, env(safe-area-inset-bottom));
   --game-bottom-total-space: calc(var(--game-bottom-height) + var(--game-bottom-offset) + 18px);
@@ -1099,14 +1096,7 @@ body.fullscreen .board {
   flex: 1;
   place-items: center;
   overflow: visible;
-  padding:
-    max(var(--game-top-spacing), var(--game-board-margin-block, 0px))
-    var(--game-board-margin-inline, 0px)
-    calc(
-      var(--game-bottom-total-space)
-      + var(--game-board-gap)
-      + var(--game-board-margin-block, 0px)
-    );
+  padding: var(--game-top-spacing) 0 calc(var(--game-bottom-total-space) + var(--game-board-gap));
 }
 
 body.fullscreen #game.panel--active,
@@ -1161,21 +1151,10 @@ body.fullscreen-card-open {
   grid-template-columns: repeat(var(--board-cols, 6), minmax(0, 1fr));
   grid-template-rows: repeat(var(--board-rows, 6), minmax(0, 1fr));
   gap: var(--board-gap);
-  width: calc(
-    (100dvw - 16px - (2 * var(--game-board-margin-inline, 0px)))
-    * var(--board-card-scale, 1)
-  );
+  width: calc(100dvw - 16px);
   max-width: 100%;
   height: calc(
-    (
-      100dvh
-      - var(--header-height)
-      - var(--game-bottom-total-space)
-      - var(--game-top-spacing)
-      - var(--game-board-gap)
-      - (2 * var(--game-board-margin-block, 0px))
-    )
-    * var(--board-card-scale, 1)
+    100dvh - var(--header-height) - var(--game-bottom-total-space) - var(--game-top-spacing) - var(--game-board-gap)
   );
   max-height: 100%;
   margin: 0 auto;
