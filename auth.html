@@ -23,33 +23,45 @@
 
   <main class="app auth-page-main">
     <section class="card auth-page-card" aria-label="Login und Registrierung">
-      <h1>Login & Registrierung</h1>
+      <div class="auth-page-header">
+        <p class="auth-eyebrow">Thinkaroo Konto</p>
+        <h1>Login & Registrierung</h1>
+        <p class="hint">Melde dich an, um deinen Fortschritt zu sichern und alle Funktionen zu nutzen.</p>
+      </div>
 
       <div class="auth-page-columns">
-        <form id="login-form" class="auth-form">
+        <form id="login-form" class="auth-form" novalidate>
           <h2>Login</h2>
+          <p class="hint">Willkommen zurück 👋</p>
           <label class="field" for="login-email">
             E-Mail
             <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+            <span id="login-email-error" class="field-error" aria-live="polite"></span>
           </label>
           <label class="field" for="login-password">
             Passwort
-            <input id="login-password" type="password" required autocomplete="current-password" />
+            <input id="login-password" type="password" required minlength="8" autocomplete="current-password" />
+            <span id="login-password-error" class="field-error" aria-live="polite"></span>
           </label>
           <button class="primary" type="submit">Login</button>
+          <p id="login-feedback" class="form-feedback" aria-live="polite"></p>
         </form>
 
-        <form id="register-form" class="auth-form">
+        <form id="register-form" class="auth-form" novalidate>
           <h2>Registrierung</h2>
+          <p class="hint">Neues Konto in wenigen Sekunden.</p>
           <label class="field" for="register-email">
             E-Mail
             <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+            <span id="register-email-error" class="field-error" aria-live="polite"></span>
           </label>
           <label class="field" for="register-password">
             Passwort
-            <input id="register-password" type="password" required autocomplete="new-password" />
+            <input id="register-password" type="password" required minlength="8" autocomplete="new-password" />
+            <span id="register-password-error" class="field-error" aria-live="polite"></span>
           </label>
           <button class="primary" type="submit">Registrierung</button>
+          <p id="register-feedback" class="form-feedback" aria-live="polite"></p>
         </form>
       </div>
 

@@ -2817,6 +2817,22 @@ body.landing-open {
 
 .auth-page-card {
   width: min(880px, 100%);
+  display: grid;
+  gap: 16px;
+}
+
+.auth-page-header {
+  display: grid;
+  gap: 6px;
+}
+
+.auth-eyebrow {
+  margin: 0;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.74rem;
+  font-weight: 700;
 }
 
 .auth-page-columns {
@@ -2828,10 +2844,19 @@ body.landing-open {
 .auth-form {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 14px;
+  border-radius: 16px;
+  padding: 18px;
   display: grid;
-  gap: 10px;
+  gap: 12px;
+  box-shadow: 0 10px 30px color-mix(in srgb, #000000 14%, transparent);
+}
+
+.auth-form h2 {
+  margin: 0;
+}
+
+.auth-form .hint {
+  margin: 0;
 }
 
 .auth-form input {
@@ -2851,6 +2876,34 @@ body.landing-open {
   outline: 3px solid color-mix(in srgb, var(--color-accent) 68%, transparent);
   outline-offset: 1px;
   border-color: color-mix(in srgb, var(--color-accent) 65%, var(--color-border));
+}
+
+.auth-form input.is-invalid {
+  border-color: color-mix(in srgb, var(--danger) 75%, var(--color-border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--color-surface));
+}
+
+.field-error {
+  display: block;
+  margin-top: 6px;
+  min-height: 1.2em;
+  color: var(--danger);
+  font-size: 0.82rem;
+}
+
+.form-feedback {
+  margin: 0;
+  min-height: 1.3em;
+  color: var(--color-muted);
+  font-size: 0.9rem;
+}
+
+.form-feedback.is-error {
+  color: var(--danger);
+}
+
+.form-feedback.is-success {
+  color: var(--success);
 }
 
 @media (max-width: 880px) {
