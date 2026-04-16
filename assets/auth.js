@@ -1,5 +1,11 @@
 import { supabase } from "./supabaseClient.js";
 
+function buildAuthError(message, code) {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 export async function loginWithPassword(email, password) {
   const { error } = await supabase.auth.signInWithPassword({
     email,
@@ -12,13 +18,18 @@ export async function loginWithPassword(email, password) {
 }
 
 export async function registerWithPassword(email, password) {
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   });
 
   if (error) {
     throw error;
+  }
+
+  const identities = data?.user?.identities;
+  if (Array.isArray(identities) && identities.length === 0) {
+    throw buildAuthError("Diese E-Mail-Adresse ist bereits registriert.", "email_already_registered");
   }
 }
 
