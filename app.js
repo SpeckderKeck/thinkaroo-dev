@@ -2651,6 +2651,37 @@ function readSelectedDatasetKeys() {
   return keys;
 }
 
+function getAvailableCategoriesFromCards(cards = []) {
+  const available = new Set();
+  (Array.isArray(cards) ? cards : []).forEach((card) => {
+    const category = card?.category;
+    if (ALLOWED_CARD_CATEGORIES.includes(category)) {
+      available.add(category);
+    }
+  });
+  return available;
+}
+
+function getAvailableCategoriesForDatasetKeys(datasetKeys = []) {
+  const available = new Set();
+  (Array.isArray(datasetKeys) ? datasetKeys : []).forEach((key) => {
+    const entry = getDatasetEntryByKey(key);
+    if (!entry?.cards) return;
+    getAvailableCategoriesFromCards(entry.cards).forEach((category) => available.add(category));
+  });
+  return available;
+}
+
+function filterCategoriesToAvailability(selectedCategories, availableCategories) {
+  return (Array.isArray(selectedCategories) ? selectedCategories : []).filter(
+    (category) => ALLOWED_CARD_CATEGORIES.includes(category) && availableCategories.has(category)
+  );
+}
+
+function getDefaultAvailableCategories(availableCategories) {
+  return ALLOWED_CARD_CATEGORIES.filter((category) => availableCategories.has(category));
+}
+
 function applySelectedDatasets() {
   const selectedKeys = readSelectedDatasetKeys();
   state.selectedDatasets = [...selectedKeys];
@@ -2661,6 +2692,13 @@ function applySelectedDatasets() {
   });
 
   state.cards = mergedCards;
+  const availableCategories = getAvailableCategoriesFromCards(mergedCards);
+  const filteredBoardCategories = filterCategoriesToAvailability(state.categories, availableCategories);
+  state.categories =
+    filteredBoardCategories.length > 0
+      ? filteredBoardCategories
+      : getDefaultAvailableCategories(availableCategories);
+
   if (window.location.hash === "#/cardsets" && cardEditorBody) {
     renderCardEditorRows(cloneCards(state.cards));
     updateEditorValidationState();
@@ -2684,6 +2722,9 @@ function applySelectedDatasets() {
   if (storageDatasetSelect && selectedKeys.length > 0) {
     storageDatasetSelect.value = "";
   }
+
+  renderBoardCategoryOptions();
+  renderSpeedQuizCategoryOptions();
 }
 
 function addDatasetSelect(initialKey = "") {
@@ -2762,12 +2803,13 @@ function ensureSpeedQuizDefaults() {
   if (!getDatasetEntryByKey(state.speedQuiz.selectedDataset)) {
     state.speedQuiz.selectedDataset = firstAvailableDatasetKey;
   }
-  const validCategories = state.speedQuiz.selectedCategories.filter((category) =>
-    ALLOWED_CARD_CATEGORIES.includes(category)
+  const speedQuizAvailableCategories = getAvailableCategoriesForDatasetKeys(
+    state.speedQuiz.selectedDataset ? [state.speedQuiz.selectedDataset] : []
   );
+  const validCategories = filterCategoriesToAvailability(state.speedQuiz.selectedCategories, speedQuizAvailableCategories);
   state.speedQuiz.selectedCategories = validCategories.length > 0
     ? validCategories
-    : [...ALLOWED_CARD_CATEGORIES];
+    : getDefaultAvailableCategories(speedQuizAvailableCategories);
 }
 
 function renderSpeedQuizDatasetOptions() {
@@ -2792,17 +2834,23 @@ function renderSpeedQuizCategoryOptions() {
 
   ensureSpeedQuizDefaults();
   speedQuizCategoriesContainer.innerHTML = "";
+  const availableCategories = getAvailableCategoriesForDatasetKeys(
+    state.speedQuiz.selectedDataset ? [state.speedQuiz.selectedDataset] : []
+  );
 
   ALLOWED_CARD_CATEGORIES.forEach((category) => {
     const categoryButton = document.createElement("button");
+    const isAvailable = availableCategories.has(category);
     const isSelected = state.speedQuiz.selectedCategories.includes(category);
     const visuals = CATEGORY_VISUALS[category];
     categoryButton.type = "button";
     categoryButton.className = "speedquiz-category-button";
     categoryButton.dataset.categoryLabel = category;
     categoryButton.setAttribute("aria-label", category);
-    categoryButton.setAttribute("aria-pressed", String(isSelected));
+    categoryButton.setAttribute("aria-pressed", String(isSelected && isAvailable));
+    categoryButton.setAttribute("aria-disabled", String(!isAvailable));
     categoryButton.classList.toggle("is-selected", isSelected);
+    categoryButton.classList.toggle("is-unavailable", !isAvailable);
     categoryButton.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
 
     const icon = document.createElement("span");
@@ -2816,12 +2864,14 @@ function renderSpeedQuizCategoryOptions() {
     categoryButton.append(selectionIndicator);
 
     categoryButton.addEventListener("click", () => {
+      if (!isAvailable) return;
       const selectedCategories = state.speedQuiz.selectedCategories.includes(category)
         ? state.speedQuiz.selectedCategories.filter((item) => item !== category)
         : [...state.speedQuiz.selectedCategories, category];
-      state.speedQuiz.selectedCategories = selectedCategories.length > 0
-        ? selectedCategories
-        : [...ALLOWED_CARD_CATEGORIES];
+      const nextSelectedCategories = filterCategoriesToAvailability(selectedCategories, availableCategories);
+      state.speedQuiz.selectedCategories = nextSelectedCategories.length > 0
+        ? nextSelectedCategories
+        : getDefaultAvailableCategories(availableCategories);
       renderSpeedQuizCategoryOptions();
     });
 
@@ -2833,17 +2883,22 @@ function renderBoardCategoryOptions() {
   if (!boardCategoriesContainer) return;
 
   boardCategoriesContainer.innerHTML = "";
+  const selectedDatasetKeys = readSelectedDatasetKeys();
+  const availableCategories = getAvailableCategoriesForDatasetKeys(selectedDatasetKeys);
 
   ALLOWED_CARD_CATEGORIES.forEach((category) => {
     const categoryButton = document.createElement("button");
+    const isAvailable = availableCategories.has(category);
     const isSelected = state.categories.includes(category);
     const visuals = CATEGORY_VISUALS[category];
     categoryButton.type = "button";
     categoryButton.className = "speedquiz-category-button";
     categoryButton.dataset.categoryLabel = category;
     categoryButton.setAttribute("aria-label", category);
-    categoryButton.setAttribute("aria-pressed", String(isSelected));
+    categoryButton.setAttribute("aria-pressed", String(isSelected && isAvailable));
+    categoryButton.setAttribute("aria-disabled", String(!isAvailable));
     categoryButton.classList.toggle("is-selected", isSelected);
+    categoryButton.classList.toggle("is-unavailable", !isAvailable);
     categoryButton.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
 
     const icon = document.createElement("span");
@@ -2857,12 +2912,14 @@ function renderBoardCategoryOptions() {
     categoryButton.append(selectionIndicator);
 
     categoryButton.addEventListener("click", () => {
+      if (!isAvailable) return;
       const selectedCategories = state.categories.includes(category)
         ? state.categories.filter((item) => item !== category)
         : [...state.categories, category];
-      state.categories = selectedCategories.length > 0
-        ? selectedCategories
-        : [...ALLOWED_CARD_CATEGORIES];
+      const nextSelectedCategories = filterCategoriesToAvailability(selectedCategories, availableCategories);
+      state.categories = nextSelectedCategories.length > 0
+        ? nextSelectedCategories
+        : getDefaultAvailableCategories(availableCategories);
       renderBoardCategoryOptions();
       updateMainMenuRequiredSelectionState();
     });
@@ -3591,6 +3648,7 @@ document.addEventListener("click", (event) => {
 });
 speedQuizDatasetSelect?.addEventListener("change", (event) => {
   state.speedQuiz.selectedDataset = event.target.value;
+  renderSpeedQuizCategoryOptions();
 });
 window.addEventListener("hashchange", () => {
   setRoute(window.location.hash);
