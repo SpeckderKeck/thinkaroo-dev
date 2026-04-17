@@ -2225,6 +2225,10 @@ button:disabled {
   color: var(--accent);
 }
 
+.turn-countdown.is-quizfrage {
+  color: #000;
+}
+
 .turn-word {
   display: none;
 }
