@@ -1488,10 +1488,14 @@ function createTokens(teamData) {
     token.className = "token";
     token.dataset.team = index;
     token.dataset.icon = team.icon;
+    token.style.opacity = "0";
     const tokenIcon = document.createElement("span");
     tokenIcon.className = "token-icon";
     tokenIcon.textContent = team.icon;
-    token.appendChild(tokenIcon);
+    const tokenName = document.createElement("span");
+    tokenName.className = "token-name";
+    tokenName.textContent = team.name || `Team ${index + 1}`;
+    token.append(tokenIcon, tokenName);
     board.appendChild(token);
   });
   positionTokens();
@@ -1545,6 +1549,7 @@ function positionTokens() {
     const quadrantY = index < 2 ? 0.28 : 0.72;
     token.style.left = `${rect.left - boardRect.left + rect.width * quadrantX}px`;
     token.style.top = `${rect.top - boardRect.top + rect.height * quadrantY}px`;
+    token.style.opacity = "1";
   });
   renderTeamStatus();
 }
@@ -1917,8 +1922,10 @@ function handleStartGame() {
   createTokens(teams);
   showGamePanel();
   requestAnimationFrame(() => {
-    renderBoardPath();
-    positionTokens();
+    requestAnimationFrame(() => {
+      renderBoardPath();
+      positionTokens();
+    });
   });
   state.currentTeam = 0;
   state.pendingRoll = null;
