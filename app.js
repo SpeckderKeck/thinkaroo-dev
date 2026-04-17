@@ -2792,6 +2792,11 @@ function renderSpeedQuizCategoryOptions() {
     applyCategoryIcon(icon, category, { allowFallback: true });
     categoryButton.append(icon);
 
+    const selectionIndicator = document.createElement("span");
+    selectionIndicator.className = "category-selection-indicator";
+    selectionIndicator.setAttribute("aria-hidden", "true");
+    categoryButton.append(selectionIndicator);
+
     categoryButton.addEventListener("click", () => {
       const selectedCategories = state.speedQuiz.selectedCategories.includes(category)
         ? state.speedQuiz.selectedCategories.filter((item) => item !== category)
@@ -2827,6 +2832,11 @@ function renderBoardCategoryOptions() {
     icon.className = "category-icon";
     applyCategoryIcon(icon, category, { allowFallback: true });
     categoryButton.append(icon);
+
+    const selectionIndicator = document.createElement("span");
+    selectionIndicator.className = "category-selection-indicator";
+    selectionIndicator.setAttribute("aria-hidden", "true");
+    categoryButton.append(selectionIndicator);
 
     categoryButton.addEventListener("click", () => {
       const selectedCategories = state.categories.includes(category)
