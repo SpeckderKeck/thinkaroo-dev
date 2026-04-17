@@ -312,12 +312,19 @@ function setRoute(hash) {
   });
   document.body.classList.toggle("game-active", nextHash === "#/game-board" || nextHash === "#/game-speedquiz");
   const settingsBackLink = document.getElementById("settings-back-topbar");
-  const showSettingsBackLink = nextHash === "#/settings-board";
+  const showSettingsBackLink = nextHash === "#/settings-board" || nextHash === "#/cardsets";
   if (settingsBackLink) {
     settingsBackLink.hidden = !showSettingsBackLink;
+    const backTarget = nextHash === "#/cardsets" ? "#/settings-board" : "#/landing";
+    settingsBackLink.setAttribute("href", backTarget);
+    settingsBackLink.setAttribute(
+      "aria-label",
+      nextHash === "#/cardsets" ? "Zurück zum Hauptmenü" : "Zurück zum Start"
+    );
+    settingsBackLink.setAttribute("title", "Zurück");
   }
 
-  if (nextHash === "#/cardsets" && cardEditorBody && !cardEditorBody.querySelector("tr[data-row-id]")) {
+  if (nextHash === "#/cardsets" && cardEditorBody) {
     renderCardEditorRows(cloneCards(state.cards));
     updateEditorValidationState();
     refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
@@ -2647,6 +2654,10 @@ function applySelectedDatasets() {
   });
 
   state.cards = mergedCards;
+  if (window.location.hash === "#/cardsets" && cardEditorBody) {
+    renderCardEditorRows(cloneCards(state.cards));
+    updateEditorValidationState();
+  }
 
   if (selectedKeys.length > 0) {
     const labels = selectedKeys
