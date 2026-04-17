@@ -3376,6 +3376,7 @@ function startCountdown() {
   state.countdownTimer = null;
   let countdown = 3;
   turnCountdown.textContent = `${countdown}`;
+  turnCountdown.classList.toggle("is-quizfrage", state.pendingCategory === "Quizfrage");
   turnCategory.classList.add("hidden");
   turnCountdownCard.classList.remove("hidden");
   turnCountdown.classList.remove("hidden");
