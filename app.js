@@ -1669,9 +1669,7 @@ function setSingleChoiceResult(optionButton, isCorrect, correctAnswer) {
 
   if (optionButton) {
     optionButton.classList.add("is-selected", "is-animating");
-    if (!isCorrect) {
-      optionButton.classList.add("is-wrong");
-    }
+    optionButton.classList.add(isCorrect ? "is-correct" : "is-wrong");
   }
 
   stopTimer();
