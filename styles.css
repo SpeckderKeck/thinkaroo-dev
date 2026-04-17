@@ -460,6 +460,31 @@ body.fullscreen .board {
   transition: opacity 120ms ease;
 }
 
+.speedquiz-category-button .category-selection-indicator {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--category-color, var(--border)) 32%, var(--border) 68%);
+  background: color-mix(in srgb, var(--category-color, var(--panel)) 50%, white 50%);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.15);
+  display: grid;
+  place-items: center;
+  transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+.speedquiz-category-button .category-selection-indicator::after {
+  content: "✓";
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #16a34a;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
 .speedquiz-category-button:not(.is-selected) {
   opacity: 0.48;
   filter: grayscale(0.25);
@@ -468,6 +493,16 @@ body.fullscreen .board {
 .speedquiz-category-button.is-selected {
   opacity: 1;
   filter: none;
+}
+
+.speedquiz-category-button.is-selected .category-selection-indicator {
+  border-color: color-mix(in srgb, #16a34a 45%, var(--border) 55%);
+  background: color-mix(in srgb, #16a34a 14%, white 86%);
+}
+
+.speedquiz-category-button.is-selected .category-selection-indicator::after {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .speedquiz-category-button:not(.is-selected):is(:hover, :focus-visible) {
