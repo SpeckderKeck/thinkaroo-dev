@@ -2820,6 +2820,7 @@ body.landing-open {
 .auth-icon-button::after {
   content: attr(data-hover-label);
   position: absolute;
+  z-index: 30;
   top: 50%;
   left: calc(100% + 10px);
   transform: translateY(-50%) translateX(-4px);
