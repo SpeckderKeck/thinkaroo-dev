@@ -2784,12 +2784,39 @@ body.landing-open {
 }
 
 .auth-icon-button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
   padding: 6px;
+}
+
+.auth-icon-button::after {
+  content: attr(data-hover-label);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%) translateX(-4px);
+  opacity: 0;
+  pointer-events: none;
+  padding: 4px 8px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 35%, var(--color-surface));
+  color: var(--color-text-on-dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.auth-icon-button:hover::after,
+.auth-icon-button:focus-visible::after {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
 }
 
 .auth-icon-button--logged-out {
