@@ -50,6 +50,15 @@ function sendJson(res, status, payload) {
   res.end(JSON.stringify(payload));
 }
 
+function sendJsonWithCacheControl(res, status, payload, cacheControl) {
+  setCorsHeaders(res);
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Cache-Control': cacheControl,
+  });
+  res.end(JSON.stringify(payload));
+}
+
 function normalizeIsoTimestamp(value, fallbackIso) {
   const parsed = new Date(value ?? '');
   if (Number.isNaN(parsed.getTime())) return fallbackIso;
@@ -452,8 +461,16 @@ async function readManifest() {
         const updatedAt = normalizeIsoTimestamp(entry.updatedAt, createdAt);
         const version = Number.isInteger(entry.version) && entry.version > 0 ? entry.version : 1;
         const ownerId = normalizeOwnerId(entry.ownerId);
-        const visibility = resolveDatasetVisibility(entry.visibility, ownerId);
-        return { id, label, ownerId, visibility, createdAt, updatedAt, version };
+        const visibility = String(entry.visibility ?? '').trim().toLowerCase();
+        return {
+          id,
+          label,
+          ownerId,
+          visibility: visibility === 'public' ? 'public' : 'private',
+          createdAt,
+          updatedAt,
+          version,
+        };
       })
       .filter(Boolean),
   };
@@ -587,6 +604,34 @@ async function listDatasets(authUser, includeGlobal = false) {
   }
 
   return datasets;
+}
+
+async function listPublicDatasets() {
+  const manifest = await readManifest();
+  const publicDatasets = [];
+
+  for (const entry of manifest.datasets) {
+    if (entry.visibility !== 'public') {
+      continue;
+    }
+
+    try {
+      const record = await readDatasetRecord(entry.id, entry.ownerId);
+      publicDatasets.push({
+        id: entry.id,
+        label: entry.label,
+        visibility: 'public',
+        cards: Array.isArray(record.cards) ? record.cards : [],
+        createdAt: entry.createdAt,
+        updatedAt: entry.updatedAt,
+        version: entry.version,
+      });
+    } catch {
+      // Skip broken entry files gracefully.
+    }
+  }
+
+  return publicDatasets;
 }
 
 
@@ -774,6 +819,22 @@ async function handleDatasetsApi(req, res, url) {
   return sendJson(res, 405, { error: 'method_not_allowed' });
 }
 
+async function handlePublicDatasetsApi(req, res) {
+  if (req.method === 'OPTIONS') {
+    setCorsHeaders(res);
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  if (req.method !== 'GET') {
+    return sendJson(res, 405, { error: 'method_not_allowed' });
+  }
+
+  const datasets = await listPublicDatasets();
+  return sendJsonWithCacheControl(res, 200, datasets, 'public, max-age=60');
+}
+
 
 
 async function serveStatic(req, res) {
@@ -816,6 +877,11 @@ const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     if (url.pathname === '/datasets' || /^\/datasets\/[^/]+$/.test(url.pathname)) {
       await handleDatasetsApi(req, res, url);
+      return;
+    }
+
+    if (url.pathname === '/public-datasets') {
+      await handlePublicDatasetsApi(req, res);
       return;
     }
 
