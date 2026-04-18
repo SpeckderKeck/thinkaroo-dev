@@ -310,7 +310,7 @@
     "Ballon aufblasen"
 ];
 
-  const quizItems = [
+const quizItems = [
     {
         "question": "Wie heißt die Hauptstadt von Deutschland?",
         "answer": "Berlin"
@@ -713,6 +713,517 @@
     }
 ];
 
+  const singleChoiceItems = [
+    {
+      question: "Was ist die Hauptstadt von Kasachstan?",
+      answer: "Astana",
+      wrongAnswers: ["Almaty", "Taschkent", "Bischkek"],
+    },
+    {
+      question: "Welche Einheit misst elektrische Ladung?",
+      answer: "Coulomb",
+      wrongAnswers: ["Volt", "Watt", "Tesla"],
+    },
+    {
+      question: "Wer schrieb „Der Steppenwolf“?",
+      answer: "Hermann Hesse",
+      wrongAnswers: ["Thomas Mann", "Franz Kafka", "Bertolt Brecht"],
+    },
+    {
+      question: "Was beschreibt die Schrödinger-Gleichung?",
+      answer: "Wellenfunktion eines Quantensystems",
+      wrongAnswers: ["Thermodynamische Zustände", "Relativität von Raum und Zeit", "Elektromagnetische Felder"],
+    },
+    {
+      question: "Welches Element hat die Ordnungszahl 26?",
+      answer: "Eisen",
+      wrongAnswers: ["Kupfer", "Zink", "Nickel"],
+    },
+    {
+      question: "Was ist die größte Wüste der Welt?",
+      answer: "Antarktis",
+      wrongAnswers: ["Sahara", "Gobi", "Kalahari"],
+    },
+    {
+      question: "Welche Sprache gehört zur finno-ugrischen Familie?",
+      answer: "Ungarisch",
+      wrongAnswers: ["Russisch", "Deutsch", "Spanisch"],
+    },
+    {
+      question: "Was misst ein Barometer?",
+      answer: "Luftdruck",
+      wrongAnswers: ["Temperatur", "Luftfeuchtigkeit", "Windgeschwindigkeit"],
+    },
+    {
+      question: "Wer entdeckte die Penicillin-Wirkung?",
+      answer: "Alexander Fleming",
+      wrongAnswers: ["Louis Pasteur", "Robert Koch", "Marie Curie"],
+    },
+    {
+      question: "Was ist ein Neutron?",
+      answer: "Elektrisch neutrales Teilchen",
+      wrongAnswers: ["Positiv geladen", "Negativ geladen", "Photon"],
+    },
+    {
+      question: "Was ist die Ableitung von sin(x)?",
+      answer: "cos(x)",
+      wrongAnswers: ["-sin(x)", "-cos(x)", "tan(x)"],
+    },
+    {
+      question: "Welches Land hat die meisten Einwohner?",
+      answer: "Indien",
+      wrongAnswers: ["China", "USA", "Indonesien"],
+    },
+    {
+      question: "Was beschreibt die Entropie?",
+      answer: "Maß für Unordnung",
+      wrongAnswers: ["Energieinhalt", "Geschwindigkeit", "Temperatur"],
+    },
+    {
+      question: "Wer malte die Mona Lisa?",
+      answer: "Leonardo da Vinci",
+      wrongAnswers: ["Michelangelo", "Raphael", "Donatello"],
+    },
+    {
+      question: "Was ist ein Isotop?",
+      answer: "Gleiches Element, unterschiedliche Neutronenzahl",
+      wrongAnswers: ["Unterschiedliche Elemente", "Gleiche Moleküle", "Ionisierte Atome"],
+    },
+    {
+      question: "Was ist die Lichtgeschwindigkeit im Vakuum?",
+      answer: "ca. 300.000 km/s",
+      wrongAnswers: ["150.000 km/s", "1.000.000 km/s", "30.000 km/s"],
+    },
+    {
+      question: "Was ist ein Vektor?",
+      answer: "Größe mit Betrag und Richtung",
+      wrongAnswers: ["Nur Betrag", "Nur Richtung", "Nur Zahl"],
+    },
+    {
+      question: "Wer entwickelte die Relativitätstheorie?",
+      answer: "Albert Einstein",
+      wrongAnswers: ["Isaac Newton", "Galileo Galilei", "Niels Bohr"],
+    },
+    {
+      question: "Was ist ein Algorithmus?",
+      answer: "Schritt-für-Schritt-Anweisung",
+      wrongAnswers: ["Hardware", "Programmiersprache", "Speicher"],
+    },
+    {
+      question: "Was ist DNA?",
+      answer: "Träger genetischer Information",
+      wrongAnswers: ["Protein", "Zellmembran", "Enzym"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Kanada?",
+      answer: "Ottawa",
+      wrongAnswers: ["Toronto", "Vancouver", "Montreal"],
+    },
+    {
+      question: "Was beschreibt die Photosynthese?",
+      answer: "Umwandlung von Licht in chemische Energie",
+      wrongAnswers: ["Atmung", "Verdauung", "Bewegung"],
+    },
+    {
+      question: "Was ist π ungefähr?",
+      answer: "3,1416",
+      wrongAnswers: ["2,718", "1,618", "0,577"],
+    },
+    {
+      question: "Wer schrieb „Faust“?",
+      answer: "Goethe",
+      wrongAnswers: ["Schiller", "Lessing", "Kafka"],
+    },
+    {
+      question: "Was ist ein Schwarzes Loch?",
+      answer: "Region mit extremer Gravitation",
+      wrongAnswers: ["Stern", "Planet", "Komet"],
+    },
+    {
+      question: "Was ist die SI-Einheit der Energie?",
+      answer: "Joule",
+      wrongAnswers: ["Watt", "Newton", "Pascal"],
+    },
+    {
+      question: "Was ist ein Polygon?",
+      answer: "Vieleck",
+      wrongAnswers: ["Kreis", "Linie", "Punkt"],
+    },
+    {
+      question: "Was ist ein Proton?",
+      answer: "Positiv geladenes Teilchen",
+      wrongAnswers: ["Neutral", "Negativ", "Photon"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Australien?",
+      answer: "Canberra",
+      wrongAnswers: ["Sydney", "Melbourne", "Perth"],
+    },
+    {
+      question: "Was misst ein Thermometer?",
+      answer: "Temperatur",
+      wrongAnswers: ["Druck", "Geschwindigkeit", "Energie"],
+    },
+    {
+      question: "Was ist ein Integral?",
+      answer: "Flächeninhalt unter Kurve",
+      wrongAnswers: ["Ableitung", "Punkt", "Linie"],
+    },
+    {
+      question: "Wer entdeckte Amerika?",
+      answer: "Christoph Kolumbus",
+      wrongAnswers: ["Magellan", "Cook", "Vespucci"],
+    },
+    {
+      question: "Was ist eine Zelle?",
+      answer: "Kleinste lebende Einheit",
+      wrongAnswers: ["Molekül", "Atom", "Organ"],
+    },
+    {
+      question: "Was ist ein Quadrat?",
+      answer: "Viereck mit gleichen Seiten",
+      wrongAnswers: ["Dreieck", "Kreis", "Linie"],
+    },
+    {
+      question: "Was ist Gravitation?",
+      answer: "Anziehungskraft",
+      wrongAnswers: ["Abstoßung", "Energie", "Licht"],
+    },
+    {
+      question: "Was ist ein Molekül?",
+      answer: "Verbundene Atome",
+      wrongAnswers: ["Einzelatom", "Ion", "Elektron"],
+    },
+    {
+      question: "Was ist ein Gen?",
+      answer: "DNA-Abschnitt",
+      wrongAnswers: ["Protein", "Zelle", "Organ"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Japan?",
+      answer: "Tokio",
+      wrongAnswers: ["Osaka", "Kyoto", "Hiroshima"],
+    },
+    {
+      question: "Was ist ein Stromkreis?",
+      answer: "Geschlossener elektrischer Weg",
+      wrongAnswers: ["Offener Draht", "Batterie", "Widerstand"],
+    },
+    {
+      question: "Was ist ein Stern?",
+      answer: "Leuchtender Himmelskörper",
+      wrongAnswers: ["Planet", "Asteroid", "Komet"],
+    },
+    {
+      question: "Was ist ein Bruch?",
+      answer: "Teil eines Ganzen",
+      wrongAnswers: ["Ganze Zahl", "Variable", "Funktion"],
+    },
+    {
+      question: "Was ist ein Computer?",
+      answer: "Maschine zur Datenverarbeitung",
+      wrongAnswers: ["Buch", "Tisch", "Werkzeug"],
+    },
+    {
+      question: "Was ist ein Virus?",
+      answer: "Infektiöser Partikel",
+      wrongAnswers: ["Bakterium", "Pilz", "Pflanze"],
+    },
+    {
+      question: "Was ist ein Ökosystem?",
+      answer: "Wechselwirkung von Lebewesen und Umwelt",
+      wrongAnswers: ["Einzelorganismus", "Molekül", "Planet"],
+    },
+    {
+      question: "Was ist ein Planet?",
+      answer: "Himmelskörper, der einen Stern umkreist",
+      wrongAnswers: ["Stern", "Asteroid", "Galaxie"],
+    },
+    {
+      question: "Was ist ein Rechteck?",
+      answer: "Viereck mit rechten Winkeln",
+      wrongAnswers: ["Dreieck", "Kreis", "Linie"],
+    },
+    {
+      question: "Was ist ein Atom?",
+      answer: "Kleinste chemische Einheit",
+      wrongAnswers: ["Molekül", "Ion", "Zelle"],
+    },
+    {
+      question: "Was ist ein Kontinent?",
+      answer: "Große Landmasse",
+      wrongAnswers: ["Insel", "Stadt", "Fluss"],
+    },
+    {
+      question: "Was ist ein Gesetz in der Physik?",
+      answer: "Allgemeingültige Regel",
+      wrongAnswers: ["Hypothese", "Meinung", "Theorie"],
+    },
+    {
+      question: "Was ist ein Experiment?",
+      answer: "Test zur Überprüfung",
+      wrongAnswers: ["Theorie", "Gesetz", "Meinung"],
+    },
+    {
+      question: "Was ist ein Datensatz?",
+      answer: "Sammlung strukturierter Daten",
+      wrongAnswers: ["Einzelwert", "Algorithmus", "Programm"],
+    },
+    {
+      question: "Was ist ein Netzwerk?",
+      answer: "Verbund von Knoten",
+      wrongAnswers: ["Einzelgerät", "Programm", "Datei"],
+    },
+    {
+      question: "Was ist KI?",
+      answer: "Simulation von Intelligenz",
+      wrongAnswers: ["Hardware", "Speicher", "Kabel"],
+    },
+    {
+      question: "Was ist ein Sensor?",
+      answer: "Messgerät",
+      wrongAnswers: ["Computer", "Software", "Kabel"],
+    },
+    {
+      question: "Was ist ein Signal?",
+      answer: "Informationsträger",
+      wrongAnswers: ["Objekt", "Energie", "Stoff"],
+    },
+    {
+      question: "Was ist ein Bit?",
+      answer: "Kleinste Informationseinheit",
+      wrongAnswers: ["Byte", "Kilobyte", "Megabyte"],
+    },
+    {
+      question: "Was ist ein Byte?",
+      answer: "8 Bit",
+      wrongAnswers: ["4 Bit", "16 Bit", "32 Bit"],
+    },
+    {
+      question: "Was ist ein Server?",
+      answer: "Dienstanbieter im Netzwerk",
+      wrongAnswers: ["Client", "Kabel", "Router"],
+    },
+    {
+      question: "Was ist ein Client?",
+      answer: "Dienstnutzer",
+      wrongAnswers: ["Server", "Kabel", "Speicher"],
+    },
+    {
+      question: "Was ist ein Protokoll?",
+      answer: "Kommunikationsregel",
+      wrongAnswers: ["Programm", "Datei", "Gerät"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Neuseeland?",
+      answer: "Wellington",
+      wrongAnswers: ["Auckland", "Christchurch", "Dunedin"],
+    },
+    {
+      question: "Welche mathematische Konstante ist die Basis des natürlichen Logarithmus?",
+      answer: "e",
+      wrongAnswers: ["π", "φ", "i"],
+    },
+    {
+      question: "Wer formulierte die drei Newtonschen Gesetze?",
+      answer: "Isaac Newton",
+      wrongAnswers: ["Johannes Kepler", "Nikolaus Kopernikus", "James Clerk Maxwell"],
+    },
+    {
+      question: "Was ist die kleinste Einheit eines chemischen Elements?",
+      answer: "Atom",
+      wrongAnswers: ["Molekül", "Proton", "Neutron"],
+    },
+    {
+      question: "Welcher Ozean ist der größte der Erde?",
+      answer: "Pazifischer Ozean",
+      wrongAnswers: ["Atlantischer Ozean", "Indischer Ozean", "Arktischer Ozean"],
+    },
+    {
+      question: "Was ist die Hauptfunktion der Mitochondrien?",
+      answer: "Energiegewinnung der Zelle",
+      wrongAnswers: ["Proteinsynthese", "Speicherung von DNA", "Zellteilung"],
+    },
+    {
+      question: "Wer schrieb „1984“?",
+      answer: "George Orwell",
+      wrongAnswers: ["Aldous Huxley", "Ray Bradbury", "Ernest Hemingway"],
+    },
+    {
+      question: "Was bezeichnet in der Informatik eine rekursive Funktion?",
+      answer: "Eine Funktion, die sich selbst aufruft",
+      wrongAnswers: [
+        "Eine Funktion ohne Rückgabewert",
+        "Eine Funktion mit vielen Parametern",
+        "Eine Funktion in Maschinensprache",
+      ],
+    },
+    {
+      question: "Welche Einheit ist die SI-Einheit der Kraft?",
+      answer: "Newton",
+      wrongAnswers: ["Joule", "Watt", "Pascal"],
+    },
+    {
+      question: "Was ist ein Archipel?",
+      answer: "Inselgruppe",
+      wrongAnswers: ["Gebirgskette", "Wüstenregion", "Flussdelta"],
+    },
+    {
+      question: "Welches Organ produziert Insulin?",
+      answer: "Bauchspeicheldrüse",
+      wrongAnswers: ["Leber", "Niere", "Milz"],
+    },
+    {
+      question: "Was ist die Hauptstadt der Mongolei?",
+      answer: "Ulaanbaatar",
+      wrongAnswers: ["Astana", "Duschanbe", "Baku"],
+    },
+    {
+      question: "Welche Aussage beschreibt ein Oxid?",
+      answer: "Verbindung eines Elements mit Sauerstoff",
+      wrongAnswers: ["Verbindung mit Wasserstoff", "Verbindung mit Stickstoff", "Verbindung mit Kohlenstoff"],
+    },
+    {
+      question: "Was ist in der Statistik der Median?",
+      answer: "Der mittlere Wert einer sortierten Datenreihe",
+      wrongAnswers: ["Der häufigste Wert", "Der Durchschnitt aller Werte", "Die Spannweite"],
+    },
+    {
+      question: "Wer entwickelte das heliozentrische Weltbild maßgeblich?",
+      answer: "Nikolaus Kopernikus",
+      wrongAnswers: ["Aristoteles", "Ptolemäus", "Archimedes"],
+    },
+    {
+      question: "Was ist ein SQL-Join?",
+      answer: "Verknüpfung von Tabellen",
+      wrongAnswers: ["Löschung von Datensätzen", "Sortierung eines Arrays", "Komprimierung einer Datenbank"],
+    },
+    {
+      question: "Welches Gas ist in der Erdatmosphäre am häufigsten?",
+      answer: "Stickstoff",
+      wrongAnswers: ["Sauerstoff", "Kohlenstoffdioxid", "Argon"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Chile?",
+      answer: "Santiago de Chile",
+      wrongAnswers: ["Valparaíso", "Lima", "Quito"],
+    },
+    {
+      question: "Welcher Teil des Auges reguliert den Lichteinfall?",
+      answer: "Iris",
+      wrongAnswers: ["Netzhaut", "Linse", "Hornhaut"],
+    },
+    {
+      question: "Was bedeutet „HTTP“?",
+      answer: "Hypertext Transfer Protocol",
+      wrongAnswers: [
+        "High Transmission Text Process",
+        "Hyperlink Text Transfer Path",
+        "Host Transfer Terminal Protocol",
+      ],
+    },
+    {
+      question: "Welche Zahl ist eine Primzahl?",
+      answer: "29",
+      wrongAnswers: ["21", "35", "39"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Äthiopien?",
+      answer: "Addis Abeba",
+      wrongAnswers: ["Nairobi", "Kampala", "Dakar"],
+    },
+    {
+      question: "Was beschreibt die Halbwertszeit?",
+      answer: "Zeitspanne, in der die Hälfte einer Stoffmenge zerfällt",
+      wrongAnswers: ["Dauer einer chemischen Reaktion", "Zeit für Verdopplung eines Signals", "Zeitraum eines Umlaufs"],
+    },
+    {
+      question: "Welcher Komponist schrieb die 9. Sinfonie mit der „Ode an die Freude“?",
+      answer: "Ludwig van Beethoven",
+      wrongAnswers: ["Wolfgang Amadeus Mozart", "Joseph Haydn", "Franz Schubert"],
+    },
+    {
+      question: "Was ist ein Prädikat in der Logik?",
+      answer: "Aussageform mit Variablen",
+      wrongAnswers: ["Beweisverfahren", "Mathematische Konstante", "Zahlenmenge"],
+    },
+    {
+      question: "Welcher Planet hat das größte Ringsystem im Sonnensystem?",
+      answer: "Saturn",
+      wrongAnswers: ["Jupiter", "Uranus", "Neptun"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Marokko?",
+      answer: "Rabat",
+      wrongAnswers: ["Casablanca", "Marrakesch", "Fès"],
+    },
+    {
+      question: "Wofür steht die Abkürzung „CPU“?",
+      answer: "Central Processing Unit",
+      wrongAnswers: ["Computer Power Unit", "Central Program Utility", "Core Processing Utility"],
+    },
+    {
+      question: "Welche Struktur speichert bei Pflanzenzellen Wasser und gelöste Stoffe?",
+      answer: "Vakuole",
+      wrongAnswers: ["Ribosom", "Chloroplast", "Zellkern"],
+    },
+    {
+      question: "Was ist ein konvexes Polygon?",
+      answer: "Vieleck ohne nach innen gerichtete Winkel größer als 180°",
+      wrongAnswers: ["Vieleck mit genau drei Seiten", "Vieleck mit nur rechten Winkeln", "Vieleck mit gekrümmten Kanten"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Sri Lanka im politischen Sinn?",
+      answer: "Sri Jayawardenepura Kotte",
+      wrongAnswers: ["Colombo", "Kandy", "Galle"],
+    },
+    {
+      question: "Welche Einheit misst die elektrische Stromstärke?",
+      answer: "Ampere",
+      wrongAnswers: ["Ohm", "Volt", "Farad"],
+    },
+    {
+      question: "Was ist ein Enzym?",
+      answer: "Biokatalysator",
+      wrongAnswers: ["Speicherstoff", "Genabschnitt", "Zellorganell"],
+    },
+    {
+      question: "Wer verfasste „Die Kritik der reinen Vernunft“?",
+      answer: "Immanuel Kant",
+      wrongAnswers: ["Friedrich Nietzsche", "Georg Wilhelm Friedrich Hegel", "Arthur Schopenhauer"],
+    },
+    {
+      question: "Was ist in der Informatik ein Stack?",
+      answer: "Datenstruktur nach dem LIFO-Prinzip",
+      wrongAnswers: ["Datenstruktur nach dem FIFO-Prinzip", "Relationale Datenbank", "Verschlüsselungsverfahren"],
+    },
+    {
+      question: "Welche Wellenart benötigt kein Medium zur Ausbreitung?",
+      answer: "Elektromagnetische Wellen",
+      wrongAnswers: ["Schallwellen", "Wasserwellen", "Seismische Wellen"],
+    },
+    {
+      question: "Was ist die Hauptstadt von Bolivien laut Verfassung?",
+      answer: "Sucre",
+      wrongAnswers: ["La Paz", "Santa Cruz", "Cochabamba"],
+    },
+    {
+      question: "Welche Zahl ist die imaginäre Einheit?",
+      answer: "i",
+      wrongAnswers: ["e", "π", "a"],
+    },
+    {
+      question: "Was beschreibt die Biodiversität?",
+      answer: "Vielfalt des Lebens",
+      wrongAnswers: ["Wachstum von Pflanzen", "Klimatische Stabilität", "Chemische Zusammensetzung des Bodens"],
+    },
+    {
+      question: "Was ist ein Hashwert in der Informatik?",
+      answer: "Ergebnis einer Hashfunktion",
+      wrongAnswers: ["Verschlüsselter Klartext", "Binärer Maschinenbefehl", "Ein Netzwerkprotokoll"],
+    },
+  ];
+
 
   databases.standard = {
     label: "Standard",
@@ -724,6 +1235,13 @@
         category: "Quizfrage",
         term: question,
         answer,
+        taboo: [],
+      })),
+      ...singleChoiceItems.map(({ question, answer, wrongAnswers }) => ({
+        category: "Single-Choice",
+        term: question,
+        answer,
+        wrongAnswers,
         taboo: [],
       })),
     ],
