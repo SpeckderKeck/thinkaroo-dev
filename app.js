@@ -312,14 +312,20 @@ function setRoute(hash) {
   });
   document.body.classList.toggle("game-active", nextHash === "#/game-board" || nextHash === "#/game-speedquiz");
   const settingsBackLink = document.getElementById("settings-back-topbar");
-  const showSettingsBackLink = nextHash === "#/settings-board" || nextHash === "#/cardsets";
+  const showSettingsBackLink = nextHash === "#/settings-board"
+    || nextHash === "#/cardsets"
+    || nextHash === "#/game-board";
   if (settingsBackLink) {
     settingsBackLink.hidden = !showSettingsBackLink;
-    const backTarget = nextHash === "#/cardsets" ? "#/settings-board" : "#/landing";
+    const backTarget = nextHash === "#/cardsets" || nextHash === "#/game-board"
+      ? "#/settings-board"
+      : "#/landing";
     settingsBackLink.setAttribute("href", backTarget);
     settingsBackLink.setAttribute(
       "aria-label",
-      nextHash === "#/cardsets" ? "Zurück zum Hauptmenü" : "Zurück zum Start"
+      nextHash === "#/cardsets" || nextHash === "#/game-board"
+        ? "Zurück zum Hauptmenü"
+        : "Zurück zum Start"
     );
     settingsBackLink.setAttribute("title", "Zurück");
   }
