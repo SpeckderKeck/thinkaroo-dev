@@ -20,6 +20,8 @@ const ADMIN_USER_IDS = new Set(
     .filter(Boolean),
 );
 const LEGACY_DATASET_OWNER_ID = String(process.env.LEGACY_DATASET_OWNER_ID || '').trim();
+const DATASET_VISIBILITY_PRIVATE = 'private';
+const DATASET_VISIBILITY_PUBLIC = 'public';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -58,6 +60,27 @@ function toDatasetFilePath(datasetId) {
   return path.join(DATASET_STORE_DIR, `${encodeURIComponent(datasetId)}.json`);
 }
 
+function normalizeOwnerId(value) {
+  const ownerId = String(value ?? '').trim();
+  return ownerId || '';
+}
+
+function normalizeVisibility(value) {
+  const normalized = String(value ?? '').trim().toLowerCase();
+  if (normalized === DATASET_VISIBILITY_PRIVATE || normalized === DATASET_VISIBILITY_PUBLIC) {
+    return normalized;
+  }
+  return '';
+}
+
+function resolveDatasetVisibility(visibility, ownerId) {
+  const normalizedVisibility = normalizeVisibility(visibility);
+  if (normalizedVisibility) {
+    return normalizedVisibility;
+  }
+  return ownerId ? DATASET_VISIBILITY_PRIVATE : DATASET_VISIBILITY_PUBLIC;
+}
+
 function normalizeDataset(rawDataset) {
   if (!rawDataset || typeof rawDataset !== 'object') {
     return null;
@@ -78,21 +101,19 @@ function normalizeDataset(rawDataset) {
   const createdAt = normalizeIsoTimestamp(rawDataset.createdAt, nowIso);
   const updatedAt = normalizeIsoTimestamp(rawDataset.updatedAt, createdAt);
   const version = Number.isInteger(rawDataset.version) && rawDataset.version > 0 ? rawDataset.version : 1;
+  const ownerId = normalizeOwnerId(rawDataset.ownerId);
+  const visibility = resolveDatasetVisibility(rawDataset.visibility, ownerId);
 
   return {
     id,
     label,
     cards,
-    ownerId: '',
+    ownerId,
+    visibility,
     createdAt,
     updatedAt,
     version,
   };
-}
-
-function normalizeOwnerId(value) {
-  const ownerId = String(value ?? '').trim();
-  return ownerId || '';
 }
 
 function isAdminUser(userId) {
@@ -189,6 +210,7 @@ async function ensureStorageInitialized() {
     manifestEntries.push({
       id: dataset.id,
       label: dataset.label,
+      visibility: dataset.visibility,
       createdAt: dataset.createdAt,
       updatedAt: dataset.updatedAt,
       version: dataset.version,
@@ -430,7 +452,8 @@ async function readManifest() {
         const updatedAt = normalizeIsoTimestamp(entry.updatedAt, createdAt);
         const version = Number.isInteger(entry.version) && entry.version > 0 ? entry.version : 1;
         const ownerId = normalizeOwnerId(entry.ownerId);
-        return { id, label, ownerId, createdAt, updatedAt, version };
+        const visibility = resolveDatasetVisibility(entry.visibility, ownerId);
+        return { id, label, ownerId, visibility, createdAt, updatedAt, version };
       })
       .filter(Boolean),
   };
@@ -458,6 +481,7 @@ async function migrateLegacyOwnerIds(manifest) {
     return {
       ...entry,
       ownerId: LEGACY_DATASET_OWNER_ID,
+      visibility: resolveDatasetVisibility(entry.visibility, ''),
     };
   });
 
@@ -542,15 +566,21 @@ async function listDatasets(authUser, includeGlobal = false) {
 
   for (const entry of manifest.datasets) {
     try {
-      if (entry.ownerId !== authUser.id && !(canSeeGlobal && !entry.ownerId)) {
+      const isPublicDataset = resolveDatasetVisibility(entry.visibility, entry.ownerId) === DATASET_VISIBILITY_PUBLIC;
+      if (entry.ownerId !== authUser.id && !(canSeeGlobal && isPublicDataset)) {
         continue;
       }
       const record = await readDatasetRecord(entry.id, entry.ownerId);
       const ownerId = record.ownerId || entry.ownerId;
-      if (ownerId !== authUser.id && !(canSeeGlobal && !ownerId)) {
+      if (ownerId !== authUser.id && !(canSeeGlobal && isPublicDataset)) {
         continue;
       }
-      datasets.push({ ...entry, ownerId, cards: record.cards });
+      datasets.push({
+        ...entry,
+        ownerId,
+        visibility: resolveDatasetVisibility(entry.visibility, ownerId),
+        cards: record.cards,
+      });
     } catch {
       // Skip broken entry files gracefully.
     }
@@ -606,12 +636,23 @@ async function handleDatasetsApi(req, res, url) {
     dataset.updatedAt = nowIso;
     dataset.version = 1;
     dataset.ownerId = authUser.id;
+    const requestedVisibility = Object.prototype.hasOwnProperty.call(payload, 'visibility')
+      ? normalizeVisibility(payload.visibility)
+      : '';
+    if (Object.prototype.hasOwnProperty.call(payload, 'visibility') && !requestedVisibility) {
+      return sendJson(res, 400, { error: 'invalid_visibility' });
+    }
+    if (requestedVisibility === DATASET_VISIBILITY_PUBLIC && !isAdmin) {
+      return sendJson(res, 403, { error: 'forbidden_visibility' });
+    }
+    dataset.visibility = requestedVisibility || DATASET_VISIBILITY_PRIVATE;
 
     await writeDatasetRecord(dataset.id, dataset.ownerId, dataset.cards);
     manifest.datasets.push({
       id: dataset.id,
       label: dataset.label,
       ownerId: dataset.ownerId,
+      visibility: dataset.visibility,
       createdAt: dataset.createdAt,
       updatedAt: dataset.updatedAt,
       version: dataset.version,
@@ -639,11 +680,17 @@ async function handleDatasetsApi(req, res, url) {
     const currentEntry = manifest.datasets[datasetIndex];
     const currentRecord = await readDatasetRecord(currentEntry.id, currentEntry.ownerId);
     const effectiveOwnerId = normalizeOwnerId(currentRecord.ownerId || currentEntry.ownerId);
+    const currentVisibility = resolveDatasetVisibility(currentEntry.visibility, effectiveOwnerId);
     if (effectiveOwnerId !== authUser.id && !isAdmin) {
       return sendJson(res, 403, { error: 'forbidden' });
     }
 
-    const currentDataset = { ...currentEntry, ownerId: effectiveOwnerId, cards: currentRecord.cards };
+    const currentDataset = {
+      ...currentEntry,
+      ownerId: effectiveOwnerId,
+      visibility: currentVisibility,
+      cards: currentRecord.cards,
+    };
 
     if (checkOptimisticConcurrency(currentDataset, payload)) {
       return sendJson(res, 409, { error: 'conflict', current: currentDataset });
@@ -651,6 +698,15 @@ async function handleDatasetsApi(req, res, url) {
 
     const nextLabel = String(payload.label ?? currentEntry.label).trim() || currentEntry.id;
     const nextCards = Array.isArray(payload.cards) ? payload.cards : currentRecord.cards;
+    const hasVisibilityInPayload = Object.prototype.hasOwnProperty.call(payload, 'visibility');
+    const normalizedVisibility = hasVisibilityInPayload ? normalizeVisibility(payload.visibility) : '';
+    if (hasVisibilityInPayload && !normalizedVisibility) {
+      return sendJson(res, 400, { error: 'invalid_visibility' });
+    }
+    const nextVisibility = normalizedVisibility || currentVisibility;
+    if ((nextVisibility === DATASET_VISIBILITY_PUBLIC || currentVisibility === DATASET_VISIBILITY_PUBLIC) && !isAdmin) {
+      return sendJson(res, 403, { error: 'forbidden_visibility' });
+    }
     if (!Array.isArray(nextCards) || nextCards.length === 0) {
       return sendJson(res, 400, { error: 'invalid_payload' });
     }
@@ -662,6 +718,7 @@ async function handleDatasetsApi(req, res, url) {
     manifest.datasets[datasetIndex] = {
       ...currentEntry,
       ownerId: effectiveOwnerId,
+      visibility: nextVisibility,
       label: nextLabel,
       updatedAt,
       version,
@@ -672,6 +729,7 @@ async function handleDatasetsApi(req, res, url) {
       id: currentEntry.id,
       label: nextLabel,
       ownerId: effectiveOwnerId,
+      visibility: nextVisibility,
       cards: nextCards,
       createdAt: currentEntry.createdAt,
       updatedAt,
