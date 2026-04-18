@@ -14,6 +14,7 @@ const advancedSettingsPanel = document.getElementById("screen-advancedsettings")
 const speedQuizDatasetSelect = document.getElementById("speedquiz-dataset-select");
 const speedQuizCategoriesContainer = document.getElementById("speedquiz-categories");
 const boardCategoriesContainer = document.getElementById("board-categories");
+const resetCategoryDistributionButton = document.getElementById("reset-category-distribution");
 const speedQuizGamePanel = document.getElementById("screen-game-speedquiz");
 const gamePanel = document.getElementById("screen-game-board");
 const loginPanel = document.getElementById("screen-login");
@@ -405,6 +406,9 @@ const CATEGORY_VISUALS = {
 const START_ICON_PATH = "start.svg";
 const GOAL_ICON_PATH = "ziel.svg";
 const ALLOWED_CARD_CATEGORIES = ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Vokabel", "Single-Choice"];
+const CATEGORY_WEIGHT_MIN = 1;
+const CATEGORY_WEIGHT_MAX = 100;
+const CATEGORY_WEIGHT_DEFAULT = 50;
 
 function isAnswerCardCategory(category) {
   return category === "Quizfrage" || category === "Vokabel" || category === "Single-Choice";
@@ -449,6 +453,12 @@ function applyCategoryIcon(element, category, { allowFallback = false } = {}) {
     element.classList.add("icon-fallback");
     element.textContent = getCategoryFallbackIcon(category);
   }
+}
+
+function createDefaultCategoryWeights(categories = ALLOWED_CARD_CATEGORIES, defaultValue = CATEGORY_WEIGHT_DEFAULT) {
+  return Object.fromEntries(
+    (Array.isArray(categories) ? categories : []).map((category) => [category, defaultValue])
+  );
 }
 
 const menuCategoryControls = Object.entries(CATEGORY_CONFIG).map(([category, config]) => ({
@@ -508,6 +518,7 @@ const state = {
   },
   swapPenalty: 10,
   categories: ["Erklären", "Zeichnen", "Pantomime", "Quizfrage", "Vokabel", "Single-Choice"],
+  categoryWeights: createDefaultCategoryWeights(),
   cards: [...DEFAULT_DATA],
   history: [],
   boardCategories: [],
@@ -1349,11 +1360,16 @@ function buildBoard(categories = state.categories) {
   board.style.setProperty("--board-cols", cols);
   board.style.setProperty("--board-rows", rows);
   const assignments = [];
+  const weightedAssignments = createWeightedBoardAssignments(
+    categories,
+    Math.max(0, total - 2),
+    state.categoryWeights
+  );
   for (let index = 0; index < total; index += 1) {
     if (index === 0 || index === total - 1) {
       assignments[index] = null;
-    } else if (categories.length > 0) {
-      assignments[index] = categories[(index - 1) % categories.length];
+    } else if (weightedAssignments.length > 0) {
+      assignments[index] = weightedAssignments[index - 1];
     } else {
       assignments[index] = null;
     }
@@ -2686,6 +2702,86 @@ function getDefaultAvailableCategories(availableCategories) {
   return ALLOWED_CARD_CATEGORIES.filter((category) => availableCategories.has(category));
 }
 
+function clampCategoryWeight(weight) {
+  const parsed = Number.parseInt(weight, 10);
+  if (!Number.isFinite(parsed)) return CATEGORY_WEIGHT_DEFAULT;
+  return Math.min(CATEGORY_WEIGHT_MAX, Math.max(CATEGORY_WEIGHT_MIN, parsed));
+}
+
+function syncCategoryWeightsForAvailableCategories(availableCategories) {
+  const nextWeights = { ...state.categoryWeights };
+  ALLOWED_CARD_CATEGORIES.forEach((category) => {
+    if (!availableCategories.has(category)) {
+      delete nextWeights[category];
+      return;
+    }
+    nextWeights[category] = clampCategoryWeight(nextWeights[category] ?? CATEGORY_WEIGHT_DEFAULT);
+  });
+  state.categoryWeights = nextWeights;
+}
+
+function getWeightedBoardCategories(availableCategories) {
+  const categories = ALLOWED_CARD_CATEGORIES.filter((category) => availableCategories.has(category));
+  return categories.filter((category) => (state.categoryWeights[category] ?? 0) > 0);
+}
+
+function getCategoryDistributionPercentages(categories) {
+  const weights = categories.map((category) => clampCategoryWeight(state.categoryWeights[category] ?? CATEGORY_WEIGHT_DEFAULT));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  if (totalWeight <= 0) {
+    return Object.fromEntries(categories.map((category) => [category, 0]));
+  }
+  return Object.fromEntries(
+    categories.map((category, index) => [category, Math.round((weights[index] / totalWeight) * 100)])
+  );
+}
+
+function resetBoardCategoryDistribution() {
+  const selectedDatasetKeys = readSelectedDatasetKeys();
+  const availableCategories = getAvailableCategoriesForDatasetKeys(selectedDatasetKeys);
+  const resetWeights = { ...state.categoryWeights };
+  getDefaultAvailableCategories(availableCategories).forEach((category) => {
+    resetWeights[category] = CATEGORY_WEIGHT_DEFAULT;
+  });
+  state.categoryWeights = resetWeights;
+  state.categories = getWeightedBoardCategories(availableCategories);
+  renderBoardCategoryOptions();
+  updateMainMenuRequiredSelectionState();
+}
+
+function createWeightedBoardAssignments(categories, slotCount, weightsByCategory) {
+  if (!Array.isArray(categories) || categories.length === 0 || slotCount <= 0) {
+    return [];
+  }
+  const weights = categories.map((category) => clampCategoryWeight(weightsByCategory?.[category] ?? CATEGORY_WEIGHT_DEFAULT));
+  const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
+  if (totalWeight <= 0) {
+    return [];
+  }
+
+  const exactCounts = weights.map((weight) => (weight / totalWeight) * slotCount);
+  const baseCounts = exactCounts.map((count) => Math.floor(count));
+  let remainingSlots = slotCount - baseCounts.reduce((sum, count) => sum + count, 0);
+  const remainders = exactCounts
+    .map((count, index) => ({ index, remainder: count - baseCounts[index] }))
+    .sort((a, b) => b.remainder - a.remainder);
+  for (let i = 0; i < remainingSlots; i += 1) {
+    baseCounts[remainders[i % remainders.length].index] += 1;
+  }
+
+  const assignmentPool = [];
+  baseCounts.forEach((count, index) => {
+    for (let i = 0; i < count; i += 1) {
+      assignmentPool.push(categories[index]);
+    }
+  });
+  for (let i = assignmentPool.length - 1; i > 0; i -= 1) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [assignmentPool[i], assignmentPool[randomIndex]] = [assignmentPool[randomIndex], assignmentPool[i]];
+  }
+  return assignmentPool;
+}
+
 function applySelectedDatasets() {
   const selectedKeys = readSelectedDatasetKeys();
   state.selectedDatasets = [...selectedKeys];
@@ -2697,10 +2793,11 @@ function applySelectedDatasets() {
 
   state.cards = mergedCards;
   const availableCategories = getAvailableCategoriesFromCards(mergedCards);
-  const filteredBoardCategories = filterCategoriesToAvailability(state.categories, availableCategories);
+  syncCategoryWeightsForAvailableCategories(availableCategories);
+  const weightedCategories = getWeightedBoardCategories(availableCategories);
   state.categories =
-    filteredBoardCategories.length > 0
-      ? filteredBoardCategories
+    weightedCategories.length > 0
+      ? weightedCategories
       : getDefaultAvailableCategories(availableCategories);
 
   if (window.location.hash === "#/cardsets" && cardEditorBody) {
@@ -2889,47 +2986,51 @@ function renderBoardCategoryOptions() {
   boardCategoriesContainer.innerHTML = "";
   const selectedDatasetKeys = readSelectedDatasetKeys();
   const availableCategories = getAvailableCategoriesForDatasetKeys(selectedDatasetKeys);
+  syncCategoryWeightsForAvailableCategories(availableCategories);
+  const categories = getDefaultAvailableCategories(availableCategories);
+  const percentages = getCategoryDistributionPercentages(categories);
+  if (resetCategoryDistributionButton) {
+    resetCategoryDistributionButton.disabled = categories.length === 0;
+  }
 
-  ALLOWED_CARD_CATEGORIES.forEach((category) => {
-    const categoryButton = document.createElement("button");
-    const isAvailable = availableCategories.has(category);
-    const isSelected = state.categories.includes(category);
+  categories.forEach((category) => {
+    const row = document.createElement("div");
+    row.className = "category-distribution-row";
     const visuals = CATEGORY_VISUALS[category];
-    categoryButton.type = "button";
-    categoryButton.className = "speedquiz-category-button";
-    categoryButton.dataset.categoryLabel = category;
-    categoryButton.setAttribute("aria-label", category);
-    categoryButton.setAttribute("aria-pressed", String(isSelected && isAvailable));
-    categoryButton.setAttribute("aria-disabled", String(!isAvailable));
-    categoryButton.classList.toggle("is-selected", isSelected);
-    categoryButton.classList.toggle("is-unavailable", !isAvailable);
-    categoryButton.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
+    row.style.setProperty("--category-color", visuals?.color ?? "#F3E9D3");
 
-    const icon = document.createElement("span");
-    icon.className = "category-icon";
-    applyCategoryIcon(icon, category, { allowFallback: true });
-    categoryButton.append(icon);
+    const label = document.createElement("label");
+    label.className = "category-distribution-label";
+    label.setAttribute("for", `category-weight-${CATEGORY_CONFIG[category]?.id ?? category}`);
+    label.textContent = category;
 
-    const selectionIndicator = document.createElement("span");
-    selectionIndicator.className = "category-selection-indicator";
-    selectionIndicator.setAttribute("aria-hidden", "true");
-    categoryButton.append(selectionIndicator);
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "category-distribution-slider";
+    slider.id = `category-weight-${CATEGORY_CONFIG[category]?.id ?? category}`;
+    slider.min = String(CATEGORY_WEIGHT_MIN);
+    slider.max = String(CATEGORY_WEIGHT_MAX);
+    slider.step = "1";
+    slider.value = String(clampCategoryWeight(state.categoryWeights[category] ?? CATEGORY_WEIGHT_DEFAULT));
+    slider.setAttribute("aria-label", `Häufigkeit für ${category}`);
 
-    categoryButton.addEventListener("click", () => {
-      if (!isAvailable) return;
-      const selectedCategories = state.categories.includes(category)
-        ? state.categories.filter((item) => item !== category)
-        : [...state.categories, category];
-      const nextSelectedCategories = filterCategoriesToAvailability(selectedCategories, availableCategories);
-      state.categories = nextSelectedCategories.length > 0
-        ? nextSelectedCategories
-        : getDefaultAvailableCategories(availableCategories);
+    const value = document.createElement("span");
+    value.className = "category-distribution-value";
+    value.textContent = `${percentages[category] ?? 0}%`;
+
+    slider.addEventListener("input", () => {
+      state.categoryWeights[category] = clampCategoryWeight(slider.value);
+      const selectedForBoard = getWeightedBoardCategories(availableCategories);
+      state.categories = selectedForBoard.length > 0 ? selectedForBoard : getDefaultAvailableCategories(availableCategories);
       renderBoardCategoryOptions();
       updateMainMenuRequiredSelectionState();
     });
 
-    boardCategoriesContainer.append(categoryButton);
+    row.append(label, slider, value);
+    boardCategoriesContainer.append(row);
   });
+
+  state.categories = getWeightedBoardCategories(availableCategories);
 }
 
 const CSV_MAX_SIZE_BYTES = 1024 * 1024;
@@ -3635,6 +3736,9 @@ if (!window.location.hash) {
 updateMainMenuRequiredSelectionState();
 
 startButton.addEventListener("click", handleStartGame);
+resetCategoryDistributionButton?.addEventListener("click", () => {
+  resetBoardCategoryDistribution();
+});
 speedQuizStartButton?.addEventListener("click", () => {
   setRoute("#/game-speedquiz");
 });
