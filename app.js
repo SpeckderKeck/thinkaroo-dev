@@ -1685,13 +1685,15 @@ function setSingleChoiceResult(optionButton, isCorrect, correctAnswer) {
 
     const buttonOption = normalizeAnswerOption(button.dataset.option ?? button.textContent);
     if (correctAnswer && buttonOption === correctAnswer) {
-      button.classList.add("is-correct-outline");
+      button.classList.add("is-correct");
     }
   });
 
   if (optionButton) {
     optionButton.classList.add("is-selected", "is-animating");
-    optionButton.classList.add(isCorrect ? "is-correct" : "is-wrong");
+    if (!isCorrect) {
+      optionButton.classList.add("is-wrong");
+    }
   }
 
   stopTimer();
