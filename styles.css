@@ -2125,10 +2125,20 @@ button:disabled {
 
 .settings-card {
   width: min(520px, 100%);
+  max-height: min(86dvh, 900px);
   background: var(--panel);
   border-radius: 20px;
   padding: 24px;
   box-shadow: 0 20px 40px var(--shadow);
+  overflow-y: auto;
+}
+
+#apply-settings {
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  z-index: 1;
+  margin-top: 16px;
 }
 
 .settings-header {
