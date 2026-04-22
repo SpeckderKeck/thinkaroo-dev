@@ -83,6 +83,8 @@ const cardEditorDatasetSelect = document.getElementById("card-editor-dataset-sel
 const cardEditorOverwriteButton = document.getElementById("card-editor-overwrite");
 const cardEditorDeleteButton = document.getElementById("card-editor-delete");
 const cardEditorErrors = document.getElementById("card-editor-errors");
+const csvVisibilityField = document.getElementById("csv-visibility-field");
+const csvVisibilityToggle = document.getElementById("csv-visibility-public");
 const fullscreenToggle = document.getElementById("fullscreen-toggle");
 const qrToggle = document.getElementById("qr-toggle");
 const qrModal = document.getElementById("qr-modal");
@@ -544,6 +546,36 @@ const state = {
 
 let isLoggedIn = Boolean(window.THINKAROO_AUTH?.isLoggedIn);
 let authSession = window.__authState?.session ?? null;
+let isAdminSession = false;
+
+function deriveIsAdminSessionFromSession(session) {
+  const user = session?.user ?? null;
+  const appMetadata = user?.app_metadata ?? {};
+  const userMetadata = user?.user_metadata ?? {};
+  const roles = [
+    appMetadata?.role,
+    userMetadata?.role,
+    ...(Array.isArray(appMetadata?.roles) ? appMetadata.roles : []),
+    ...(Array.isArray(userMetadata?.roles) ? userMetadata.roles : []),
+  ];
+  return roles.some((role) => String(role ?? "").trim().toLowerCase() === "admin");
+}
+
+async function refreshAdminSessionState() {
+  let session = authSession ?? window.__authState?.session ?? null;
+  if (!session?.user && window.supabase?.auth?.getSession) {
+    try {
+      const {
+        data: { session: latestSession },
+      } = await window.supabase.auth.getSession();
+      session = latestSession ?? session;
+      authSession = session;
+    } catch {
+      // Ignore and keep previous session state.
+    }
+  }
+  isAdminSession = Boolean(isLoggedIn && deriveIsAdminSessionFromSession(session));
+}
 
 function createAuthApiError(message, { shouldRedirect = true } = {}) {
   const error = new Error(message);
@@ -636,7 +668,17 @@ function applyDatasetAuthMode() {
   refreshDatasetSelections();
   refreshCsvDatasetOverwriteSelect("");
   updateCsvDatasetActionState();
+  updateCsvVisibilityControls();
   updateMainMenuRequiredSelectionState();
+}
+
+function updateCsvVisibilityControls() {
+  if (!csvVisibilityField || !csvVisibilityToggle) return;
+  const shouldShowToggle = Boolean(isLoggedIn && isAdminSession);
+  csvVisibilityField.hidden = !shouldShowToggle;
+  if (!shouldShowToggle) {
+    csvVisibilityToggle.checked = false;
+  }
 }
 
 const TEAM_ICONS = [
@@ -908,6 +950,9 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
         });
       } else if (targetDataset) {
         const hasPreviousDataset = Boolean(previousDataset);
+        const visibilityPayload = isLoggedIn && isAdminSession && csvVisibilityToggle?.checked
+          ? { visibility: "public" }
+          : {};
         response = await fetch(
           hasPreviousDataset
             ? `${getCustomDatasetsApiEndpoint()}/${encodeURIComponent(targetDataset.id)}`
@@ -920,10 +965,11 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
                 ? {
                     label: targetDataset.label,
                     cards: targetDataset.cards,
+                    ...visibilityPayload,
                     expectedVersion: previousDataset?.version,
                     expectedUpdatedAt: previousDataset?.updatedAt,
                   }
-                : targetDataset,
+                : { ...targetDataset, ...visibilityPayload },
             ),
           },
         );
@@ -2311,6 +2357,10 @@ function refreshCsvDatasetOverwriteSelect(selectedId = "") {
   updateCsvDatasetActionState();
 }
 
+function getDatasetVisibilityStatus(datasetId) {
+  return state.customDatasets[datasetId]?.isPublic ? "Global veröffentlicht" : "Nur für dich";
+}
+
 async function saveCardsAsCustomDataset({ cards, label, existingId = "" }) {
   const normalizedLabel = String(label ?? "").trim();
   if (!normalizedLabel) {
@@ -2333,6 +2383,7 @@ async function saveCardsAsCustomDataset({ cards, label, existingId = "" }) {
     cards: normalizedCards,
     createdAt: existingDataset?.createdAt ?? now,
     updatedAt: now,
+    isPublic: Boolean(isLoggedIn && isAdminSession && csvVisibilityToggle?.checked),
     version: existingDataset?.version ?? 1,
   };
 
@@ -2416,9 +2467,9 @@ async function saveEditorAsNewDataset() {
     cardEditorDatasetLabelInput.value = result.label;
   }
   if (result.persistenceResult.mode === "remote") {
-    csvStatus.textContent = `Kartensatz global gespeichert: ${result.label} (${result.count} Karten).`;
+    csvStatus.textContent = `Kartensatz global gespeichert: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
   } else {
-    csvStatus.textContent = `Eigener Kartensatz lokal gespeichert: ${result.label} (${result.count} Karten).`;
+    csvStatus.textContent = `Eigener Kartensatz lokal gespeichert: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
   }
 }
 
@@ -2451,9 +2502,9 @@ async function overwriteSelectedCustomDataset() {
     cardEditorDatasetLabelInput.value = nextLabel;
   }
   if (result.persistenceResult.mode === "remote") {
-    csvStatus.textContent = `Kartensatz global überschrieben: ${nextLabel} (${result.count} Karten).`;
+    csvStatus.textContent = `Kartensatz global überschrieben: ${nextLabel} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
   } else {
-    csvStatus.textContent = `Kartensatz lokal überschrieben: ${nextLabel} (${result.count} Karten).`;
+    csvStatus.textContent = `Kartensatz lokal überschrieben: ${nextLabel} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
   }
 }
 
@@ -3406,8 +3457,8 @@ async function saveUploadedCsvAsNewDataset() {
   refreshCsvDatasetOverwriteSelect(result.datasetId);
   csvStatus.textContent =
     result.persistenceResult.mode === "remote"
-      ? `CSV global gespeichert: ${result.label} (${result.count} Karten).`
-      : `CSV lokal gespeichert: ${result.label} (${result.count} Karten).`;
+      ? `CSV global gespeichert: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`
+      : `CSV lokal gespeichert: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
 }
 
 async function overwriteDatasetWithUploadedCsv() {
@@ -3435,8 +3486,8 @@ async function overwriteDatasetWithUploadedCsv() {
   refreshCsvDatasetOverwriteSelect(result.datasetId);
   csvStatus.textContent =
     result.persistenceResult.mode === "remote"
-      ? `Datensatz global überschrieben: ${result.label} (${result.count} Karten).`
-      : `Datensatz lokal überschrieben: ${result.label} (${result.count} Karten).`;
+      ? `Datensatz global überschrieben: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`
+      : `Datensatz lokal überschrieben: ${result.label} (${result.count} Karten). ${getDatasetVisibilityStatus(result.datasetId)}.`;
 }
 
 function syncSettingsPanel() {
@@ -3645,6 +3696,7 @@ function handleWinnerRestart() {
 
 async function setup() {
   state.customDatasetsApiUrl = resolveCustomDatasetsApiUrl();
+  await refreshAdminSessionState();
   if (isLoggedIn) {
     state.customDatasets = await loadCustomDatasets();
   } else {
@@ -3969,15 +4021,18 @@ document.addEventListener("fullscreenchange", () => {
 });
 
 window.addEventListener(AUTH_MODE_EVENT, async (event) => {
+  const previousIsLoggedIn = isLoggedIn;
+  const previousIsAdminSession = isAdminSession;
   const nextIsLoggedIn = Boolean(event.detail?.isLoggedIn);
   authSession = event.detail?.session ?? null;
-  if (nextIsLoggedIn === isLoggedIn) return;
   isLoggedIn = nextIsLoggedIn;
-  if (isLoggedIn) {
+  await refreshAdminSessionState();
+  if (isLoggedIn && !previousIsLoggedIn) {
     const publicDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
     const loadedDatasets = await loadCustomDatasets();
     state.customDatasets = { ...publicDatasets, ...loadedDatasets };
   }
+  if (previousIsLoggedIn === isLoggedIn && previousIsAdminSession === isAdminSession) return;
   applyDatasetAuthMode();
   await refreshPublicCsvList();
 });
