@@ -482,6 +482,8 @@ const MAX_DATASET_SELECTIONS = 5;
 const CUSTOM_DATASETS_STORAGE_KEY = "wissivity.customDatasets";
 const CUSTOM_DATASETS_API_URL_STORAGE_KEY = "wissivity.customDatasetsApiUrl";
 const CUSTOM_DATASETS_API_ENDPOINT = "/datasets";
+const PUBLIC_CUSTOM_DATASETS_API_ENDPOINT = "/public-datasets";
+const INCLUDE_PUBLIC_DATASETS_FOR_LOGGED_IN = true;
 const CUSTOM_DATASET_KEY_PREFIX = "custom:";
 const STORAGE_DATASET_KEY_PREFIX = "storage:";
 const REMOVED_PRESET_DATASET_KEYS = new Set(["umformen"]);
@@ -738,6 +740,14 @@ function getCustomDatasetsApiEndpoint() {
   return `${baseUrl}${CUSTOM_DATASETS_API_ENDPOINT}`;
 }
 
+function getPublicCustomDatasetsApiEndpoint() {
+  const baseUrl = normalizeCustomDatasetsApiUrl(state.customDatasetsApiUrl);
+  if (!baseUrl) {
+    return PUBLIC_CUSTOM_DATASETS_API_ENDPOINT;
+  }
+  return `${baseUrl}${PUBLIC_CUSTOM_DATASETS_API_ENDPOINT}`;
+}
+
 function fromCustomDatasetKey(key) {
   const normalized = String(key ?? "").trim();
   if (!normalized.startsWith(CUSTOM_DATASET_KEY_PREFIX)) {
@@ -790,20 +800,20 @@ function isCustomDatasetPublic(rawDataset) {
     return false;
   }
 
-  if (typeof rawDataset.isPublic === "boolean") {
-    return rawDataset.isPublic;
-  }
-
-  if (typeof rawDataset.public === "boolean") {
-    return rawDataset.public;
-  }
-
   const visibility = String(rawDataset.visibility ?? "").trim().toLowerCase();
   if (visibility === "public") {
     return true;
   }
   if (visibility === "private") {
     return false;
+  }
+
+  if (typeof rawDataset.isPublic === "boolean") {
+    return rawDataset.isPublic;
+  }
+
+  if (typeof rawDataset.public === "boolean") {
+    return rawDataset.public;
   }
 
   return !normalizeOwnerId(rawDataset.ownerId ?? rawDataset.owner_id);
@@ -891,35 +901,42 @@ function readCustomDatasetsFromStorage() {
   }
 }
 
-async function readCustomDatasetsFromApi() {
+async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
+  const endpoint = includeOnlyPublic ? getPublicCustomDatasetsApiEndpoint() : getCustomDatasetsApiEndpoint();
+  const actionLabel = includeOnlyPublic
+    ? "Laden der öffentlichen Kartensätze"
+    : "Laden der eigenen Kartensätze";
+
   try {
-    const response = await fetch(getCustomDatasetsApiEndpoint(), {
+    const response = await fetch(endpoint, {
       method: "GET",
       headers: await getAuthHeaders(),
     });
-    ensureAuthorizedResponse(response, "Laden der eigenen Kartensätze");
+    ensureAuthorizedResponse(response, actionLabel);
 
     if (!response.ok) {
-      return null;
+      return { datasets: null, hasApiError: true };
     }
 
     const parsed = await response.json();
     if (!Array.isArray(parsed)) {
-      return null;
+      return { datasets: null, hasApiError: true };
     }
 
-    return parsed.reduce((accumulator, rawDataset) => {
+    const datasets = parsed.reduce((accumulator, rawDataset) => {
       const dataset = normalizeStoredCustomDataset(rawDataset);
       if (dataset) {
         accumulator[dataset.id] = dataset;
       }
       return accumulator;
     }, {});
+
+    return { datasets, hasApiError: false };
   } catch (error) {
     if (error?.isAuthError) {
       throw error;
     }
-    return null;
+    return { datasets: null, hasApiError: true };
   }
 }
 
@@ -1027,9 +1044,26 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
 }
 
 async function loadCustomDatasets() {
-  let remoteDatasets = null;
+  let privateDatasets = {};
+  let publicDatasets = {};
+  let hasApiError = false;
+
   try {
-    remoteDatasets = await readCustomDatasetsFromApi();
+    if (isLoggedIn) {
+      const privateResult = await readCustomDatasetsFromApi({ includeOnlyPublic: false });
+      privateDatasets = privateResult.datasets ?? {};
+      hasApiError = hasApiError || privateResult.hasApiError;
+
+      if (INCLUDE_PUBLIC_DATASETS_FOR_LOGGED_IN) {
+        const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
+        publicDatasets = publicResult.datasets ?? {};
+        hasApiError = hasApiError || publicResult.hasApiError;
+      }
+    } else {
+      const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
+      publicDatasets = publicResult.datasets ?? {};
+      hasApiError = publicResult.hasApiError;
+    }
   } catch (error) {
     if (error?.isAuthError) {
       if (csvStatus) {
@@ -1038,14 +1072,18 @@ async function loadCustomDatasets() {
       redirectToLogin();
       return {};
     }
+    hasApiError = true;
   }
-  if (remoteDatasets) {
+
+  const remoteDatasets = filterCustomDatasetsForAuthMode({ ...publicDatasets, ...privateDatasets });
+  if (!hasApiError) {
     state.datasetStorageMode = "remote";
     return remoteDatasets;
   }
 
   state.datasetStorageMode = "local";
-  return readCustomDatasetsFromStorage();
+  const localDatasets = readCustomDatasetsFromStorage();
+  return filterCustomDatasetsForAuthMode({ ...localDatasets, ...remoteDatasets });
 }
 
 function getAllDatasetEntries() {
@@ -3697,11 +3735,7 @@ function handleWinnerRestart() {
 async function setup() {
   state.customDatasetsApiUrl = resolveCustomDatasetsApiUrl();
   await refreshAdminSessionState();
-  if (isLoggedIn) {
-    state.customDatasets = await loadCustomDatasets();
-  } else {
-    state.customDatasets = filterCustomDatasetsForAuthMode(readCustomDatasetsFromStorage());
-  }
+  state.customDatasets = await loadCustomDatasets();
   menuCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   gameCategoryControls.forEach((control) => populateTimeSelect(control.timeSelect, 60));
   syncTeamCountControls(teamCountInput.value);
