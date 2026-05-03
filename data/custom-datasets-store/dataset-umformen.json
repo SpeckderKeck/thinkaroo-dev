@@ -1,0 +1,1114 @@
+[
+  {
+    "category": "Quizfrage",
+    "term": "Was versteht man unter Umformen?",
+    "answer": "Eine spanlose Änderung der Form eines Werkstücks.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welches Fertigungsverfahren gehört zum Umformen?",
+    "answer": "Biegen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wird beim Umformen Material abgetragen?",
+    "answer": "Nein.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man die dauerhafte Verformung eines Werkstoffs?",
+    "answer": "Plastische Verformung.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt die Verformung, die sich wieder zurückbildet?",
+    "answer": "Elastische Verformung.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Nenne ein Umformverfahren für Bleche.",
+    "answer": "Abkanten.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt das Umformen mit Rollen?",
+    "answer": "Walzen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man das Umformen durch Ziehen eines Blechs in eine Form?",
+    "answer": "Tiefziehen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welches Werkzeug drückt beim Umformen auf das Werkstück?",
+    "answer": "Stempel.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt das Gegenstück zum Stempel?",
+    "answer": "Matrize.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man das Ausgangsmaterial vor der Bearbeitung?",
+    "answer": "Rohteil.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt das fertige Teil nach der Bearbeitung?",
+    "answer": "Fertigteil.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welches Metall ist besonders leicht?",
+    "answer": "Aluminium.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welcher Werkstoff besteht aus Eisen und maximal 2,06 % Kohlenstoff?",
+    "answer": "Stahl.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man die Kraft, die zum Umformen nötig ist?",
+    "answer": "Umformkraft.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welche Maschine wird häufig zum Biegen von Blechen genutzt?",
+    "answer": "Abkantpresse.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man das Schmieden ohne feste Form?",
+    "answer": "Freiformschmieden.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man Schmieden mit einer festen Form?",
+    "answer": "Gesenkschmieden.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Unterschied zwischen Warm- und Kaltumformen?",
+    "answer": "Der Werkstoff wird erhitzt.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was kann mit einem Messschieber gemessen werden?",
+    "answer": "Längen und Durchmesser.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man erlaubte Maßabweichungen?",
+    "answer": "Toleranzen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist Ausschuss?",
+    "answer": "Fehlerhafte Teile.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Warum ist Arbeitssicherheit wichtig?",
+    "answer": "Um Unfälle zu vermeiden.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt der rote Sicherheitsschalter an Maschinen?",
+    "answer": "Not-Aus.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welche PSA schützt die Augen?",
+    "answer": "Schutzbrille.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet Serienfertigung?",
+    "answer": "Viele gleiche Teile herstellen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist Einzelfertigung?",
+    "answer": "Herstellung einzelner Teile.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man die Dauer, die ein Werkzeug nutzbar ist?",
+    "answer": "Standzeit.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man das Einrichten einer Maschine vor Produktionsbeginn?",
+    "answer": "Rüsten.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welche Kraft wirkt beim Ziehen?",
+    "answer": "Zugkraft.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Welche Kraft wirkt beim Drücken?",
+    "answer": "Druckkraft.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißt ein Schaden durch Überlastung des Materials?",
+    "answer": "Riss.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was beschreibt die Oberfläche eines Werkstücks?",
+    "answer": "Rauheit oder Glätte.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist ein Rohr?",
+    "answer": "Ein hohles Rundprofil.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man eine Werkstoffprüfung, bei der das Material belastet wird bis es bricht?",
+    "answer": "Zugversuch.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie nennt man das Gefüge eines Metalls?",
+    "answer": "Kornstruktur.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was zeigt ein Kraftpfeil in der Skizze?",
+    "answer": "Richtung der wirkenden Kraft.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist eine Presse?",
+    "answer": "Eine Maschine zum Umformen durch Druckkräfte.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet Maßhaltigkeit?",
+    "answer": "Einhaltung der Maße.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist ein Gesenk?",
+    "answer": "Formwerkzeug beim Schmieden.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet spanlos?",
+    "answer": "Ohne Materialabtrag.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet Oberfläche rau?",
+    "answer": "Unebenheiten sind vorhanden.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist eine Falte im Blech nach dem Walzen?",
+    "answer": "Ein Umformfehler.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Wie heißen die Werkzeuge beim Tiefziehen?",
+    "answer": "Stempel und Matrize.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet gleichmäßig umformen?",
+    "answer": "Ohne starke Abweichungen.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Warum werden Bleche gebogen?",
+    "answer": "Um eine gewünschte Form zu erhalten.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist ein Fehlerteil?",
+    "answer": "Ein Teil mit Mängeln.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was bedeutet PSA?",
+    "answer": "Persönliche Schutzausrüstung.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Warum trägt man Handschuhe?",
+    "answer": "Zum Schutz der Hände.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist eine Falz?",
+    "answer": "Umgebogene Kante.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist eine Kraft?",
+    "answer": "Ursache für Bewegung oder Verformung.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist ein Fertigungsfehler?",
+    "answer": "Z.B Abweichung vom Soll.",
+    "taboo": []
+  },
+  {
+    "category": "Quizfrage",
+    "term": "Was ist der Hauptunterschied zwischen Umformen und Fräsen?",
+    "answer": "Es geht kein Material verloren.",
+    "taboo": []
+  },
+  {
+    "category": "Erklären",
+    "term": "Umformen",
+    "taboo": [
+      "spanlos",
+      "Kraft",
+      "Formänderung"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Plastische Verformung",
+    "taboo": [
+      "elastisch",
+      "dauerhaft",
+      "Werkstoff"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Elastische Verformung",
+    "taboo": [
+      "rückgängig",
+      "Feder",
+      "Spannung"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Stauchen",
+    "taboo": [
+      "drücken",
+      "kürzer",
+      "Presse"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Strecken",
+    "taboo": [
+      "verlängern",
+      "Zug",
+      "Draht"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Biegen",
+    "taboo": [
+      "Winkel",
+      "Abkantpresse",
+      "Kante"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Abkanten",
+    "taboo": [
+      "Blech",
+      "Presse",
+      "Winkel"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Walzen",
+    "taboo": [
+      "Rollen",
+      "Blech",
+      "Band"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Tiefziehen",
+    "taboo": [
+      "Blech",
+      "Napf",
+      "Ziehstempel"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Freiformschmieden",
+    "taboo": [
+      "Hammer",
+      "Amboss",
+      "Handarbeit"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Gesenkschmieden",
+    "taboo": [
+      "Form",
+      "Gesenk",
+      "Serie"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Fließpressen",
+    "taboo": [
+      "Druck",
+      "Metall",
+      "Hohlkörper"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Drahtziehen",
+    "taboo": [
+      "Durchmesser",
+      "Ziehstein",
+      "Draht"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Strangpressen",
+    "taboo": [
+      "Profil",
+      "Matrize",
+      "Aluminium"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Kaltumformen",
+    "taboo": [
+      "Raumtemperatur",
+      "Festigkeit",
+      "ohne Erwärmen"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Warmumformen",
+    "taboo": [
+      "erhitzen",
+      "Ofen",
+      "Temperatur"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Blech",
+    "taboo": [
+      "dünn",
+      "Tafel",
+      "Metall"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Stabmaterial",
+    "taboo": [
+      "rund",
+      "lang",
+      "Vollmaterial"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Rohr",
+    "taboo": [
+      "hohl",
+      "rund",
+      "Durchmesser"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Streckgrenze",
+    "taboo": [
+      "Spannung",
+      "dauerhaft",
+      "Werkstoff"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Zugfestigkeit",
+    "taboo": [
+      "reißen",
+      "Kraft",
+      "Materialprüfung"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Umformkraft",
+    "taboo": [
+      "Presse",
+      "Druck",
+      "Newton"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Presskraft",
+    "taboo": [
+      "Maschine",
+      "Kraft",
+      "Stempel"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Stempel",
+    "taboo": [
+      "Werkzeug",
+      "drücken",
+      "Form"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Matrize",
+    "taboo": [
+      "Gegenstück",
+      "Öffnung",
+      "Werkzeug"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Gesenk",
+    "taboo": [
+      "Schmieden",
+      "Form",
+      "Werkzeug"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Abkantpresse",
+    "taboo": [
+      "Maschine",
+      "Biegen",
+      "Blech"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Werkstoff",
+    "taboo": [
+      "Material",
+      "Metall",
+      "Eigenschaften"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Stahl",
+    "taboo": [
+      "Eisen",
+      "Kohlenstoff",
+      "Legierung"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Aluminium",
+    "taboo": [
+      "leicht",
+      "NE-Metall",
+      "weich"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Kupfer",
+    "taboo": [
+      "rot",
+      "elektrisch",
+      "Leitfähigkeit"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Messing",
+    "taboo": [
+      "Kupfer",
+      "Zink",
+      "gelb"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Reibung",
+    "taboo": [
+      "Widerstand",
+      "Bewegung",
+      "Oberfläche"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Schmierung",
+    "taboo": [
+      "Öl",
+      "Fett",
+      "Reibung"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Oberfläche",
+    "taboo": [
+      "rau",
+      "glatt",
+      "Struktur"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Rissbildung",
+    "taboo": [
+      "Bruch",
+      "Schaden",
+      "Materialfehler"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Faltenbildung",
+    "taboo": [
+      "Blech",
+      "Wellen",
+      "Fehler"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Werkzeugverschleiß",
+    "taboo": [
+      "Abnutzung",
+      "Standzeit",
+      "Werkzeug"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Formänderung",
+    "taboo": [
+      "Gestalt",
+      "Umformen",
+      "verändern"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Kraftfluss",
+    "taboo": [
+      "Last",
+      "Verlauf",
+      "Bauteil"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Werkstück",
+    "taboo": [
+      "Teil",
+      "bearbeiten",
+      "Material"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Rohteil",
+    "taboo": [
+      "unbearbeitet",
+      "Ausgang",
+      "Werkstück"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Endprodukt",
+    "taboo": [
+      "fertig",
+      "Bauteil",
+      "Ergebnis"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Maschinenbediener",
+    "taboo": [
+      "Mensch",
+      "steuern",
+      "Maschine"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Arbeitssicherheit",
+    "taboo": [
+      "Schutz",
+      "Unfall",
+      "Regeln"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Schutzeinrichtung",
+    "taboo": [
+      "Schutzhaube",
+      "Sicherheit",
+      "Maschine"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Not-Aus",
+    "taboo": [
+      "stoppen",
+      "Gefahr",
+      "Schalter"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Schutzbrille",
+    "taboo": [
+      "Augen",
+      "Sicherheit",
+      "PSA"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "PSA",
+    "taboo": [
+      "Schutz",
+      "Kleidung",
+      "Arbeit"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Qualitätskontrolle",
+    "taboo": [
+      "prüfen",
+      "messen",
+      "Ergebnis"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Messschieber",
+    "taboo": [
+      "Länge",
+      "messen",
+      "Millimeter"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Maßband",
+    "taboo": [
+      "Länge",
+      "flexibel",
+      "messen"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Werkstofffehler",
+    "taboo": [
+      "Lunker",
+      "Riss",
+      "Einschluss"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Korn-struktur",
+    "taboo": [
+      "Gefüge",
+      "Kristall",
+      "Metall"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Gefüge",
+    "taboo": [
+      "Struktur",
+      "Werkstoff",
+      "Körner"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Erwärmung",
+    "taboo": [
+      "Temperatur",
+      "Hitze",
+      "Ofen"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Ofen",
+    "taboo": [
+      "erhitzen",
+      "warm",
+      "Anlage"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Temperatur",
+    "taboo": [
+      "Grad",
+      "Wärme",
+      "kalt"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Zugspannung",
+    "taboo": [
+      "ziehen",
+      "Kraft",
+      "Material"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Druckspannung",
+    "taboo": [
+      "drücken",
+      "Kraft",
+      "Material"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "krz-Gitter",
+    "taboo": [
+      "Atom",
+      "hdp-Gitter",
+      "kfz-Gitter"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "kfz-Gitter",
+    "taboo": [
+      "Atom",
+      "hdp-Gitter",
+      "krz-Gitter"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Atom",
+    "taboo": [
+      "Elektron"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Gitterstruktur",
+    "taboo": [
+      "hdp-Gitter",
+      "krz-Gitter",
+      "kfz-Gitter"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Umformverfahren",
+    "taboo": [
+      "Methode",
+      "Technik",
+      "Prozess"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Körner",
+    "taboo": [
+      "Essen Vögel"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Kristallstruktur",
+    "taboo": [
+      "Atom"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Ausschuss",
+    "taboo": [
+      "unbrauchbar",
+      "wegwerfen",
+      "Fehler"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Zugversuch",
+    "taboo": [
+      "Probe",
+      "reißen",
+      "Kraft"
+    ]
+  },
+  {
+    "category": "Erklären",
+    "term": "Umformtechnik",
+    "taboo": [
+      "Fertigung",
+      "Metall",
+      "Verfahren"
+    ]
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Hammer",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Walzen",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Blech",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Rohr",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "U-Profil",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "L-Profil",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Getränkedose",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Schraube",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Mutter",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Zahnrad",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "hdp-Gitter",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "krz-Gitter",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "kfz-Gitter",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Kristallstruktur",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Riss im Blech",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Zugversuchstab",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Spannungs-Dehnungs-Diagramm",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Mikro-struktur Körner",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Versetzung im Gitter",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Schutzbrille",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Sicherheitsschuh",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Messschieber",
+    "taboo": []
+  },
+  {
+    "category": "Zeichnen",
+    "term": "Grat an Kante",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Schmieden",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "ein Blech abkanten",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "ein Rohr biegen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "eine Dose tiefziehen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Material zwischen Walzen durchführen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Schmierstoff auftragen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "mit Messschieber messen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Schutzbrille aufsetzen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Sicherheitsschuhe anziehen",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Not-Aus drücken",
+    "taboo": []
+  },
+  {
+    "category": "Pantomime",
+    "term": "Zugversuch durchführen",
+    "taboo": []
+  }
+]

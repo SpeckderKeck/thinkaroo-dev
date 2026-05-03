@@ -1,0 +1,602 @@
+[
+  {
+    "category": "Vokabael",
+    "term": "Taten sagen mehr als Worte",
+    "answer": "Actions speak louder than words",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Besser spät als nie",
+    "answer": "Better late than never",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Übung macht den Meister",
+    "answer": "Practice makes perfect",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Zeit ist Geld",
+    "answer": "Time is money",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ehrlichkeit währt am längsten",
+    "answer": "Honesty is the best policy",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Andere Länder, andere Sitten",
+    "answer": "When in Rome, do as the Romans do",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Morgenstund hat Gold im Mund",
+    "answer": "The early bird catches the worm",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Beurteile ein Buch nicht nach seinem Einband",
+    "answer": "Don’t judge a book by its cover",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Zwei Köpfe sind besser als einer",
+    "answer": "Two heads are better than one",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wie gewonnen, so zerronnen",
+    "answer": "Easy come, easy go",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wo ein Wille ist, ist auch ein Weg",
+    "answer": "Where there’s a will, there’s a way",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Erst denken, dann handeln",
+    "answer": "Look before you leap",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Gleich und gleich gesellt sich gern",
+    "answer": "Birds of a feather flock together",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ein Bild sagt mehr als tausend Worte",
+    "answer": "A picture is worth a thousand words",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ohne Fleiß kein Preis",
+    "answer": "No pain, no gain",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Alles hat ein Ende",
+    "answer": "All good things come to an end",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Aus den Augen, aus dem Sinn",
+    "answer": "Out of sight, out of mind",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Man kann nicht alles haben",
+    "answer": "You can’t have your cake and eat it too",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Das Gras ist woanders immer grüner",
+    "answer": "The grass is always greener on the other side",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Viele Köche verderben den Brei",
+    "answer": "Too many cooks spoil the broth",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Bettler können nicht wählerisch sein",
+    "answer": "Beggars can’t be choosers",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Man soll den Tag nicht vor dem Abend loben",
+    "answer": "Don’t count your chickens before they hatch",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Was du heute kannst besorgen, das verschiebe nicht auf morgen",
+    "answer": "A stitch in time saves nine",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Vorsicht ist besser als Nachsicht",
+    "answer": "Better safe than sorry",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Die Feder ist mächtiger als das Schwert",
+    "answer": "The pen is mightier than the sword",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Das Glück ist mit den Tüchtigen",
+    "answer": "Fortune favors the bold",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ein beobachteter Topf kocht nie",
+    "answer": "A watched pot never boils",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Abwesenheit lässt die Liebe wachsen",
+    "answer": "Absence makes the heart grow fonder",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Beiß nicht die Hand, die dich füttert",
+    "answer": "Don’t bite the hand that feeds you",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Jede Wolke hat einen Silberstreif",
+    "answer": "Every cloud has a silver lining",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Eile mit Weile",
+    "answer": "Haste makes waste",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Die besten Dinge im Leben sind kostenlos",
+    "answer": "The best things in life are free",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wie man sät, so erntet man",
+    "answer": "You reap what you sow",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Es ist nicht alles Gold, was glänzt",
+    "answer": "All that glitters is not gold",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Der Apfel fällt nicht weit vom Stamm",
+    "answer": "The apple doesn’t fall far from the tree",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Schönheit liegt im Auge des Betrachters",
+    "answer": "Beauty is in the eye of the beholder",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Setze nicht alles auf eine Karte",
+    "answer": "Don’t put all your eggs in one basket",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Rom wurde nicht an einem Tag erbaut",
+    "answer": "Rome wasn’t built in a day",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Schmiede das Eisen, solange es heiß ist",
+    "answer": "Strike while the iron is hot",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Neugier ist der Katze Tod",
+    "answer": "Curiosity killed the cat",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Unwissenheit ist ein Segen",
+    "answer": "Ignorance is bliss",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wer nicht schreit, wird nicht gehört",
+    "answer": "The squeaky wheel gets the grease",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Man darf nicht vorschnell urteilen",
+    "answer": "You can’t judge a tree by its fruit",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ein Freund in der Not ist ein wahrer Freund",
+    "answer": "A friend in need is a friend indeed",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Verschüttete Milch lohnt kein Weinen",
+    "answer": "Don’t cry over spilled milk",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Alleskönner, aber Meister von nichts",
+    "answer": "Jack of all trades, master of none",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Not macht erfinderisch",
+    "answer": "Necessity is the mother of invention",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Gut gemeint ist nicht gut gemacht",
+    "answer": "The road to hell is paved with good intentions",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Stetig und langsam gewinnt das Rennen",
+    "answer": "Slow and steady wins the race",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wissen ist Macht",
+    "answer": "Knowledge is power",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Stille Wasser sind tief",
+    "answer": "Still waters run deep",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Zuhause ist es am schönsten",
+    "answer": "There’s no place like home",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Der Zweck heiligt die Mittel",
+    "answer": "The ends justify the means",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wasser predigen und Wein trinken",
+    "answer": "Practice what you preach",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Was du heute kannst besorgen…",
+    "answer": "Don’t put off until tomorrow what you can do today",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Je größer, desto tiefer der Fall",
+    "answer": "The bigger they are, the harder they fall",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Geld wächst nicht auf Bäumen",
+    "answer": "Money doesn’t grow on trees",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wer spart, gewinnt",
+    "answer": "A penny saved is a penny earned",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Der Beweis liegt im Ergebnis",
+    "answer": "The proof of the pudding is in the eating",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Zu wenig, zu spät",
+    "answer": "Too little, too late",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wände haben Ohren",
+    "answer": "Walls have ears",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Viele Hände, schnelles Ende",
+    "answer": "Many hands make light work",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Glück ist mehr wert als Reichtum",
+    "answer": "Better an ounce of luck than a pound of gold",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ohne Fleiß kein Ergebnis",
+    "answer": "You can’t make an omelette without breaking eggs",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Je mehr, desto besser",
+    "answer": "The more, the merrier",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wer zuerst kommt, mahlt zuerst",
+    "answer": "First come, first served",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Bring nichts durcheinander",
+    "answer": "Don’t rock the boat",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Schlafende Hunde soll man nicht wecken",
+    "answer": "Let sleeping dogs lie",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Blut ist dicker als Wasser",
+    "answer": "Blood is thicker than water",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Alles kommt zurück",
+    "answer": "What goes around comes around",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Man kann niemanden zwingen",
+    "answer": "You can lead a horse to water, but you can’t make it drink",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Jeder hat mal Glück",
+    "answer": "Every dog has its day",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Der Teufel steckt im Detail",
+    "answer": "The devil is in the details",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Keine Nachrichten sind gute Nachrichten",
+    "answer": "No news is good news",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Eine Kette ist nur so stark wie ihr schwächstes Glied",
+    "answer": "A chain is only as strong as its weakest link",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Zeit heilt alle Wunden",
+    "answer": "Time heals all wounds",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Gelegenheit klopft nur einmal",
+    "answer": "Opportunity knocks but once",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Der Kunde hat immer recht",
+    "answer": "The customer is always right",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Taten haben Folgen",
+    "answer": "Actions have consequences",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Verbrenn nicht deine Brücken",
+    "answer": "Don’t burn your bridges",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Angriff ist die beste Verteidigung",
+    "answer": "The best defense is a good offense",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Mal gewinnt man, mal verliert man",
+    "answer": "You win some, you lose some",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Die Show muss weitergehen",
+    "answer": "The show must go on",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Ein rastloser Mensch bleibt frei",
+    "answer": "A rolling stone gathers no moss",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wer nicht wagt, der nicht gewinnt",
+    "answer": "Nothing ventured, nothing gained",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Jede Rose hat Dornen",
+    "answer": "Every rose has its thorn",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Große Geister denken gleich",
+    "answer": "Great minds think alike",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Es gehören immer zwei dazu",
+    "answer": "It takes two to tango",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Alte Gewohnheiten ändern sich schwer",
+    "answer": "You can’t teach an old dog new tricks",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Alles bleibt irgendwie gleich",
+    "answer": "The more things change, the more they stay the same",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Die Ruhe vor dem Sturm",
+    "answer": "The calm before the storm",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Mach aus einer Mücke keinen Elefanten",
+    "answer": "Don’t make a mountain out of a molehill",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Leichter gesagt als getan",
+    "answer": "Easier said than done",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Halte deine Feinde noch näher",
+    "answer": "Keep your friends close and your enemies closer",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Übung festigt",
+    "answer": "Practice makes permanent",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Sehen heißt glauben",
+    "answer": "Seeing is believing",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Reden ist billig",
+    "answer": "Talk is cheap",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Die Wahrheit kommt ans Licht",
+    "answer": "The truth will out",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Wer nichts verschwendet, hat immer genug",
+    "answer": "Waste not, want not",
+    "taboo": []
+  },
+  {
+    "category": "Vokabael",
+    "term": "Man kann nicht beides haben",
+    "answer": "You can’t have it both ways",
+    "taboo": []
+  }
+]

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Thinkaroo</title>
+  <link rel="icon" href="./thinkaroologo.ico" sizes="any">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="global-header">
+    <div class="global-header-inner">
+      <a id="settings-back-topbar" href="#/landing" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zum Start" title="Zurück" hidden>←</a>
+      <div class="auth-topbar" aria-label="Authentifizierung">
+        <div class="auth-topbar-left" id="auth-left-actions">
+          <button id="auth-login-action" type="button" class="auth-icon-button auth-icon-button--logged-out" data-route="#/login" data-hover-label="Login" aria-label="Login öffnen" title="Login">
+            <img src="./login.svg" alt="Login" />
+          </button>
+          <button id="auth-logout-action" type="button" class="auth-icon-button auth-icon-button--logged-in" data-hover-label="Logout" aria-label="Logout" title="Logout" hidden>
+            <img src="./logout.svg" alt="Logout" />
+          </button>
+        </div>
+        <div class="auth-topbar-right" id="auth-status-wrapper">
+          <span id="auth-status"></span>
+        </div>
+      </div>
+      <button
+        id="theme-toggle"
+        class="icon-button"
+        type="button"
+        aria-label="Theme umschalten"
+        aria-pressed="false"
+        title="Theme umschalten"
+      >
+        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12Z"></path>
+          <path d="M12 2v2.2M12 19.8V22M4 12H2M22 12h-2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19"></path>
+        </svg>
+        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M21 14.5A8.2 8.2 0 0 1 9.5 3 7.2 7.2 0 1 0 21 14.5Z"></path>
+        </svg>
+      </button>
+
+      <button
+        id="game-sound-toggle"
+        class="icon-button audio-toggle"
+        type="button"
+        aria-label="Gamesounds ausschalten"
+        aria-pressed="true"
+        title="Gamesounds ausschalten"
+      >
+        <svg class="audio-icon audio-icon--speaker" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
+          <path d="M16 8.5a4 4 0 0 1 0 7"></path>
+          <path d="M18.5 6a7 7 0 0 1 0 12"></path>
+          <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
+        </svg>
+      </button>
+      <button
+        id="music-toggle"
+        class="icon-button audio-toggle"
+        type="button"
+        aria-label="Musik ausschalten"
+        aria-pressed="true"
+        title="Musik ausschalten"
+      >
+        <svg class="audio-icon audio-icon--music" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M9 18V5l10-2v13"></path>
+          <circle cx="6.5" cy="18" r="2.5"></circle>
+          <circle cx="16.5" cy="16" r="2.5"></circle>
+          <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
+        </svg>
+      </button>
+      <button
+        id="qr-toggle"
+        class="icon-button"
+        type="button"
+        aria-label="QR-Code für diese Seite öffnen"
+        title="QR-Code anzeigen"
+      >
+        <svg class="qr-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <rect x="3" y="3" width="6" height="6" rx="1"></rect>
+          <rect x="5" y="5" width="2" height="2"></rect>
+          <rect x="15" y="3" width="6" height="6" rx="1"></rect>
+          <rect x="17" y="5" width="2" height="2"></rect>
+          <rect x="3" y="15" width="6" height="6" rx="1"></rect>
+          <rect x="5" y="17" width="2" height="2"></rect>
+          <rect x="12" y="12" width="2" height="2"></rect>
+          <rect x="15" y="12" width="2" height="2"></rect>
+          <rect x="18" y="12" width="3" height="2"></rect>
+          <rect x="12" y="15" width="2" height="2"></rect>
+          <rect x="15" y="15" width="6" height="2"></rect>
+          <rect x="12" y="18" width="4" height="3"></rect>
+          <rect x="18" y="18" width="3" height="3"></rect>
+        </svg>
+      </button>
+      <button
+        id="fullscreen-toggle"
+        class="icon-button"
+        type="button"
+        aria-label="Vollbildmodus umschalten"
+        aria-pressed="false"
+        title="Vollbildmodus"
+      >
+        <svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path>
+        </svg>
+      </button>
+
+    </div>
+  </header>
+
+  <div id="app-root" class="app">
+
+    <main>
+
+      <section id="screen-landing" class="panel panel--active" aria-label="Landing Page" aria-hidden="false">
+        <div class="landing-overlay" role="region" aria-label="Thinkaroo Startseite">
+          <div class="landing-shell">
+            <header class="landing-header" aria-label="Thinkaroo Navigation">
+              <div class="landing-brand" aria-label="Thinkaroo">
+                <img class="landing-brand-mark" src="./assets/landing-logo.png" alt="Thinkaroo Logo" />
+                <span class="landing-brand-text">Thinkaroo</span>
+              </div>
+
+              <nav class="landing-nav" aria-label="Hauptnavigation">
+                <button class="landing-nav-link" type="button" data-route="#/how">So funktioniert’s</button>
+                <button class="landing-login" type="button" data-route="#/login">Anmelden</button>
+              </nav>
+            </header>
+
+            <div class="landing-hero" aria-label="Thinkaroo Hero">
+              <div class="landing-hero-center">
+                <div class="landing-center">
+                  <h1 class="landing-title">Thinkaroo</h1>
+                  <p class="landing-subtitle">Gemeinsam spielerisch lernen.</p>
+
+                  <div class="landing-cta" role="group" aria-label="Spiel Aktionen">
+                    <button id="landing-create" type="button" class="landing-cta-button landing-cta-button--primary" data-route="#/settings-board">Spiel starten</button>
+                    <button id="landing-join" type="button" class="landing-cta-button landing-cta-button--secondary" data-route="#/join">Spiel beitreten</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="landing-hero-right">
+                <aside class="landing-qr" aria-label="QR-Code zur Landing Page" title="QR-Code zur Landing Page">
+                  <img id="landing-qr-image" class="landing-qr-box" alt="QR-Code zur Thinkaroo Landing Page" loading="lazy" />
+                  <p class="landing-qr-text">Scannen &amp; direkt spielen</p>
+                </aside>
+              </div>
+            </div>
+
+            <footer class="landing-footer" aria-label="Rechtliche Links">
+              <div class="landing-footer-inner">
+                <button id="open-impressum" class="landing-footer-link" type="button">Impressum</button>
+                <span class="landing-footer-separator" aria-hidden="true">·</span>
+                <button id="open-datenschutz" class="landing-footer-link" type="button">Datenschutz</button>
+              </div>
+            </footer>
+
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-how" class="panel panel--gradient panel--centered" aria-label="So funktioniert’s" aria-hidden="true" hidden>
+        <div class="how-shell" role="region" aria-label="Thinkaroo Spielanleitung">
+          <header class="how-header">
+            <div class="how-header-title">
+              <h1>Thinkaroo – Spielanleitung</h1>
+              <p class="how-subtitle">
+                Thinkaroo ist ein team-basiertes Partyspiel, bei dem Kreativität, Wissen und schnelles Denken kombiniert werden.
+                Teams treten gegeneinander an und erklären Begriffe durch Zeichnen, Pantomime, Umschreiben oder das Beantworten von Fragen.
+              </p>
+            </div>
+            <button class="ghost" type="button" data-route="#/landing">Zurück</button>
+          </header>
+
+          <section class="how-grid" aria-label="Anleitung Inhalte">
+            <article class="card how-card">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">🎯</span>
+                <h2>Ziel des Spiels</h2>
+              </div>
+              <div class="how-list" role="list">
+                <div class="how-list-item" role="listitem">Teams bewegen sich über ein Spielfeld bis ins Ziel.</div>
+                <div class="how-list-item" role="listitem">Gewinner ist das Team, das zuerst das Ziel erreicht <strong>und</strong> die Masterquizfrage richtig beantwortet.</div>
+              </div>
+            </article>
+
+            <article class="card how-card">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">👥</span>
+                <h2>Spieler & Setup</h2>
+              </div>
+              <div class="how-list" role="list">
+                <div class="how-list-item" role="listitem">2–4 Teams</div>
+                <div class="how-list-item" role="listitem">Mindestens 2 Spieler pro Team</div>
+                <div class="how-list-item" role="listitem">Alle Teams starten auf dem Startfeld</div>
+              </div>
+            </article>
+
+            <article class="card how-card how-card--wide">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">🧭</span>
+                <h2>Spielablauf</h2>
+              </div>
+              <ol class="how-steps" aria-label="Spielablauf Schritte">
+                <li>Team würfelt.</li>
+                <li>Team zieht entsprechend viele Felder.</li>
+                <li>Feld bestimmt die Kategorie.</li>
+                <li>Timer startet.</li>
+                <li>Team errät Begriffe / beantwortet Fragen.</li>
+              </ol>
+            </article>
+
+            <article class="card how-card how-card--wide">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">✅</span>
+                <h2>Auswertung</h2>
+              </div>
+              <div class="how-eval" role="list">
+                <div class="how-eval-row" role="listitem">
+                  <span class="how-eval-badge how-eval-badge--danger">0</span>
+                  <span>richtig → zurück zum Start</span>
+                </div>
+                <div class="how-eval-row" role="listitem">
+                  <span class="how-eval-badge">1</span>
+                  <span>richtig → stehen bleiben</span>
+                </div>
+                <div class="how-eval-row" role="listitem">
+                  <span class="how-eval-badge how-eval-badge--success">2+</span>
+                  <span>richtig → pro zusätzlichem Begriff 1 Feld vorwärts</span>
+                </div>
+                <div class="how-eval-row" role="listitem">
+                  <span class="how-eval-badge how-eval-badge--muted">↻</span>
+                  <span>Nächstes Team ist dran (reihum)</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="card how-card how-card--wide">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">🧩</span>
+                <h2>Kategorien</h2>
+              </div>
+
+              <div class="how-categories" aria-label="Kategorien Übersicht">
+                <div class="how-category" style="--how-category-color: var(--card-zeichnen)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="zeichnen_1.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Zeichnen</h3>
+                    <p>Begriff zeichnen, sprechen verboten.</p>
+                  </div>
+                </div>
+
+                <div class="how-category" style="--how-category-color: var(--card-pantomime)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="pantomime_1.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Pantomime</h3>
+                    <p>Begriff darstellen, sprechen verboten.</p>
+                  </div>
+                </div>
+
+                <div class="how-category" style="--how-category-color: var(--card-erklaeren)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="erklaeren.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Erklären</h3>
+                    <p>Begriff erklären, Tabuwörter verboten.</p>
+                  </div>
+                </div>
+
+                <div class="how-category" style="--how-category-color: var(--card-quizfrage)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="singlechoice.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Single-Choice</h3>
+                    <p>Frage mit einer richtigen Antwort für das Team.</p>
+                  </div>
+                </div>
+
+                <div class="how-category" style="--how-category-color: var(--card-quizfrage)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="quiz.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Quiz</h3>
+                    <p>Offene Frage für das Team.</p>
+                  </div>
+                </div>
+
+                <div class="how-category" style="--how-category-color: var(--color-info)">
+                  <div class="how-category__icon" aria-hidden="true"><img src="voc.svg" alt="" loading="lazy" /></div>
+                  <div class="how-category__content">
+                    <h3>Vokabeln</h3>
+                    <p>Übersetzung oder Erklärung.</p>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="card how-card">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">⏱️</span>
+                <h2>Zeitregeln</h2>
+              </div>
+              <div class="how-list" role="list">
+                <div class="how-list-item" role="listitem">Zeit ist in den Einstellungen anpassbar.</div>
+                <div class="how-list-item" role="listitem"><strong>30 Sekunden:</strong> Single-Choice, Quiz</div>
+                <div class="how-list-item" role="listitem"><strong>60 Sekunden:</strong> alle anderen Kategorien</div>
+              </div>
+            </article>
+
+            <article class="card how-card">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">🗺️</span>
+                <h2>Spielfeld</h2>
+              </div>
+              <div class="how-list" role="list">
+                <div class="how-list-item" role="listitem">Spielfeld besteht aktuell nur aus Kategorienfeldern.</div>
+                <div class="how-list-item" role="listitem">Keine Sonderfelder.</div>
+              </div>
+            </article>
+
+            <article class="card how-card how-card--wide">
+              <div class="how-card__title">
+                <span class="how-icon" aria-hidden="true">🏁</span>
+                <h2>Ziel & Masterquiz</h2>
+              </div>
+
+              <details class="how-accordion">
+                <summary>Was passiert im Ziel?</summary>
+                <div class="how-accordion__content">
+                  <div class="how-list" role="list">
+                    <div class="how-list-item" role="listitem">Team erreicht Zielfeld.</div>
+                    <div class="how-list-item" role="listitem">Muss Masterquizfrage beantworten.</div>
+                  </div>
+                </div>
+              </details>
+
+              <details class="how-accordion">
+                <summary>Richtig / Falsch</summary>
+                <div class="how-accordion__content">
+                  <div class="how-eval" role="list">
+                    <div class="how-eval-row" role="listitem">
+                      <span class="how-eval-badge how-eval-badge--success">✓</span>
+                      <span>Richtig → gewinnt</span>
+                    </div>
+                    <div class="how-eval-row" role="listitem">
+                      <span class="how-eval-badge how-eval-badge--danger">✕</span>
+                      <span>Falsch → zurück zum Startfeld</span>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            </article>
+          </section>
+        </div>
+      </section>
+
+      <section id="screen-join" class="panel panel--gradient panel--centered" aria-label="Spiel beitreten" aria-hidden="true" hidden>
+        <div class="panel-grid settings-three-columns">
+          <div class="settings-column">
+            <div class="card">
+              <div class="card-row advanced-settings-header">
+                <h1>Spiel beitreten</h1>
+                <button class="ghost" type="button" data-route="#/landing">Zurück</button>
+              </div>
+              <div class="field-group">
+                <label for="join-code">Spielcode</label>
+                <input id="join-code" type="text" inputmode="text" autocomplete="one-time-code" placeholder="z. B. AB12CD34" />
+                <p id="join-error" class="hint" hidden></p>
+                <button id="join-submit" class="primary" type="button">Beitreten</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-shared" class="panel panel--gradient panel--centered" aria-label="Geteiltes Spiel" aria-hidden="true" hidden>
+        <div class="panel-grid settings-three-columns">
+          <div class="settings-column">
+            <div class="card">
+              <div class="card-row advanced-settings-header">
+                <h1>Geteiltes Spiel</h1>
+                <button class="ghost" type="button" data-route="#/landing">Zurück</button>
+              </div>
+              <p id="shared-summary" class="hint"></p>
+              <div class="field-group">
+                <p>Teams</p>
+                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                  <button type="button" class="count-button" id="shared-team-count-decrease" aria-label="Teamanzahl verringern">–</button>
+                  <input id="shared-team-count" type="number" min="2" max="4" value="2" />
+                  <button type="button" class="count-button" id="shared-team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+                </div>
+                <div id="shared-team-list" class="team-list" aria-label="Teams"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer class="menu-footer">
+          <button id="shared-start-game" class="primary menu-start-button" type="button">Spiel starten</button>
+        </footer>
+      </section>
+
+      <section id="screen-settings-board" class="panel" aria-label="Hauptmenü" aria-hidden="true" hidden>
+        <div class="panel-grid settings-three-columns">
+          <div class="settings-column">
+            <div class="card-stack">
+              <div class="card card--teams" data-settings-mode="board">
+                <h2>Teams</h2>
+                <div class="field">
+                  <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                    <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">–</button>
+                    <input id="team-count" type="number" min="2" max="4" step="1" value="2" />
+                    <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">+</button>
+                  </div>
+                </div>
+                <div id="team-list" class="team-list"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="settings-column">
+            <div class="card" id="menu-settings-card" data-settings-mode="board">
+              <h2>Kategorien</h2>
+              <div class="field-group board-menu__categories">
+                <div id="board-category-selector" class="board-category-selector" aria-label="Kategorien wählen"></div>
+                <button id="toggle-category-distribution" class="category-distribution-toggle" type="button" aria-expanded="false">
+                  <span class="toggle-label">Häufigkeit anpassen</span>
+                  <span class="toggle-icon" aria-hidden="true">▼</span>
+                </button>
+                <div id="category-distribution-panel" class="category-distribution-panel" hidden>
+                  <p class="category-distribution-hint"></p>
+                  <div id="board-categories" aria-label="Häufigkeit pro Kategorie einstellen"></div>
+                  <button id="reset-category-distribution" class="ghost category-distribution-reset" type="button">
+                    Zurücksetzen
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="settings-column settings-column--right" data-settings-mode="board">
+            <div class="card-stack">
+              <div class="card">
+                <div class="card-row">
+                  <h2>Kartensatz</h2>
+                </div>
+                <div class="field">
+                  Kartensatz auswählen
+                  <div id="dataset-select-list" class="dataset-select-list" aria-live="polite"></div>
+                  <button id="dataset-add" class="dataset-add-button" type="button" aria-label="Weiteren Kartensatz hinzufügen" hidden data-auth="full">+</button>
+                </div>
+                <button class="primary" type="button" data-route="#/cardsets">Kartensätze bearbeiten</button>
+              </div>
+
+              <div class="card" id="game-mode-card" data-settings-mode="board">
+                <h2>Spielmodus</h2>
+                <div class="game-mode-options" role="radiogroup" aria-label="Spielmodus auswählen">
+                  <button id="game-mode-classic" class="game-mode-option" type="button" role="radio" aria-checked="true" data-game-mode="classic" data-tooltip="Eine Karte pro Runde">
+                    Klassischer Modus
+                  </button>
+                  <button id="game-mode-blitz" class="game-mode-option" type="button" role="radio" aria-checked="false" data-game-mode="blitz" data-tooltip="So viele Begriffe wie möglich pro Runde">
+                    Blitzmodus
+                  </button>
+                </div>
+              </div>
+            </div>
+            <button class="settings-advanced-button" type="button" data-route="/advancedsettings">Erweiterte Einstellungen</button>
+          </div>
+
+        </div>
+        <footer class="menu-footer menu-footer--main-actions">
+          <button id="start-game" class="primary menu-start-button" data-settings-mode="board">Spiel starten</button>
+          <button id="create-shared-game" class="secondary menu-start-button" type="button" data-auth="full" hidden>Spiel erstellen</button>
+        </footer>
+      </section>
+
+      <section id="screen-advancedsettings" class="panel" aria-label="Erweiterte Spieleinstellungen" aria-hidden="true" hidden>
+        <div class="advanced-settings-shell">
+          <div class="advanced-settings-floating advanced-settings-floating--one" aria-hidden="true"></div>
+          <div class="advanced-settings-floating advanced-settings-floating--two" aria-hidden="true"></div>
+          <div class="card advanced-settings-card">
+            <div class="card-row advanced-settings-header">
+              <h1>Erweiterte Einstellungen</h1>
+              <button class="ghost" type="button" data-route="#/settings-board">Zurück</button>
+            </div>
+            <div class="field-group category-settings">
+              <p>Kategorien & Zeit pro Kategorie</p>
+              <div class="category-settings-head" aria-hidden="true">
+                <span>Kategorie</span>
+                <span>Zeit pro Runde</span>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Erklären</span>
+                <div class="category-time">
+                  <select id="time-explain" aria-label="Zeit pro Runde für Erklären"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Zeichnen</span>
+                <div class="category-time">
+                  <select id="time-draw" aria-label="Zeit pro Runde für Zeichnen"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Pantomime</span>
+                <div class="category-time">
+                  <select id="time-pantomime" aria-label="Zeit pro Runde für Pantomime"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Quizfrage</span>
+                <div class="category-time">
+                  <select id="time-quiz" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Vokabel</span>
+                <div class="category-time">
+                  <select id="time-vocab" aria-label="Zeit pro Runde für Vokabel"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <span class="category-label">Single-Choice</span>
+                <div class="category-time">
+                  <select id="time-singlechoice" aria-label="Zeit pro Runde für Single-Choice"></select>
+                </div>
+              </div>
+            </div>
+
+            <label class="field">
+              Spiellänge
+              <select id="board-size-select">
+                <option value="short">Kurzes Spiel · 24 Felder (6 × 4)</option>
+                <option value="normal" selected>Normales Spiel · 30 Felder (6 × 5)</option>
+                <option value="long">Langes Spiel · 42 Felder (7 × 6)</option>
+              </select>
+            </label>
+
+            <label class="field">
+              Strafzeit beim Tauschen
+              <select id="swap-select">
+                <option value="5">5s</option>
+                <option value="10" selected>10s</option>
+                <option value="15">15s</option>
+              </select>
+            </label>
+
+            <div class="advanced-settings-actions">
+              <button id="save-advanced-settings" class="primary" type="button">Speichern</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-login" class="panel" aria-label="Login und Registrierung" aria-hidden="true" hidden>
+        <section class="card auth-page-card" aria-label="Login und Registrierung">
+          <h1>Login & Registrierung</h1>
+          <div class="auth-page-columns">
+            <form id="login-form" class="auth-form">
+              <h2>Login</h2>
+              <label class="field" for="login-email">
+                E-Mail
+                <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <label class="field" for="login-password">
+                Passwort
+                <input id="login-password" type="password" required autocomplete="current-password" />
+              </label>
+              <button class="primary" type="submit">Login</button>
+            </form>
+            <form id="register-form" class="auth-form">
+              <h2>Registrierung</h2>
+              <label class="field" for="register-email">
+                E-Mail
+                <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <label class="field" for="register-password">
+                Passwort
+                <input id="register-password" type="password" required autocomplete="new-password" />
+              </label>
+              <button class="primary" type="submit">Registrierung</button>
+            </form>
+          </div>
+          <p id="auth-page-hint" class="hint" aria-live="polite"></p>
+        </section>
+      </section>
+
+      <section id="screen-cardsets" class="panel" aria-label="Kartensätze verwalten" aria-hidden="true" hidden data-auth="full">
+        <div class="cardsets-layout">
+          <section class="card cardsets-column" aria-label="Kartensätze">
+            <div class="cardsets-sidebar-header">
+              <h2>Kartensätze</h2>
+            </div>
+
+            <section class="cardsets-block" aria-label="Vorhandene Kartensätze">
+              <div id="storage-dataset-summary" class="storage-dataset-summary" aria-label="Kartensatz Übersicht"></div>
+            </section>
+          </section>
+
+          <section class="card cardsets-column" aria-label="CSV Import">
+            <div class="cardsets-sidebar-header">
+              <h2>CSV-Import</h2>
+            </div>
+
+            <label class="field" for="csv-upload">
+              CSV-Datei hochladen
+              <input id="csv-upload" type="file" accept=".csv,text/csv" />
+            </label>
+            <div class="dataset-upload-actions">
+              <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
+            </div>
+            <p id="csv-status" class="hint" aria-live="polite"></p>
+
+            <div class="csv-dataset-actions">
+              <button id="csv-save-new" class="ghost" type="button" disabled>Als neuen Kartensatz speichern</button>
+              <select id="csv-overwrite-select" aria-label="Eigenen Kartensatz auswählen"></select>
+              <button id="csv-overwrite" class="ghost" type="button" disabled>Bestehenden Kartensatz überschreiben</button>
+            </div>
+
+            <div class="cardsets-editor-preview-actions">
+              <button id="open-editor-page" class="primary" type="button">Karteneditor öffnen</button>
+            </div>
+          </section>
+        </div>
+
+        <div id="storage-delete-confirm" class="main-menu-confirm hidden" role="dialog" aria-modal="true" aria-label="Kartensatz löschen bestätigen">
+          <div class="main-menu-confirm-card">
+            <p id="storage-delete-confirm-text" class="main-menu-confirm-text">Sind Sie sicher, dass Sie diesen Kartensatz entfernen möchten?</p>
+            <div class="main-menu-confirm-actions" role="group" aria-label="Kartensatz löschen bestätigen">
+              <button id="storage-delete-confirm-cancel" class="turn-action-button is-wrong" type="button" aria-label="Abbrechen" title="Abbrechen">✕</button>
+              <button id="storage-delete-confirm-ok" class="turn-action-button is-correct" type="button" aria-label="Kartensatz löschen" title="Kartensatz löschen">✓</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="screen-editor" class="panel" aria-label="Kartensatz Editor" aria-hidden="true" hidden data-auth="full">
+        <div class="editor-background-layer" aria-label="Editor Hintergrund">
+          <section class="card cardsets-editor-column" aria-label="Kartensatz Editor">
+            <div class="card-editor-header">
+              <h2>Editor</h2>
+            </div>
+            <div class="card-editor-table-wrap">
+              <table class="card-editor-table">
+                <thead>
+                  <tr>
+                    <th>Kategorie</th>
+                    <th>Begriff/Frage</th>
+                    <th>Antwort/Tabu1</th>
+                    <th>Tabu2</th>
+                    <th>Tabu3</th>
+                    <th>Tabu4</th>
+                    <th>Aktion</th>
+                  </tr>
+                </thead>
+                <tbody id="card-editor-body"></tbody>
+              </table>
+
+              <div class="card-editor-add-row">
+                <button id="card-editor-add-row" class="ghost" type="button">+ Zeile</button>
+              </div>
+            </div>
+            <div id="card-editor-errors" class="card-editor-errors hidden" aria-live="polite"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="screen-game-board" class="panel" aria-label="Spielfeld" aria-hidden="true" hidden>
+        <div class="game-top">
+          <div class="board" id="board" aria-hidden="true"></div>
+          <div id="dice-overlay" class="dice-overlay" aria-hidden="true">
+            <div class="dice-overlay-die">
+              <div class="dice-3d" aria-hidden="true">
+                <div class="dice-3d__cube" id="dice-3d-cube">
+                  <div class="dice-3d__face dice-3d__face--1">
+                    <span class="dice-pip"></span>
+                  </div>
+                  <div class="dice-3d__face dice-3d__face--2">
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                  </div>
+                  <div class="dice-3d__face dice-3d__face--3">
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                  </div>
+                  <div class="dice-3d__face dice-3d__face--4">
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                  </div>
+                  <div class="dice-3d__face dice-3d__face--5">
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                  </div>
+                  <div class="dice-3d__face dice-3d__face--6">
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                    <span class="dice-pip"></span>
+                  </div>
+                </div>
+              </div>
+              <span id="dice-overlay-value" class="dice-overlay-value hidden">1</span>
+            </div>
+          </div>
+          <div id="game-mode-indicator" class="game-mode-indicator" aria-hidden="true"></div>
+        </div>
+        <div class="game-bottom" aria-label="Spielsteuerung">
+          <div class="game-controls">
+            <button id="roll" class="dice" aria-label="Würfeln">🎲</button>
+            <button id="undo" class="ghost toolbar-button" aria-label="Zug zurück">↩️</button>
+            <button id="open-settings" class="ghost toolbar-button" aria-label="Spieleinstellungen">⚙️</button>
+            <button id="main-menu" class="ghost toolbar-button" aria-label="Hauptmenü">🏠</button>
+          </div>
+        </div>
+
+        <div id="main-menu-confirm" class="main-menu-confirm hidden" role="dialog" aria-modal="true" aria-label="Spiel beenden bestätigen">
+          <div class="main-menu-confirm-card">
+            <p class="main-menu-confirm-text">Sind Sie sicher, dass Sie das Spiel beenden möchten?</p>
+            <div class="main-menu-confirm-actions" role="group" aria-label="Spiel beenden bestätigen">
+              <button id="main-menu-confirm-cancel" class="turn-action-button is-wrong" type="button" aria-label="Abbrechen" title="Abbrechen">✕</button>
+              <button id="main-menu-confirm-ok" class="turn-action-button is-correct" type="button" aria-label="Spiel beenden" title="Spiel beenden">✓</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="settings-panel" class="settings-panel hidden" role="dialog" aria-modal="true" aria-label="Spieleinstellungen">
+          <div class="settings-card">
+            <div class="settings-header">
+              <h2>Spieleinstellungen</h2>
+              <button id="close-settings" class="ghost">Schließen</button>
+            </div>
+            <div class="field-group category-settings">
+              <p>Kategorien</p>
+              <div class="category-settings-head" aria-hidden="true">
+                <span>Kategorie</span>
+                <span>Zeit pro Runde</span>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-explain-game" value="Erklären" checked />
+                  Erklären
+                </label>
+                <div class="category-time">
+                  <select id="time-explain-game" aria-label="Zeit pro Runde für Erklären"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-draw-game" value="Zeichnen" checked />
+                  Zeichnen
+                </label>
+                <div class="category-time">
+                  <select id="time-draw-game" aria-label="Zeit pro Runde für Zeichnen"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-pantomime-game" value="Pantomime" checked />
+                  Pantomime
+                </label>
+                <div class="category-time">
+                  <select id="time-pantomime-game" aria-label="Zeit pro Runde für Pantomime"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-quiz-game" value="Quizfrage" checked />
+                  Quizfrage
+                </label>
+                <div class="category-time">
+                  <select id="time-quiz-game" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-vocab-game" value="Vokabel" checked />
+                  Vokabel
+                </label>
+                <div class="category-time">
+                  <select id="time-vocab-game" aria-label="Zeit pro Runde für Vokabel"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-singlechoice-game" value="Single-Choice" checked />
+                  Single-Choice
+                </label>
+                <div class="category-time">
+                  <select id="time-singlechoice-game" aria-label="Zeit pro Runde für Single-Choice"></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <button id="toggle-category-distribution-game" class="category-distribution-toggle" type="button" aria-expanded="false">
+                <span class="toggle-label">Häufigkeit anpassen</span>
+                <span class="toggle-icon" aria-hidden="true">▼</span>
+              </button>
+              <div id="category-distribution-panel-game" class="category-distribution-panel" hidden>
+                <p class="category-distribution-hint"></p>
+                <div id="board-categories-game" aria-label="Häufigkeit pro Kategorie einstellen"></div>
+                <button id="reset-category-distribution-game" class="ghost category-distribution-reset" type="button">
+                  Zurücksetzen
+                </button>
+              </div>
+            </div>
+
+            <label class="field">
+              Strafzeit beim Tauschen
+              <select id="swap-select-game">
+                <option value="5">5s</option>
+                <option value="10" selected>10s</option>
+                <option value="15">15s</option>
+              </select>
+            </label>
+            <button id="apply-settings" class="primary">Einstellungen speichern</button>
+          </div>
+        </div>
+      </section>
+
+      <div id="qr-modal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-label="QR-Code">
+        <div class="qr-modal-card">
+          <div class="qr-modal-header">
+            <h2>QR-Code</h2>
+            <button id="close-qr-modal" class="ghost" type="button">Schließen</button>
+          </div>
+          <img id="qr-image" class="qr-modal-image" alt="QR-Code für diese Seite" loading="lazy" />
+        </div>
+      </div>
+
+      <div id="shared-game-modal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-label="Spiel teilen">
+        <div class="qr-modal-card">
+          <div class="qr-modal-header">
+            <h2>Spiel teilen</h2>
+            <button id="close-shared-game-modal" class="ghost" type="button" aria-label="Schließen">✕</button>
+          </div>
+          <div class="field-group">
+            <p class="hint">Spielcode</p>
+            <div id="shared-game-code" class="copy-value" aria-label="Spielcode"></div>
+          </div>
+          <img id="shared-game-qr" class="qr-modal-image" alt="QR-Code für den Share-Link" loading="lazy" />
+          <button id="shared-game-link" class="ghost" type="button" aria-label="Link kopieren"></button>
+          <p id="shared-game-link-status" class="hint" hidden></p>
+          <button id="shared-game-start" class="primary" type="button">Spiel starten</button>
+          <p id="shared-game-status" class="hint" hidden></p>
+        </div>
+      </div>
+
+      <div id="impressum-modal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-label="Impressum">
+        <div class="qr-modal-card legal-modal-card">
+          <div class="qr-modal-header">
+            <h2>Impressum</h2>
+            <button id="close-impressum-modal" class="ghost" type="button" aria-label="Schließen">✕</button>
+          </div>
+          <div class="legal-modal-content">
+            <p>
+              Lukas Gebhard<br />
+              Zur Lochwiese 23<br />
+              91320 Ebermannstadt<br />
+              Deutschland
+            </p>
+            <p>
+              E-Mail: <a class="legal-link" href="mailto:thinkaroo_support@proton.me">thinkaroo_support@proton.me</a>
+            </p>
+            <p>Angaben gemäß § 5 TMG</p>
+            <p>
+              Projektname: Thinkaroo<br />
+              Art des Angebots: private, nicht-kommerzielle Web-App
+            </p>
+            <p>[Platzhalter für spätere Ergänzungen]</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="privacy-modal" class="qr-modal hidden" role="dialog" aria-modal="true" aria-label="Datenschutzerklärung">
+        <div class="qr-modal-card legal-modal-card">
+          <div class="qr-modal-header">
+            <h2>Datenschutzerklärung</h2>
+            <button id="close-privacy-modal" class="ghost" type="button" aria-label="Schließen">✕</button>
+          </div>
+          <div class="legal-modal-content">
+            <h3>1. Allgemeine Hinweise</h3>
+            <p>
+              Der Schutz deiner Daten ist mir wichtig. Diese Datenschutzerklärung erklärt in einfacher Form, welche Daten beim Besuch
+              dieser Web-App verarbeitet werden können und wofür.
+            </p>
+
+            <h3>2. Verantwortlicher</h3>
+            <p>
+              Lukas Gebhard<br />
+              Zur Lochwiese 23<br />
+              91320 Ebermannstadt<br />
+              Deutschland<br />
+              E-Mail: <a class="legal-link" href="mailto:thinkaroo_support@proton.me">thinkaroo_support@proton.me</a>
+            </p>
+
+            <h3>3. Datenerfassung in dieser App</h3>
+            <p>
+              Diese Web-App nutzt Supabase als Backend/Datenbank. Es werden aktuell keine Analytics- oder Tracking-Tools verwendet.
+              Es findet keine bewusste Nutzerverfolgung statt.
+            </p>
+
+            <h3>4. Technische Daten</h3>
+            <p>
+              Beim Aufruf der App können technisch notwendige Daten verarbeitet werden (z. B. IP-Adresse, Zeitpunkt des Zugriffs,
+              verwendeter Browser). Solche Daten können z. B. in Server-Logs anfallen und dienen der technischen Bereitstellung und
+              Sicherheit.
+            </p>
+
+            <h3>5. Speicherung von Daten</h3>
+            <p>[Hier ergänzen: Welche Daten konkret gespeichert werden, Speicherdauer, Zweck]</p>
+
+            <h3>6. Cookies / Local Storage</h3>
+            <p>
+              Diese App kann technisch notwendige Informationen im Browser speichern (z. B. Einstellungen).<br />
+              [Hier ergänzen: Ob Cookies/Local Storage genutzt werden, welche Zwecke und Speicherdauer]
+            </p>
+
+            <h3>7. Rechte der Nutzer</h3>
+            <p>
+              Du hast grundsätzlich das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung deiner Daten.
+              Wenn du Fragen dazu hast, kannst du dich jederzeit per E-Mail melden.
+            </p>
+
+            <h3>8. Externe Dienste</h3>
+            <p>
+              Supabase wird als externer Dienst für Backend/Datenbank eingesetzt.<br />
+              [Hier ergänzen: Hosting-Region / Details]
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div id="overlay" class="overlay hidden" aria-hidden="true">
+        <div class="overlay-content" id="overlay-content">🎲</div>
+      </div>
+
+      <div id="turn-overlay" class="turn-overlay hidden" aria-hidden="true">
+        <div id="turn-overlay-panel" class="turn-overlay-panel">
+          <div id="turn-category" class="turn-category" aria-hidden="true">
+            <span id="turn-category-icon" class="turn-category-icon"></span>
+            <span id="turn-category-label" class="turn-category-label">Kategorie</span>
+          </div>
+          <button id="turn-ready" class="primary">Bereit</button>
+          <div class="turn-countdown-card hidden" id="turn-countdown-card">
+            <h2>Start in</h2>
+            <div class="turn-countdown" id="turn-countdown">3</div>
+          </div>
+          <section class="turn-word fullscreen-game-card hidden" id="turn-word" aria-live="polite">
+            <div class="fullscreen-game-card__top">
+              <p class="turn-word-category-label" id="turn-word-category-label">Kategorie</p>
+              <div class="turn-timer" id="turn-timer">00</div>
+              <button id="turn-timeout" class="turn-close-button" type="button" aria-label="Runde beenden">×</button>
+              <div class="turn-round-counter" id="turn-round-counter" aria-label="Rundenpunkte">
+                0
+                <span class="turn-round-counter-plus" id="turn-round-counter-plus" aria-hidden="true">+1</span>
+              </div>
+              <div class="turn-penalty" id="turn-penalty" aria-live="polite"></div>
+            </div>
+            <div class="fullscreen-game-card__center">
+              <h2 id="turn-word-title">Begriff</h2>
+              <p id="turn-answer" class="turn-answer hidden"></p>
+              <div id="turn-single-choice-options" class="turn-single-choice-options hidden" aria-label="Antwortoptionen"></div>
+            </div>
+            <div class="fullscreen-game-card__bottom">
+              <p id="turn-word-hint" class="hint hidden">Hinweis</p>
+              <ul id="turn-taboo-list"></ul>
+              <div class="turn-action-buttons" aria-label="Antwortoptionen">
+                <button class="turn-action-button is-correct" id="turn-correct" aria-label="Begriff richtig erraten" title="Richtig">✓</button>
+                <button class="turn-action-button is-wrong" id="turn-wrong" aria-label="Begriff falsch beantwortet" title="Falsch">✕</button>
+                <button class="turn-action-button is-swap" id="turn-swap" aria-label="Begriff tauschen" title="Begriff tauschen">⟲</button>
+              </div>
+              <button id="turn-continue" class="primary">Lösen</button>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div id="winner-screen" class="winner-screen hidden" aria-live="polite">
+        <div class="winner-card">
+          <div class="confetti" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <h2 id="winner-label">Team hat gewonnen</h2>
+          <button id="winner-restart" class="ghost">Zurück zum Menü</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data/allgemein.js"></script>
+  <script src="data/kfz.js"></script>
+  <script src="data/kfz_werkstoffe.js"></script>
+  <script src="data/kfz_einfach.js"></script>
+  <script src="data/geographie.js"></script>
+  <script src="data/um_nachruesten_mk10.js"></script>
+  <script src="data/mfm10_ish.js"></script>
+  <script src="data/industriemechanik_allgemein.js"></script>
+  <script src="data/tiefziehen.js"></script>
+  <script src="data/gesellschaft_kunst_geo_sport_geschichte_mathe_grammatik.js"></script>
+  <script src="data/druck_luftdruck_pneumatik_regelung_fertigungsmechanik.js"></script>
+  <script src="data/mk11d.js"></script>
+  <script src="data/standard.js"></script>
+    <script src="src/theme/tokens.js"></script>
+  <script src="app.js"></script>
+  <script type="module" src="./assets/app.js"></script>
+  <script type="module" src="./assets/authPage.js"></script>
+
+  <div id="editor-fixed-bottom-bar" class="editor-fixed-bottom-bar" aria-label="Karteneditor Aktionen">
+    <div class="editor-fixed-bottom-bar__inner">
+      <div class="editor-fixed-bottom-bar__prompt">Kartensatz bearbeiten</div>
+      <div class="editor-fixed-bottom-bar__actions">
+        <button id="editor-fixed-cancel" class="ghost" type="button">Abbrechen</button>
+        <button id="editor-fixed-save" class="primary" type="button">Kartensatz speichern</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

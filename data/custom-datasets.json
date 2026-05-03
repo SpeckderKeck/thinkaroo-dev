@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 3,
+  "datasets": [
+    {
+      "id": "dataset-umformen",
+      "label": "Umformen",
+      "visibility": "public",
+      "createdAt": "2026-02-25T17:14:49.143Z",
+      "updatedAt": "2026-02-25T17:14:49.143Z",
+      "version": 1
+    },
+    {
+      "id": "dataset-sprichwoerter-englisch",
+      "label": "Sprichwörter Englisch",
+      "visibility": "public",
+      "createdAt": "2026-04-22T10:23:43.358Z",
+      "updatedAt": "2026-04-22T10:23:43.358Z",
+      "version": 1
+    }
+  ]
+}

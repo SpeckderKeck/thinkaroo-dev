@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Thinkaroo · Auth</title>
+  <link rel="icon" href="./thinkaroologo.ico" sizes="any">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body class="auth-page">
+  <header class="global-header">
+    <div class="global-header-inner">
+      <div class="auth-topbar" aria-label="Authentifizierung">
+        <div class="auth-topbar-left">
+          <a class="auth-back-link" href="./index.html">← Zurück zum Spiel</a>
+        </div>
+        <div class="auth-topbar-right">
+          <span id="auth-page-status">Du bist nicht eingeloggt.</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app auth-page-main">
+    <section class="card auth-page-card" aria-label="Login und Registrierung">
+      <div class="auth-page-header">
+        <p class="auth-eyebrow">Thinkaroo Konto</p>
+        <h1>Login & Registrierung</h1>
+        <p class="hint">Melde dich an, um deinen Fortschritt zu sichern und alle Funktionen zu nutzen.</p>
+      </div>
+
+      <div class="auth-page-columns">
+        <form id="login-form" class="auth-form" novalidate>
+          <h2>Login</h2>
+          <p class="hint">Willkommen zurück 👋</p>
+          <label class="field" for="login-email">
+            E-Mail
+            <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+            <span id="login-email-error" class="field-error" aria-live="polite"></span>
+          </label>
+          <label class="field" for="login-password">
+            Passwort
+            <input id="login-password" type="password" required minlength="8" autocomplete="current-password" />
+            <span id="login-password-error" class="field-error" aria-live="polite"></span>
+          </label>
+          <button class="primary" type="submit">Login</button>
+          <p id="login-feedback" class="form-feedback" aria-live="polite"></p>
+        </form>
+
+        <form id="register-form" class="auth-form" novalidate>
+          <h2>Registrierung</h2>
+          <p class="hint">Neues Konto in wenigen Sekunden.</p>
+          <label class="field" for="register-email">
+            E-Mail
+            <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+            <span id="register-email-error" class="field-error" aria-live="polite"></span>
+          </label>
+          <label class="field" for="register-password">
+            Passwort
+            <input id="register-password" type="password" required minlength="8" autocomplete="new-password" />
+            <span id="register-password-error" class="field-error" aria-live="polite"></span>
+          </label>
+          <button class="primary" type="submit">Registrierung</button>
+          <p id="register-feedback" class="form-feedback" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <p id="auth-page-hint" class="hint" aria-live="polite"></p>
+    </section>
+  </main>
+
+  <script type="module" src="./assets/authPage.js"></script>
+</body>
+</html>

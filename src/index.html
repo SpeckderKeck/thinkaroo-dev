@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Thinkaroo</title>
+  <link rel="icon" href="./thinkaroologo.ico" sizes="any">
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <header class="global-header">
+    <div class="global-header-inner">
+      <button
+        id="fullscreen-toggle"
+        class="icon-button"
+        type="button"
+        aria-label="Vollbildmodus umschalten"
+        aria-pressed="false"
+        title="Vollbildmodus"
+      >
+        ⛶
+      </button>
+    </div>
+  </header>
+
+  <div class="app">
+
+    <main>
+      <section id="menu" class="panel panel--active" aria-label="Hauptmenü">
+        <div class="panel-grid">
+          <div class="card-stack">
+            <div class="card card--teams">
+              <h2>Teams</h2>
+              <div class="field">
+                <div class="team-count-control" role="group" aria-label="Anzahl Teams">
+                  <button type="button" class="count-button" id="team-count-decrease" aria-label="Teamanzahl verringern">
+                    –
+                  </button>
+                  <input id="team-count" type="number" min="2" max="4" step="1" value="2" />
+                  <button type="button" class="count-button" id="team-count-increase" aria-label="Teamanzahl erhöhen">
+                    +
+                  </button>
+                </div>
+              </div>
+              <div id="team-list" class="team-list"></div>
+            </div>
+            <div class="card">
+              <h2>Spiellänge</h2>
+              <label class="field">
+                <select id="board-size-select">
+                  <option value="short">Kurzes Spiel · 24 Felder (6 × 4)</option>
+                  <option value="normal" selected>Normales Spiel · 30 Felder (6 × 5)</option>
+                  <option value="long">Langes Spiel · 42 Felder (7 × 6)</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Spieleinstellungen</h2>
+            <div class="field-group category-settings">
+              <div class="category-settings-head" aria-hidden="true">
+                <span>Kategorie</span>
+                <span>Zeit pro Runde</span>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-explain" value="Erklären" checked />
+                  Erklären
+                </label>
+                <div class="category-time">
+                  <select id="time-explain" aria-label="Zeit pro Runde für Erklären"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-draw" value="Zeichnen" checked />
+                  Zeichnen
+                </label>
+                <div class="category-time">
+                  <select id="time-draw" aria-label="Zeit pro Runde für Zeichnen"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-pantomime" value="Pantomime" checked />
+                  Pantomime
+                </label>
+                <div class="category-time">
+                  <select id="time-pantomime" aria-label="Zeit pro Runde für Pantomime"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-quiz" value="Quizfrage" checked />
+                  Quizfrage
+                </label>
+                <div class="category-time">
+                  <select id="time-quiz" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+            </div>
+            <label class="field">
+              Strafzeit beim Tauschen
+              <select id="swap-select">
+                <option value="5">5s</option>
+                <option value="10" selected>10s</option>
+                <option value="15">15s</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="card">
+            <div class="card-row">
+              <h2>Kartensatz</h2>
+              <button class="info-button" id="csv-info" aria-label="CSV Info">i</button>
+            </div>
+            <label class="field">
+              Kartensatz auswählen
+              <select id="dataset-select">
+                <option value="standard">Standard</option>
+                <option value="allgemein">Allgemeinwissen</option>
+                <option value="kfz">KFZ</option>
+                <option value="kfz_einfach">KFZ einfach</option>
+                <option value="geographie">Geographie</option>
+              </select>
+            </label>
+            <label class="field upload">
+              CSV Upload
+              <input id="csv-upload" type="file" accept=".csv" />
+            </label>
+            <p class="hint" id="csv-status">Standarddatensatz aktiv.</p>
+            <div class="tooltip" id="csv-tooltip" role="dialog" aria-hidden="true">
+              <h3>CSV-Format</h3>
+              <ul>
+                <li>Spalten: Kategorie;Begriff/Frage;Tabu1/Antwort;Tabu2;Tabu3…</li>
+                <li>Kategorien: Erklären, Zeichnen, Pantomime, Quizfrage, Masterquizfrage</li>
+                <li>Quizfrage/Masterquizfrage: Frage + Antwort in Spalte 2/3</li>
+                <li>Excel: als CSV (UTF-8, Semikolon) exportieren</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <button id="start-game" class="primary">Spiel starten</button>
+      </section>
+
+      <section id="game" class="panel" aria-label="Spielfeld">
+        <div class="game-top">
+          <div class="board" id="board" aria-hidden="true"></div>
+          <div id="dice-overlay" class="dice-overlay" aria-hidden="true">
+            <div class="dice-overlay-die">
+              <span class="dice-overlay-icon" aria-hidden="true">🎲</span>
+              <span id="dice-overlay-value" class="dice-overlay-value">1</span>
+            </div>
+          </div>
+          <div id="status" class="status">Würfeln, um zu starten.</div>
+        </div>
+        <div class="game-bottom" aria-label="Spielsteuerung">
+          <div class="game-controls">
+            <button id="roll" class="dice" aria-label="Würfeln">🎲</button>
+            <button id="undo" class="ghost toolbar-button" aria-label="Zug zurück">↩️</button>
+            <button id="open-settings" class="ghost toolbar-button" aria-label="Spieleinstellungen">⚙️</button>
+            <button id="main-menu" class="ghost toolbar-button" aria-label="Hauptmenü">🏠</button>
+          </div>
+        </div>
+        <div id="settings-panel" class="settings-panel hidden" role="dialog" aria-modal="true" aria-label="Spieleinstellungen">
+          <div class="settings-card">
+            <div class="settings-header">
+              <h2>Spieleinstellungen</h2>
+              <button id="close-settings" class="ghost">Schließen</button>
+            </div>
+            <div class="field-group category-settings">
+              <p>Kategorien</p>
+              <div class="category-settings-head" aria-hidden="true">
+                <span>Kategorie</span>
+                <span>Zeit pro Runde</span>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-explain-game" value="Erklären" checked />
+                  Erklären
+                </label>
+                <div class="category-time">
+                  <select id="time-explain-game" aria-label="Zeit pro Runde für Erklären"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-draw-game" value="Zeichnen" checked />
+                  Zeichnen
+                </label>
+                <div class="category-time">
+                  <select id="time-draw-game" aria-label="Zeit pro Runde für Zeichnen"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-pantomime-game" value="Pantomime" checked />
+                  Pantomime
+                </label>
+                <div class="category-time">
+                  <select id="time-pantomime-game" aria-label="Zeit pro Runde für Pantomime"></select>
+                </div>
+              </div>
+              <div class="category-setting">
+                <label class="category-toggle">
+                  <input type="checkbox" id="category-quiz-game" value="Quizfrage" checked />
+                  Quizfrage
+                </label>
+                <div class="category-time">
+                  <select id="time-quiz-game" aria-label="Zeit pro Runde für Quizfrage"></select>
+                </div>
+              </div>
+            </div>
+            <div class="field-group board-size-group">
+              <p>Spiellänge</p>
+              <label class="option-card">
+                <input type="radio" name="board-size-game" value="short" />
+                <span>
+                  <strong>Kurzes Spiel</strong>
+                  <small>24 Felder · Raster 6 × 4</small>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="board-size-game" value="normal" checked />
+                <span>
+                  <strong>Normales Spiel</strong>
+                  <small>30 Felder · Raster 6 × 5</small>
+                </span>
+              </label>
+              <label class="option-card">
+                <input type="radio" name="board-size-game" value="long" />
+                <span>
+                  <strong>Langes Spiel</strong>
+                  <small>42 Felder · Raster 7 × 6</small>
+                </span>
+              </label>
+            </div>
+            <label class="field">
+              Strafzeit beim Tauschen
+              <select id="swap-select-game">
+                <option value="5">5s</option>
+                <option value="10" selected>10s</option>
+                <option value="15">15s</option>
+              </select>
+            </label>
+            <label class="field">
+              Spiellänge
+              <select id="board-size-select-game">
+                <option value="short">Kurzes Spiel · 24 Felder (6 × 4)</option>
+                <option value="normal" selected>Normales Spiel · 30 Felder (6 × 5)</option>
+                <option value="long">Langes Spiel · 42 Felder (7 × 6)</option>
+              </select>
+            </label>
+            <button id="apply-settings" class="primary">Einstellungen speichern</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="overlay" class="overlay hidden" aria-live="polite">
+    <div class="overlay-content" id="overlay-content">🎲</div>
+  </div>
+
+  <div id="turn-overlay" class="turn-overlay hidden" aria-live="polite">
+    <div class="turn-overlay-panel" id="turn-overlay-panel">
+      <div class="turn-category" id="turn-category">
+        <div class="turn-category-icon" id="turn-category-icon">?</div>
+        <h2 id="turn-category-label">Kategorie</h2>
+        <div class="turn-countdown hidden" id="turn-countdown">3</div>
+        <button id="turn-ready" class="primary">Bereit</button>
+      </div>
+      <div class="turn-word hidden" id="turn-word">
+        <div class="turn-timer" id="turn-timer">00</div>
+        <div class="turn-penalty" id="turn-penalty" aria-live="polite"></div>
+        <h2 id="turn-word-title">Begriff</h2>
+        <ul id="turn-taboo-list"></ul>
+        <div class="turn-action-buttons" aria-label="Antwortoptionen">
+          <button class="turn-action-button is-correct" id="turn-correct" aria-label="Begriff richtig erraten" title="Richtig">
+            Ja
+          </button>
+          <button class="turn-action-button is-wrong" id="turn-wrong" aria-label="Begriff falsch beantwortet" title="Falsch">
+            ✕
+          </button>
+          <button class="turn-action-button is-swap" id="turn-swap" aria-label="Begriff tauschen" title="Begriff tauschen">
+            ⟲
+          </button>
+        </div>
+        <p id="turn-answer" class="turn-answer hidden"></p>
+        <button id="turn-continue" class="primary">Lösen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="winner-screen" class="winner-screen hidden" aria-live="polite">
+    <div class="winner-card">
+      <div class="confetti" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <h2 id="winner-label">Team gewinnt</h2>
+      <button id="winner-restart" class="ghost">Neues Spiel</button>
+    </div>
+  </div>
+
+  <script src="../data/allgemein.js"></script>
+  <script src="../data/kfz.js"></script>
+  <script src="../data/kfz_einfach.js"></script>
+  <script src="../data/geographie.js"></script>
+  <script src="../data/mk11d.js"></script>
+  <script src="../data/standard.js"></script>
+  <script src="../app.js"></script>
+</body>
+</html>
