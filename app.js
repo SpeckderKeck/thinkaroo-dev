@@ -167,10 +167,20 @@ function setRoute(hash) {
   }
 
   if (nextHash === "#/join") {
-    const joinCodeFromHash = getJoinCodeFromHash();
-    if (joinCodeFromHash && joinCodeInput) {
-      joinCodeInput.value = joinCodeFromHash;
-      submitJoinCode();
+    // Check for static shared game data in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const staticData = urlParams.get('data');
+
+    if (staticData) {
+      // Handle static shared game from URL
+      loadStaticSharedGame(staticData);
+    } else {
+      // Handle traditional join code
+      const joinCodeFromHash = getJoinCodeFromHash();
+      if (joinCodeFromHash && joinCodeInput) {
+        joinCodeInput.value = joinCodeFromHash;
+        submitJoinCode();
+      }
     }
   }
 
@@ -788,9 +798,284 @@ function startSharedGame() {
   setNextRollStatus(state.currentTeam);
 }
 
+// Create a static shared game that works without backend (GitHub Pages compatible)
+async function createStaticSharedGame() {
+  if (!sharedGameStatus || !sharedGameCodeEl || !sharedGameLinkButton || !sharedGameQrImage) return;
+
+  const isMainMenuComplete = updateMainMenuRequiredSelectionState();
+  if (!isMainMenuComplete) {
+    if (sharedGameStatus) {
+      sharedGameStatus.textContent = "Bitte Kartensätze und Kategorien auswählen.";
+    }
+    openSharedGameModal();
+    return;
+  }
+
+  sharedGameStatus.textContent = "Erstelle Spiel-Link ...";
+  sharedGameStatus.hidden = false;
+  if (sharedGameLinkStatus) {
+    sharedGameLinkStatus.hidden = true;
+    sharedGameLinkStatus.textContent = "";
+  }
+  sharedGameCodeEl.textContent = "STATIC";
+  sharedGameLinkButton.textContent = "";
+  sharedGameQrImage.src = "";
+  openSharedGameModal();
+
+  // Collect all game settings
+  const selectedKeys = readSelectedDatasetKeys();
+  const datasetEntries = selectedKeys.map(key => getDatasetEntryByKey(key)).filter(Boolean);
+
+  // Build embedded card sets from selected datasets
+  const embeddedCardSets = datasetEntries.map(entry => ({
+    key: entry.key,
+    label: entry.label,
+    cards: entry.cards || [],
+  }));
+
+  const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
+
+  // Build complete game settings object
+  const gameSettings = {
+    categories: state.categories.filter((category) => SELECTABLE_CARD_CATEGORIES.includes(category)),
+    categoryTimes: readCategoryTimes(menuCategoryControls),
+    swapPenalty: Number.parseInt(swapSelect?.value || "10", 10),
+    boardSize: selectedBoardSize,
+    selectedBoardCategories: [...state.selectedBoardCategories],
+    categoryWeights: { ...state.categoryWeights },
+    gameMode: normalizeGameMode(state.gameMode),
+    embeddedCardSets,
+  };
+
+  const teamSettings = {
+    teams: readTeamsFromContainer(teamListContainer),
+  };
+
+  // Combine all settings
+  const sharedGameData = {
+    v: 1, // version
+    gs: gameSettings,
+    ts: teamSettings,
+    t: Date.now(), // timestamp
+  };
+
+  try {
+    // Compress and encode settings
+    const jsonString = JSON.stringify(sharedGameData);
+    const compressed = await compressData(jsonString);
+    const base64 = encodeBase64UrlSafe(compressed);
+
+    // Build share URL
+    const baseDocumentUrl = `${window.location.origin}${window.location.pathname}`;
+    const shareUrl = `${baseDocumentUrl}#/join?data=${base64}`;
+
+    sharedGameCodeEl.textContent = "STATIC";
+    sharedGameLinkButton.textContent = shareUrl;
+    sharedGameStatus.textContent = "Link erstellt! Scan den QR-Code oder kopiere den Link.";
+    sharedGameStatus.hidden = false;
+
+    // Generate QR Code
+    sharedGameQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}`;
+  } catch (error) {
+    sharedGameStatus.textContent = `Fehler: ${error?.message || String(error)}`;
+    sharedGameStatus.hidden = false;
+  }
+}
+
+// Compression helper using CompressionStream API
+async function compressData(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+
+  // Try native compression
+  if (typeof CompressionStream !== 'undefined') {
+    const cs = new CompressionStream('deflate');
+    const writer = cs.writable.getWriter();
+    writer.write(data);
+    writer.close();
+
+    const chunks = [];
+    const reader = cs.readable.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    const compressed = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+    let offset = 0;
+    for (const chunk of chunks) {
+      compressed.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return compressed;
+  }
+
+  // Fallback: return uncompressed
+  return data;
+}
+
+// Base64 URL-safe encoding
+function encodeBase64UrlSafe(bytes) {
+  const binString = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+  const base64 = btoa(binString);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// Base64 URL-safe decoding
+function decodeBase64UrlSafe(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  const binString = atob(str);
+  return Uint8Array.from(binString, (c) => c.charCodeAt(0));
+}
+
+// Decompression helper
+async function decompressData(bytes) {
+  if (typeof DecompressionStream !== 'undefined') {
+    const ds = new DecompressionStream('deflate');
+    const writer = ds.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+
+    const chunks = [];
+    const reader = ds.readable.getReader();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+    }
+
+    const decompressed = new Uint8Array(chunks.reduce((acc, chunk) => acc + chunk.length, 0));
+    let offset = 0;
+    for (const chunk of chunks) {
+      decompressed.set(chunk, offset);
+      offset += chunk.length;
+    }
+    return decompressed;
+  }
+
+  // Fallback: return as-is (uncompressed)
+  return bytes;
+}
+
+// Load and start a static shared game from URL-encoded data
+async function loadStaticSharedGame(base64Data) {
+  try {
+    // Decode and decompress
+    const compressed = decodeBase64UrlSafe(base64Data);
+    const decompressed = await decompressData(compressed);
+    const decoder = new TextDecoder();
+    const jsonString = decoder.decode(decompressed);
+    const sharedGameData = JSON.parse(jsonString);
+
+    // Validate version
+    if (!sharedGameData.v || !sharedGameData.gs) {
+      throw new Error("Ungültige Spieldaten");
+    }
+
+    const gameSettings = sharedGameData.gs;
+    const teamSettings = sharedGameData.ts;
+
+    // Apply game settings
+    if (gameSettings.categories) {
+      state.categories = gameSettings.categories;
+    }
+    if (gameSettings.categoryTimes) {
+      applyCategoryTimes(gameSettings.categoryTimes);
+    }
+    if (gameSettings.swapPenalty) {
+      state.swapPenalty = gameSettings.swapPenalty;
+      if (swapSelect) swapSelect.value = String(gameSettings.swapPenalty);
+    }
+    if (gameSettings.boardSize) {
+      setSelectedBoardSize(gameSettings.boardSize);
+    }
+    if (gameSettings.selectedBoardCategories) {
+      state.selectedBoardCategories = gameSettings.selectedBoardCategories;
+    }
+    if (gameSettings.categoryWeights) {
+      state.categoryWeights = { ...gameSettings.categoryWeights };
+    }
+    if (gameSettings.gameMode) {
+      state.gameMode = gameSettings.gameMode;
+    }
+
+    // Apply embedded card sets
+    if (gameSettings.embeddedCardSets && Array.isArray(gameSettings.embeddedCardSets)) {
+      // Store embedded cards
+      state.embeddedSharedCards = gameSettings.embeddedCardSets.flatMap((set, index) => {
+        const cards = Array.isArray(set?.cards) ? set.cards : [];
+        return cards.map(card => normalizeCardInput(card)).filter(Boolean);
+      });
+
+      // Create dataset entries for the embedded sets
+      gameSettings.embeddedCardSets.forEach((set, index) => {
+        if (set.key && set.cards) {
+          const key = `embedded:${index}`;
+          state.storageDatasets[key] = {
+            cards: set.cards,
+            label: set.label || `Kartensatz ${index + 1}`,
+            name: set.label || `Kartensatz ${index + 1}`,
+          };
+        }
+      });
+
+      // Select these embedded datasets
+      state.selectedDatasets = gameSettings.embeddedCardSets.map((_, index) => `embedded:${index}`);
+    }
+
+    // Apply team settings
+    if (teamSettings?.teams && Array.isArray(teamSettings.teams)) {
+      applyTeamsFromSharedData(teamSettings.teams);
+    }
+
+    // Start the game
+    await startGame({ isMultiScreen: false });
+
+  } catch (error) {
+    console.error("Failed to load static shared game:", error);
+    window.alert(`Fehler beim Laden des Spiels: ${error.message}`);
+    setRoute("#/landing");
+  }
+}
+
+// Apply teams from shared game data
+function applyTeamsFromSharedData(teams) {
+  if (!Array.isArray(teams) || teams.length === 0) return;
+
+  // Update team count
+  const targetCount = Math.min(Math.max(teams.length, 2), 6);
+  syncTeamCountControls(targetCount);
+
+  // Update team names and colors
+  teams.forEach((team, index) => {
+    if (index >= targetCount) return;
+
+    const nameInput = document.getElementById(`team-${index + 1}-name`);
+    if (nameInput && team.name) {
+      nameInput.value = team.name;
+    }
+
+    const colorSelect = document.getElementById(`team-${index + 1}-color`);
+    if (colorSelect && team.color) {
+      colorSelect.value = team.color;
+    }
+  });
+
+  state.teams = readTeamsFromContainer(teamListContainer);
+}
+
 async function createSharedGameFromCurrentMenu() {
   if (!requireFullAccess()) return;
   if (!sharedGameStatus || !sharedGameCodeEl || !sharedGameLinkButton || !sharedGameQrImage) return;
+
+  // Try backend first, fall back to static
+  const baseUrl = resolveSharedGamesApiBaseUrl();
+  if (!baseUrl) {
+    // No backend available - use static method
+    return createStaticSharedGame();
+  }
 
   const isMainMenuComplete = updateMainMenuRequiredSelectionState();
   if (!isMainMenuComplete) {
@@ -2450,10 +2735,25 @@ function readCategoryTimes(controls) {
   if (controls.length === 0) {
     return Object.fromEntries(ALLOWED_CARD_CATEGORIES.map((category) => [category, getDefaultRoundTimeForCategory(category)]));
   }
-  return controls.reduce((times, control) => {
-    times[control.category] = Number.parseInt(control.timeSelect.value, 10);
-    return times;
-  }, { [MASTER_QUIZ_CATEGORY]: getDefaultRoundTimeForCategory(MASTER_QUIZ_CATEGORY) });
+  const times = {};
+  for (const control of controls) {
+    const category = control.category;
+    const timeValue = parseInt(control.timeSelect.value, 10);
+    times[category] = isNaN(timeValue) ? getDefaultRoundTimeForCategory(category) : timeValue;
+  }
+  return times;
+}
+
+function applyCategoryTimes(times) {
+  if (!times || typeof times !== 'object') return;
+  state.categoryTimes = { ...times };
+  // Update UI controls
+  for (const control of menuCategoryControls) {
+    const category = control.category;
+    if (times[category] && control.timeSelect) {
+      control.timeSelect.value = String(times[category]);
+    }
+  }
 }
 
 function syncCategoryControls(controls, selectedCategories, categoryTimes) {
@@ -2587,6 +2887,11 @@ function applyBoardSize(size) {
   state.positions = state.positions.map((pos) => Math.min(pos, config.total - 1));
   buildBoard(state.categories, { preserveAssignments: true });
   syncBoardDecorations();
+}
+
+function setSelectedBoardSize(size) {
+  syncBoardSizeControls(size);
+  applyBoardSize(size);
 }
 
 function syncBoardSizeControls(size) {
