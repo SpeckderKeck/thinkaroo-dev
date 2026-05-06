@@ -2331,11 +2331,20 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
     : "Laden der eigenen Kartensätze";
 
   try {
+    // For public datasets, don't require authentication
+    const headers = includeOnlyPublic
+      ? { Accept: "application/json" }
+      : await getAuthHeaders();
+
     const response = await fetch(endpoint, {
       method: "GET",
-      headers: await getAuthHeaders(),
+      headers,
     });
-    ensureAuthorizedResponse(response, actionLabel);
+
+    // Only check auth errors for non-public endpoints
+    if (!includeOnlyPublic) {
+      ensureAuthorizedResponse(response, actionLabel);
+    }
 
     if (!response.ok) {
       return { datasets: null, hasApiError: true };
@@ -2356,7 +2365,7 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
 
     return { datasets, hasApiError: false };
   } catch (error) {
-    if (error?.isAuthError) {
+    if (error?.isAuthError && !includeOnlyPublic) {
       throw error;
     }
     return { datasets: null, hasApiError: true };
