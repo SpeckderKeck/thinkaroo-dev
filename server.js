@@ -86,6 +86,20 @@ function normalizeOwnerId(value) {
   return ownerId || '';
 }
 
+function normalizeDatasetName(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function isDuplicateDatasetName(manifest, label, ownerId, excludeId = '') {
+  const normalizedName = normalizeDatasetName(label);
+  if (!normalizedName) return false;
+  return manifest.datasets.some((entry) => {
+    if (excludeId && entry.id === excludeId) return false;
+    if (entry.ownerId !== ownerId) return false;
+    return normalizeDatasetName(entry.label) === normalizedName;
+  });
+}
+
 function normalizeVisibility(value) {
   const normalized = String(value ?? '').trim().toLowerCase();
   if (normalized === DATASET_VISIBILITY_PRIVATE || normalized === DATASET_VISIBILITY_PUBLIC) {
@@ -688,6 +702,10 @@ async function handleDatasetsApi(req, res, url) {
       return sendJson(res, 409, { error: 'already_exists' });
     }
 
+    if (isDuplicateDatasetName(manifest, dataset.label, authUser.id)) {
+      return sendJson(res, 409, { error: 'duplicate_name', message: 'Ein Datensatz mit diesem Namen existiert bereits.' });
+    }
+
     const nowIso = new Date().toISOString();
     dataset.createdAt = nowIso;
     dataset.updatedAt = nowIso;
@@ -754,6 +772,13 @@ async function handleDatasetsApi(req, res, url) {
     }
 
     const nextLabel = String(payload.label ?? currentEntry.label).trim() || currentEntry.id;
+
+    if (normalizeDatasetName(nextLabel) !== normalizeDatasetName(currentEntry.label)) {
+      if (isDuplicateDatasetName(manifest, nextLabel, effectiveOwnerId, currentEntry.id)) {
+        return sendJson(res, 409, { error: 'duplicate_name', message: 'Ein Datensatz mit diesem Namen existiert bereits.' });
+      }
+    }
+
     const nextCards = Array.isArray(payload.cards) ? payload.cards : currentRecord.cards;
     const hasVisibilityInPayload = Object.prototype.hasOwnProperty.call(payload, 'visibility');
     const normalizedVisibility = hasVisibilityInPayload ? normalizeVisibility(payload.visibility) : '';

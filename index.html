@@ -9,106 +9,122 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="user-menu.css" />
 </head>
 <body>
   <header class="global-header">
     <div class="global-header-inner">
-      <a id="settings-back-topbar" href="#/landing" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zum Start" title="Zurück" hidden>←</a>
-      <div class="auth-topbar" aria-label="Authentifizierung">
-        <div class="auth-topbar-left" id="auth-left-actions">
-          <button id="auth-login-action" type="button" class="auth-icon-button auth-icon-button--logged-out" data-route="#/login" data-hover-label="Login" aria-label="Login öffnen" title="Login">
-            <img src="./login.svg" alt="Login" />
+      <div class="header-left">
+        <a id="settings-back-topbar" href="#/landing" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zum Start" title="Zurück" hidden>←</a>
+      </div>
+      <span id="auth-status" hidden></span>
+      <div class="header-center">
+        <button
+          id="theme-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Theme umschalten"
+          aria-pressed="false"
+          title="Theme umschalten"
+        >
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12Z"></path>
+            <path d="M12 2v2.2M12 19.8V22M4 12H2M22 12h-2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19"></path>
+          </svg>
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M21 14.5A8.2 8.2 0 0 1 9.5 3 7.2 7.2 0 1 0 21 14.5Z"></path>
+          </svg>
+        </button>
+
+        <button
+          id="game-sound-toggle"
+          class="icon-button audio-toggle"
+          type="button"
+          aria-label="Gamesounds ausschalten"
+          aria-pressed="true"
+          title="Gamesounds ausschalten"
+        >
+          <svg class="audio-icon audio-icon--speaker" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
+            <path d="M16 8.5a4 4 0 0 1 0 7"></path>
+            <path d="M18.5 6a7 7 0 0 1 0 12"></path>
+            <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
+          </svg>
+        </button>
+        <button
+          id="music-toggle"
+          class="icon-button audio-toggle"
+          type="button"
+          aria-label="Musik ausschalten"
+          aria-pressed="true"
+          title="Musik ausschalten"
+        >
+          <svg class="audio-icon audio-icon--music" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 18V5l10-2v13"></path>
+            <circle cx="6.5" cy="18" r="2.5"></circle>
+            <circle cx="16.5" cy="16" r="2.5"></circle>
+            <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
+          </svg>
+        </button>
+        <div class="user-menu-container">
+          <button id="user-menu-toggle" type="button" class="icon-button user-menu-button" aria-label="Login" title="Login" aria-haspopup="true" aria-expanded="false">
+            <svg class="user-menu-login-icon" viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <span id="user-menu-initial" class="user-menu-initial" hidden></span>
           </button>
-          <button id="auth-logout-action" type="button" class="auth-icon-button auth-icon-button--logged-in" data-hover-label="Logout" aria-label="Logout" title="Logout" hidden>
-            <img src="./logout.svg" alt="Logout" />
-          </button>
-        </div>
-        <div class="auth-topbar-right" id="auth-status-wrapper">
-          <span id="auth-status"></span>
+          <div id="user-menu-dropdown" class="user-menu-dropdown hidden" role="menu">
+            <div class="user-menu-dropdown-info" id="user-menu-email"></div>
+            <button class="user-menu-dropdown-item" data-action="account" role="menuitem">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Konto
+            </button>
+            <button class="user-menu-dropdown-item user-menu-dropdown-item--danger" data-action="logout" role="menuitem">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
-      <button
-        id="theme-toggle"
-        class="icon-button"
-        type="button"
-        aria-label="Theme umschalten"
-        aria-pressed="false"
-        title="Theme umschalten"
-      >
-        <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12Z"></path>
-          <path d="M12 2v2.2M12 19.8V22M4 12H2M22 12h-2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19"></path>
-        </svg>
-        <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M21 14.5A8.2 8.2 0 0 1 9.5 3 7.2 7.2 0 1 0 21 14.5Z"></path>
-        </svg>
-      </button>
-
-      <button
-        id="game-sound-toggle"
-        class="icon-button audio-toggle"
-        type="button"
-        aria-label="Gamesounds ausschalten"
-        aria-pressed="true"
-        title="Gamesounds ausschalten"
-      >
-        <svg class="audio-icon audio-icon--speaker" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 9v6h4l5 4V5L8 9H4Z"></path>
-          <path d="M16 8.5a4 4 0 0 1 0 7"></path>
-          <path d="M18.5 6a7 7 0 0 1 0 12"></path>
-          <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
-        </svg>
-      </button>
-      <button
-        id="music-toggle"
-        class="icon-button audio-toggle"
-        type="button"
-        aria-label="Musik ausschalten"
-        aria-pressed="true"
-        title="Musik ausschalten"
-      >
-        <svg class="audio-icon audio-icon--music" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M9 18V5l10-2v13"></path>
-          <circle cx="6.5" cy="18" r="2.5"></circle>
-          <circle cx="16.5" cy="16" r="2.5"></circle>
-          <path class="audio-icon-muted-line" d="M4 4l16 16"></path>
-        </svg>
-      </button>
-      <button
-        id="qr-toggle"
-        class="icon-button"
-        type="button"
-        aria-label="QR-Code für diese Seite öffnen"
-        title="QR-Code anzeigen"
-      >
-        <svg class="qr-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <rect x="3" y="3" width="6" height="6" rx="1"></rect>
-          <rect x="5" y="5" width="2" height="2"></rect>
-          <rect x="15" y="3" width="6" height="6" rx="1"></rect>
-          <rect x="17" y="5" width="2" height="2"></rect>
-          <rect x="3" y="15" width="6" height="6" rx="1"></rect>
-          <rect x="5" y="17" width="2" height="2"></rect>
-          <rect x="12" y="12" width="2" height="2"></rect>
-          <rect x="15" y="12" width="2" height="2"></rect>
-          <rect x="18" y="12" width="3" height="2"></rect>
-          <rect x="12" y="15" width="2" height="2"></rect>
-          <rect x="15" y="15" width="6" height="2"></rect>
-          <rect x="12" y="18" width="4" height="3"></rect>
-          <rect x="18" y="18" width="3" height="3"></rect>
-        </svg>
-      </button>
-      <button
-        id="fullscreen-toggle"
-        class="icon-button"
-        type="button"
-        aria-label="Vollbildmodus umschalten"
-        aria-pressed="false"
-        title="Vollbildmodus"
-      >
-        <svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path>
-        </svg>
-      </button>
+      <div class="header-right">
+        <button
+          id="qr-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="QR-Code für diese Seite öffnen"
+          title="QR-Code anzeigen"
+        >
+          <svg class="qr-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="3" y="3" width="6" height="6" rx="1"></rect>
+            <rect x="5" y="5" width="2" height="2"></rect>
+            <rect x="15" y="3" width="6" height="6" rx="1"></rect>
+            <rect x="17" y="5" width="2" height="2"></rect>
+            <rect x="3" y="15" width="6" height="6" rx="1"></rect>
+            <rect x="5" y="17" width="2" height="2"></rect>
+            <rect x="12" y="12" width="2" height="2"></rect>
+            <rect x="15" y="12" width="2" height="2"></rect>
+            <rect x="18" y="12" width="3" height="2"></rect>
+            <rect x="12" y="15" width="2" height="2"></rect>
+            <rect x="15" y="15" width="6" height="2"></rect>
+            <rect x="12" y="18" width="4" height="3"></rect>
+            <rect x="18" y="18" width="3" height="3"></rect>
+          </svg>
+        </button>
+        <button
+          id="fullscreen-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Vollbildmodus umschalten"
+          aria-pressed="false"
+          title="Vollbildmodus"
+        >
+          <svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path>
+          </svg>
+        </button>
+      </div>
 
     </div>
   </header>
@@ -472,11 +488,12 @@
           </div>
 
         </div>
-        <footer class="menu-footer menu-footer--main-actions">
-          <button id="start-game" class="primary menu-start-button" data-settings-mode="board">Spiel starten</button>
-          <button id="create-shared-game" class="secondary menu-start-button" type="button" data-auth="full" hidden>Spiel erstellen</button>
-        </footer>
       </section>
+
+      <footer id="menu-bottom-bar" class="menu-footer menu-footer--main-actions">
+        <button id="start-game" class="primary menu-start-button" data-settings-mode="board">Spiel starten</button>
+        <button id="create-shared-game" class="secondary menu-start-button" type="button" data-auth="full" hidden>Spiel erstellen</button>
+      </footer>
 
       <section id="screen-advancedsettings" class="panel" aria-label="Erweiterte Spieleinstellungen" aria-hidden="true" hidden>
         <div class="advanced-settings-shell">
@@ -563,17 +580,23 @@
             <form id="login-form" class="auth-form">
               <h2>Login</h2>
               <label class="field" for="login-email">
-                E-Mail
-                <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+                E-Mail oder Benutzername
+                <input id="login-email" type="text" required autocomplete="username" placeholder="name@beispiel.de oder Benutzername" />
               </label>
               <label class="field" for="login-password">
                 Passwort
                 <input id="login-password" type="password" required autocomplete="current-password" />
               </label>
               <button class="primary" type="submit">Login</button>
+              <p id="login-feedback" class="form-feedback" aria-live="polite"></p>
             </form>
             <form id="register-form" class="auth-form">
               <h2>Registrierung</h2>
+              <label class="field" for="register-username">
+                Benutzername
+                <input id="register-username" type="text" required autocomplete="username" placeholder="MeinName" minlength="3" maxlength="30" />
+                <span id="register-username-error" class="field-error" aria-live="polite"></span>
+              </label>
               <label class="field" for="register-email">
                 E-Mail
                 <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
@@ -583,13 +606,72 @@
                 <input id="register-password" type="password" required autocomplete="new-password" />
               </label>
               <button class="primary" type="submit">Registrierung</button>
+              <p id="register-feedback" class="form-feedback" aria-live="polite"></p>
             </form>
           </div>
           <p id="auth-page-hint" class="hint" aria-live="polite"></p>
         </section>
       </section>
 
-      <section id="screen-cardsets" class="panel" aria-label="Kartensätze verwalten" aria-hidden="true" hidden data-auth="full">
+      <section id="screen-account" class="panel" aria-label="Konto verwalten" aria-hidden="true" hidden>
+        <section class="card auth-page-card" aria-label="Konto verwalten">
+          <h1>Mein Konto</h1>
+          <div class="account-sections">
+            <form id="account-username-form" class="auth-form" novalidate>
+              <h2>Benutzername ändern</h2>
+              <p class="account-current-value">Aktuell: <strong id="account-current-username">–</strong></p>
+              <label class="field" for="account-username">
+                Neuer Benutzername
+                <input id="account-username" type="text" required minlength="3" maxlength="30" autocomplete="username" placeholder="MeinName" />
+              </label>
+              <button class="primary" type="submit">Benutzername speichern</button>
+              <p id="account-username-feedback" class="form-feedback" aria-live="polite"></p>
+            </form>
+
+            <form id="account-email-form" class="auth-form" novalidate>
+              <h2>E-Mail ändern</h2>
+              <p class="account-current-value">Aktuell: <strong id="account-current-email">–</strong></p>
+              <label class="field" for="account-new-email">
+                Neue E-Mail-Adresse
+                <input id="account-new-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <label class="field" for="account-confirm-email">
+                E-Mail bestätigen
+                <input id="account-confirm-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
+              </label>
+              <button class="primary" type="submit">E-Mail ändern</button>
+              <p id="account-email-feedback" class="form-feedback" aria-live="polite"></p>
+            </form>
+
+            <form id="account-password-form" class="auth-form" novalidate>
+              <h2>Passwort ändern</h2>
+              <label class="field" for="account-current-password">
+                Aktuelles Passwort
+                <input id="account-current-password" type="password" required autocomplete="current-password" />
+              </label>
+              <label class="field" for="account-new-password">
+                Neues Passwort
+                <input id="account-new-password" type="password" required minlength="8" autocomplete="new-password" />
+              </label>
+              <label class="field" for="account-confirm-password">
+                Passwort bestätigen
+                <input id="account-confirm-password" type="password" required minlength="8" autocomplete="new-password" />
+              </label>
+              <button class="primary" type="submit">Passwort ändern</button>
+              <p id="account-password-feedback" class="form-feedback" aria-live="polite"></p>
+            </form>
+
+            <div class="auth-form account-danger-zone">
+              <h2>Konto löschen</h2>
+              <p class="hint">Diese Aktion kann nicht rückgängig gemacht werden. Alle deine Kartensätze werden gelöscht.</p>
+              <button id="account-delete-btn" class="primary account-delete-button" type="button">Konto unwiderruflich löschen</button>
+              <p id="account-delete-feedback" class="form-feedback" aria-live="polite"></p>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section id="screen-cardsets" class="panel" aria-label="Kartensätze verwalten" aria-hidden="true" hidden>
         <div class="cardsets-layout">
           <section class="card cardsets-column" aria-label="Kartensätze">
             <div class="cardsets-sidebar-header">
@@ -601,7 +683,7 @@
             </section>
           </section>
 
-          <section class="card cardsets-column" aria-label="CSV Import">
+          <section class="card cardsets-column" aria-label="CSV Import" data-auth="full">
             <div class="cardsets-sidebar-header">
               <h2>CSV-Import</h2>
             </div>
@@ -612,14 +694,9 @@
             </label>
             <div class="dataset-upload-actions">
               <button id="csv-upload-button" class="ghost" type="button">CSV hochladen</button>
+              <button id="csv-upload-public-button" class="ghost" type="button" hidden>Öffentlichen Kartensatz erstellen</button>
             </div>
-            <p id="csv-status" class="hint" aria-live="polite"></p>
-
-            <div class="csv-dataset-actions">
-              <button id="csv-save-new" class="ghost" type="button" disabled>Als neuen Kartensatz speichern</button>
-              <select id="csv-overwrite-select" aria-label="Eigenen Kartensatz auswählen"></select>
-              <button id="csv-overwrite" class="ghost" type="button" disabled>Bestehenden Kartensatz überschreiben</button>
-            </div>
+            <div class="cardsets-spacer" style="height: 16px;"></div>
 
             <div class="cardsets-editor-preview-actions">
               <button id="open-editor-page" class="primary" type="button">Karteneditor öffnen</button>
@@ -636,6 +713,7 @@
             </div>
           </div>
         </div>
+
       </section>
 
       <section id="screen-editor" class="panel" aria-label="Kartensatz Editor" aria-hidden="true" hidden data-auth="full">
@@ -643,27 +721,55 @@
           <section class="card cardsets-editor-column" aria-label="Kartensatz Editor">
             <div class="card-editor-header">
               <h2>Editor</h2>
-            </div>
-            <div class="card-editor-table-wrap">
-              <table class="card-editor-table">
-                <thead>
-                  <tr>
-                    <th>Kategorie</th>
-                    <th>Begriff/Frage</th>
-                    <th>Antwort/Tabu1</th>
-                    <th>Tabu2</th>
-                    <th>Tabu3</th>
-                    <th>Tabu4</th>
-                    <th>Aktion</th>
-                  </tr>
-                </thead>
-                <tbody id="card-editor-body"></tbody>
-              </table>
 
-              <div class="card-editor-add-row">
-                <button id="card-editor-add-row" class="ghost" type="button">+ Zeile</button>
+              <!-- Dataset Selector Dropdown -->
+              <div class="editor-dataset-selector">
+                <button id="editor-dataset-dropdown-toggle" class="editor-dataset-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">
+                  Kartensätze wählen
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+                <div id="editor-selected-count" class="editor-selected-count">0 Kartensätze</div>
+                <div id="editor-selected-names" class="editor-selected-names"></div>
+                <div id="editor-dataset-dropdown" class="editor-dataset-dropdown hidden" role="menu">
+                  <div class="editor-dataset-dropdown-content" id="editor-dataset-list">
+                    <!-- Populated by JS -->
+                  </div>
+                </div>
               </div>
             </div>
+
+            <!-- Multiple Dataset Sections Container -->
+            <div id="editor-datasets-container" class="editor-datasets-container">
+              <!-- Single table for 1-2 datasets -->
+              <div id="editor-single-table" class="editor-single-table">
+                <div class="card-editor-table-wrap">
+                  <table class="card-editor-table">
+                    <thead>
+                      <tr>
+                        <th>Kategorie</th>
+                        <th>Begriff/Frage</th>
+                        <th>Antwort/Tabu1</th>
+                        <th>Tabu2</th>
+                        <th>Tabu3</th>
+                        <th>Tabu4</th>
+                        <th>Aktion</th>
+                      </tr>
+                    </thead>
+                    <tbody id="card-editor-body"></tbody>
+                  </table>
+
+                  <div class="card-editor-add-row">
+                    <button id="card-editor-add-row" class="ghost" type="button">+ Zeile</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Multiple collapsible sections for 3+ datasets -->
+              <div id="editor-multi-sections" class="editor-multi-sections hidden">
+                <!-- Populated by JS -->
+              </div>
+            </div>
+
             <div id="card-editor-errors" class="card-editor-errors hidden" aria-live="polite"></div>
           </section>
         </div>
@@ -975,7 +1081,6 @@
               <div id="turn-single-choice-options" class="turn-single-choice-options hidden" aria-label="Antwortoptionen"></div>
             </div>
             <div class="fullscreen-game-card__bottom">
-              <p id="turn-word-hint" class="hint hidden">Hinweis</p>
               <ul id="turn-taboo-list"></ul>
               <div class="turn-action-buttons" aria-label="Antwortoptionen">
                 <button class="turn-action-button is-correct" id="turn-correct" aria-label="Begriff richtig erraten" title="Richtig">✓</button>
@@ -1002,32 +1107,79 @@
     </div>
   </div>
 
-  <script src="data/allgemein.js"></script>
-  <script src="data/kfz.js"></script>
-  <script src="data/kfz_werkstoffe.js"></script>
-  <script src="data/kfz_einfach.js"></script>
-  <script src="data/geographie.js"></script>
-  <script src="data/um_nachruesten_mk10.js"></script>
-  <script src="data/mfm10_ish.js"></script>
-  <script src="data/industriemechanik_allgemein.js"></script>
-  <script src="data/tiefziehen.js"></script>
-  <script src="data/gesellschaft_kunst_geo_sport_geschichte_mathe_grammatik.js"></script>
-  <script src="data/druck_luftdruck_pneumatik_regelung_fertigungsmechanik.js"></script>
-  <script src="data/mk11d.js"></script>
-  <script src="data/standard.js"></script>
-    <script src="src/theme/tokens.js"></script>
-  <script src="app.js"></script>
-  <script type="module" src="./assets/app.js"></script>
-  <script type="module" src="./assets/authPage.js"></script>
+  <script src="src/theme/tokens.js"></script>
 
-  <div id="editor-fixed-bottom-bar" class="editor-fixed-bottom-bar" aria-label="Karteneditor Aktionen">
-    <div class="editor-fixed-bottom-bar__inner">
-      <div class="editor-fixed-bottom-bar__prompt">Kartensatz bearbeiten</div>
-      <div class="editor-fixed-bottom-bar__actions">
-        <button id="editor-fixed-cancel" class="ghost" type="button">Abbrechen</button>
-        <button id="editor-fixed-save" class="primary" type="button">Kartensatz speichern</button>
+  <div id="editor-save-confirm" class="main-menu-confirm hidden" role="dialog" aria-modal="true" aria-label="Kartensatz speichern bestätigen">
+    <div class="main-menu-confirm-card">
+      <p id="editor-save-confirm-text" class="main-menu-confirm-text">Bestehenden Kartensatz überschreiben?</p>
+      <div class="main-menu-confirm-actions" role="group" aria-label="Kartensatz speichern bestätigen">
+        <button id="editor-save-confirm-cancel" class="turn-action-button is-wrong" type="button" aria-label="Abbrechen" title="Abbrechen">✕</button>
+        <button id="editor-save-confirm-ok" class="turn-action-button is-correct" type="button" aria-label="Überschreiben" title="Überschreiben">✓</button>
       </div>
     </div>
   </div>
+
+  <div id="editor-unsaved-confirm" class="main-menu-confirm hidden" role="dialog" aria-modal="true" aria-label="Ungespeicherte Änderungen">
+    <div class="main-menu-confirm-card">
+      <p id="editor-unsaved-confirm-text" class="main-menu-confirm-text">Ungespeicherte Änderungen! Erst speichern?</p>
+      <div class="main-menu-confirm-actions" role="group" aria-label="Ungespeicherte Änderungen">
+        <button id="editor-unsaved-discard" class="turn-action-button is-wrong" type="button" aria-label="Verwerfen" title="Verwerfen">✕</button>
+        <button id="editor-unsaved-save" class="turn-action-button is-correct" type="button" aria-label="Speichern" title="Speichern">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editor-fixed-bottom-bar" class="editor-fixed-bottom-bar" aria-label="Karteneditor Aktionen">
+    <div class="editor-fixed-bottom-bar__inner">
+      <!-- Links: Zurück -->
+      <div class="editor-bottom-bar__left">
+        <button id="editor-back-button" class="ghost" type="button" title="Zurück">
+          ← Zurück
+        </button>
+      </div>
+
+      <!-- Mitte: Status und Speichern -->
+      <div class="editor-bottom-bar__center">
+        <div id="editor-status" class="editor-status">Ungespeicherte Änderungen</div>
+        <button id="editor-save-button" class="primary" type="button">Speichern</button>
+      </div>
+
+      <!-- Rechts: Mehr-Menü -->
+      <div class="editor-bottom-bar__right">
+        <div class="editor-more-menu-container">
+          <button id="editor-more-button" class="ghost" type="button" title="Mehr Aktionen" aria-haspopup="true" aria-expanded="false">
+            ⋯
+          </button>
+          <div id="editor-more-dropdown" class="editor-more-dropdown hidden" role="menu">
+            <button class="editor-more-item" data-action="new" role="menuitem">Neuer Datensatz</button>
+            <button class="editor-more-item" data-action="save-as" role="menuitem">Speichern unter…</button>
+            <button class="editor-more-item" data-action="rename" role="menuitem">Umbenennen</button>
+            <button class="editor-more-item" data-action="duplicate" role="menuitem">Duplizieren</button>
+            <div class="editor-more-separator"></div>
+            <button class="editor-more-item" data-action="import" role="menuitem">Import CSV</button>
+            <button class="editor-more-item" data-action="export" role="menuitem">Export CSV</button>
+            <div class="editor-more-separator"></div>
+            <button class="editor-more-item editor-more-item--danger" data-action="delete" role="menuitem">Löschen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="dataset-name-prompt" class="main-menu-confirm hidden" role="dialog" aria-modal="true" aria-label="Name eingeben">
+    <div class="main-menu-confirm-card">
+      <p id="dataset-name-prompt-text" class="main-menu-confirm-text">Name eingeben</p>
+      <input id="dataset-name-prompt-input" class="dataset-name-prompt-input" type="text" autocomplete="off" placeholder="Name" />
+      <div class="main-menu-confirm-actions" role="group" aria-label="Name bestätigen">
+        <button id="dataset-name-prompt-cancel" class="turn-action-button is-wrong" type="button" aria-label="Abbrechen" title="Abbrechen">✕</button>
+        <button id="dataset-name-prompt-ok" class="turn-action-button is-correct" type="button" aria-label="Bestätigen" title="Bestätigen">✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Scripts (loaded after DOM) -->
+  <script src="app.js"></script>
+  <script type="module" src="./assets/app.js"></script>
+  <script type="module" src="./assets/authPage.js"></script>
 </body>
 </html>

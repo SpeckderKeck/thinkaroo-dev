@@ -19,7 +19,20 @@ const editorPanel = document.getElementById("screen-editor");
 const joinPanel = document.getElementById("screen-join");
 const sharedPanel = document.getElementById("screen-shared");
 const howPanel = document.getElementById("screen-how");
+const accountPanel = document.getElementById("screen-account");
 const settingsBackLink = document.getElementById("settings-back-topbar");
+
+if (settingsBackLink) {
+  settingsBackLink.addEventListener("click", (event) => {
+    const currentHash = window.location.hash;
+    if (currentHash === "#/game-board") {
+      const confirmed = confirm("Bist du sicher, dass du das Spiel beenden möchtest?");
+      if (!confirmed) {
+        event.preventDefault();
+      }
+    }
+  });
+}
 
 const screenPanels = {
   "#/landing": landingPanel,
@@ -33,6 +46,7 @@ const screenPanels = {
   "#/editor": editorPanel,
   "#/editcardsets": editorPanel,
   "#/game-board": gamePanel,
+  "#/account": accountPanel,
 };
 
 function getPresetCardsForKeys(keys = []) {
@@ -117,22 +131,35 @@ function setRoute(hash) {
   if (settingsBackLink) {
     const showSettingsBackLink = nextHash !== "#/landing";
     settingsBackLink.hidden = !showSettingsBackLink;
-    const backTarget = nextHash === "#/cardsets" || nextHash === "#/game-board"
-      ? "#/settings-board"
-      : "#/landing";
+    let backTarget;
+    if (nextHash === "#/cardsets" || nextHash === "#/game-board") {
+      backTarget = "#/settings-board";
+    } else if (nextHash === "#/editcardsets") {
+      backTarget = "#/cardsets";
+    } else if (nextHash === "#/account") {
+      backTarget = "#/settings-board";
+    } else {
+      backTarget = "#/landing";
+    }
     settingsBackLink.setAttribute("href", backTarget);
   }
 
-  if (nextHash === "#/cardsets" && cardEditorBody) {
-    renderCardEditorRows(cloneCards(state.cards));
-    updateEditorValidationState();
-    refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
+  if (nextHash === "#/cardsets") {
+    refreshPublicCsvList();
+    if (cardEditorBody) {
+      renderCardEditorRows(cloneCards(state.cards));
+      updateEditorValidationState();
+      refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
+    }
   }
 
   if ((nextHash === "#/editor" || nextHash === "#/editcardsets") && cardEditorBody) {
+    clearEditorStatus();
     renderCardEditorRows(cloneCards(state.cards));
     updateEditorValidationState();
     refreshEditorCustomDatasetSelect(cardEditorDatasetSelect?.value ?? "");
+    // Initialize dataset selector with default dataset selected
+    initEditorDatasetSelector();
   }
 
   if (nextHash === "#/shared") {
@@ -156,6 +183,21 @@ function setRoute(hash) {
           restoreActiveGameFromSnapshot(snapshot);
         });
       }
+    }
+  }
+
+  if (nextHash === "#/account") {
+    const accountUsernameInput = document.getElementById("account-username");
+    if (accountUsernameInput) {
+      accountUsernameInput.value = getUserDisplayName();
+    }
+    const accountCurrentUsername = document.getElementById("account-current-username");
+    if (accountCurrentUsername) {
+      accountCurrentUsername.textContent = getUserDisplayName() || "–";
+    }
+    const accountCurrentEmail = document.getElementById("account-current-email");
+    if (accountCurrentEmail) {
+      accountCurrentEmail.textContent = authSession?.user?.email || "–";
     }
   }
 
@@ -236,6 +278,7 @@ const csvOverwriteSelect = document.getElementById("csv-overwrite-select");
 const csvOverwriteButton = document.getElementById("csv-overwrite");
 const csvStatus = document.getElementById("csv-status");
 const csvUploadButton = document.getElementById("csv-upload-button");
+const csvUploadPublicButton = document.getElementById("csv-upload-public-button");
 const csvRefreshListButton = document.getElementById("csv-refresh-list");
 const storageDatasetSelect = document.getElementById("storage-dataset-select");
 const storageDatasetList = document.getElementById("storage-dataset-list");
@@ -247,6 +290,11 @@ const storageDeleteConfirmModal = document.getElementById("storage-delete-confir
 const storageDeleteConfirmText = document.getElementById("storage-delete-confirm-text");
 const storageDeleteConfirmCancelButton = document.getElementById("storage-delete-confirm-cancel");
 const storageDeleteConfirmOkButton = document.getElementById("storage-delete-confirm-ok");
+const datasetNamePrompt = document.getElementById("dataset-name-prompt");
+const datasetNamePromptText = document.getElementById("dataset-name-prompt-text");
+const datasetNamePromptInput = document.getElementById("dataset-name-prompt-input");
+const datasetNamePromptCancel = document.getElementById("dataset-name-prompt-cancel");
+const datasetNamePromptOk = document.getElementById("dataset-name-prompt-ok");
 const datasetSelect = document.getElementById("dataset-select");
 const datasetSelectList = document.getElementById("dataset-select-list");
 const datasetAddButton = document.getElementById("dataset-add");
@@ -273,6 +321,35 @@ const gameSoundToggle = document.getElementById("game-sound-toggle");
 const musicToggle = document.getElementById("music-toggle");
 const qrToggle = document.getElementById("qr-toggle");
 const themeToggle = document.getElementById("theme-toggle");
+// New Editor Bottom Bar Elements
+const editorBackButton = document.getElementById("editor-back-button");
+const editorSaveButton = document.getElementById("editor-save-button");
+const editorStatus = document.getElementById("editor-status");
+const editorMoreButton = document.getElementById("editor-more-button");
+const editorMoreDropdown = document.getElementById("editor-more-dropdown");
+
+// Dataset Selector Elements
+const editorDatasetDropdownToggle = document.getElementById("editor-dataset-dropdown-toggle");
+const editorDatasetDropdown = document.getElementById("editor-dataset-dropdown");
+const editorDatasetList = document.getElementById("editor-dataset-list");
+const editorSelectedCount = document.getElementById("editor-selected-count");
+const editorSelectedNames = document.getElementById("editor-selected-names");
+const editorSingleTable = document.getElementById("editor-single-table");
+const editorMultiSections = document.getElementById("editor-multi-sections");
+
+// Editor Save Confirm Modal
+const editorSaveConfirm = document.getElementById("editor-save-confirm");
+const editorSaveConfirmText = document.getElementById("editor-save-confirm-text");
+const editorSaveConfirmCancel = document.getElementById("editor-save-confirm-cancel");
+const editorSaveConfirmOk = document.getElementById("editor-save-confirm-ok");
+
+// Editor Unsaved Changes Confirm Modal
+const editorUnsavedConfirm = document.getElementById("editor-unsaved-confirm");
+const editorUnsavedConfirmText = document.getElementById("editor-unsaved-confirm-text");
+const editorUnsavedDiscard = document.getElementById("editor-unsaved-discard");
+const editorUnsavedSave = document.getElementById("editor-unsaved-save");
+
+// Legacy buttons (for compatibility)
 const editorFixedCancelButton = document.getElementById("editor-fixed-cancel");
 const editorFixedSaveButton = document.getElementById("editor-fixed-save");
 const qrModal = document.getElementById("qr-modal");
@@ -304,8 +381,11 @@ const sharedGameQrImage = document.getElementById("shared-game-qr");
 const sharedGameStartButton = document.getElementById("shared-game-start");
 const sharedGameStatus = document.getElementById("shared-game-status");
 const fullAccessElements = [...document.querySelectorAll('[data-auth="full"]')];
-const authLoginActionButton = document.getElementById("auth-login-action");
-const authLogoutActionButton = document.getElementById("auth-logout-action");
+const userMenuToggle = document.getElementById("user-menu-toggle");
+const userMenuLoginIcon = userMenuToggle?.querySelector(".user-menu-login-icon");
+const userMenuInitial = document.getElementById("user-menu-initial");
+const userMenuDropdown = document.getElementById("user-menu-dropdown");
+const userMenuEmail = document.getElementById("user-menu-email");
 const BOARD_CATEGORY_LABEL_MIN_FONT_SIZE = 4;
 const BOARD_CATEGORY_LABEL_MAX_FONT_SIZE = 22;
 const BOARD_VIEW_SOUND_SRC = "assets/quiz-glow.mp3";
@@ -1138,9 +1218,70 @@ const CURRENT_ROUTE_STORAGE_KEY = "thinkaroo.currentRoute";
 const THEME_STORAGE_KEY = "thinkaroo.theme";
 const ACTIVE_GAME_STORAGE_KEY = "thinkaroo.activeGame";
 const GAME_MODE_STORAGE_KEY = "thinkaroo.gameMode";
-const REMOVED_PRESET_DATASET_KEYS = new Set(["umformen"]);
-const STANDARD_PRESET_DATASET_KEYS = new Set(["standard", "allgemein", "kfz", "kfz_einfach", "geographie"]);
-const REMOVED_CUSTOM_DATASET_LABELS = new Set(["umformen"]);
+const STANDARD_PRESET_DATASET_KEYS = new Set([]);
+const REMOVED_CUSTOM_DATASET_LABELS = new Set(["umformen", "tiefziehen"]);
+const PRESET_MIGRATION_KEY = "wissivity.presetsMigrated";
+const REMOVED_PRESETS_STORAGE_KEY = "thinkaroo.removedPresetKeys";
+
+// Load removed presets from storage (with hardcoded defaults)
+const REMOVED_PRESET_DATASET_KEYS = new Set([
+  "umformen",
+  "tiefziehen",
+  ...JSON.parse(localStorage.getItem(REMOVED_PRESETS_STORAGE_KEY) || "[]"),
+]);
+
+function persistRemovedPresetKey(key) {
+  REMOVED_PRESET_DATASET_KEYS.add(key);
+  const current = JSON.parse(localStorage.getItem(REMOVED_PRESETS_STORAGE_KEY) || "[]");
+  if (!current.includes(key)) {
+    localStorage.setItem(REMOVED_PRESETS_STORAGE_KEY, JSON.stringify([...current, key]));
+  }
+}
+
+async function migratePresetDatasetsToBackend() {
+  if (!isAdminSession) return;
+  if (localStorage.getItem(PRESET_MIGRATION_KEY) === "done") return;
+
+  const presetKeys = Object.keys(PRESET_DATASETS).filter(
+    (key) => !REMOVED_PRESET_DATASET_KEYS.has(key)
+  );
+  if (presetKeys.length === 0) {
+    localStorage.setItem(PRESET_MIGRATION_KEY, "done");
+    return;
+  }
+
+  // Check which preset labels already exist as public custom datasets
+  const existingLabels = new Set(
+    Object.values(state.customDatasets)
+      .filter((d) => d.isPublic)
+      .map((d) => String(d.label ?? "").trim().toLowerCase())
+  );
+
+  let migrated = 0;
+  for (const key of presetKeys) {
+    const preset = PRESET_DATASETS[key];
+    if (!preset?.cards?.length) continue;
+    const label = preset.label || key;
+    if (existingLabels.has(label.trim().toLowerCase())) continue;
+
+    try {
+      const result = await saveCardsAsCustomDataset({
+        cards: preset.cards,
+        label,
+        isPublic: true,
+      });
+      if (result.ok) migrated++;
+    } catch {
+      // Continue with next dataset
+    }
+  }
+
+  if (migrated > 0) {
+    await refreshPublicCsvList();
+    refreshDatasetSelections();
+  }
+  localStorage.setItem(PRESET_MIGRATION_KEY, "done");
+}
 
 function normalizeTheme(theme) {
   return theme === "light" || theme === "dark" ? theme : "dark";
@@ -1235,7 +1376,7 @@ const state = {
   roundTimer: 0,
   roundActive: false,
   currentCardType: "",
-  selectedDatasets: [DEFAULT_DATASET_KEY],
+  selectedDatasets: [],
   customDatasets: {},
   storageDatasets: {},
   storageDatasetFiles: [],
@@ -1247,6 +1388,13 @@ const state = {
   musicEnabled: readStoredAudioPreference(MUSIC_ENABLED_STORAGE_KEY, true),
   sharedGame: null,
   gameMode: "classic",
+  editor: {
+    currentDatasetId: null,
+    datasetName: "",
+    hasUnsavedChanges: false,
+    isSaving: false,
+    lastSavedAt: null,
+  },
 };
 
 const GAME_MODES = {
@@ -1436,6 +1584,7 @@ async function refreshAdminSessionState() {
   }
   const metadataSaysAdmin = deriveIsAdminSessionFromSession(session);
   isAdminSession = Boolean(isLoggedIn && metadataSaysAdmin);
+  console.log("[Admin Check]", { isLoggedIn, metadataSaysAdmin, isAdminSession, appMetadata: session?.user?.app_metadata, userMetadata: session?.user?.user_metadata });
 
   if (!isLoggedIn || !session?.access_token) {
     return;
@@ -1450,7 +1599,9 @@ async function refreshAdminSessionState() {
       return;
     }
     const payload = await response.json();
-    isAdminSession = Boolean(payload?.isAdmin);
+    if (payload?.isAdmin) {
+      isAdminSession = true;
+    }
   } catch {
     // Keep metadata-derived admin state when the backend admin check is unavailable.
   }
@@ -1527,20 +1678,62 @@ function clearRestrictedDatasetSelections() {
     state.selectedDatasets = allowedDatasetKeys.slice(0, MAX_DATASET_SELECTIONS);
     return;
   }
-  state.selectedDatasets = [DEFAULT_DATASET_KEY];
+  state.selectedDatasets = [resolveDefaultDatasetKey()];
+}
+
+function getUserDisplayName() {
+  const session = authSession ?? window.__authState?.session ?? null;
+  const meta = session?.user?.user_metadata;
+  return meta?.username || meta?.display_name || session?.user?.email || "";
+}
+
+function syncUserMenuInfo() {
+  const session = authSession ?? window.__authState?.session ?? null;
+  const username = session?.user?.user_metadata?.username || "";
+  const email = session?.user?.email ?? "";
+  const initial = username ? username.charAt(0) : (email ? email.charAt(0) : "");
+  if (userMenuInitial) {
+    userMenuInitial.textContent = initial;
+    userMenuInitial.hidden = !isLoggedIn;
+  }
+  if (userMenuLoginIcon) {
+    userMenuLoginIcon.style.display = isLoggedIn ? "none" : "";
+  }
+  if (userMenuToggle) {
+    userMenuToggle.classList.toggle("user-menu-button--avatar", isLoggedIn);
+    userMenuToggle.classList.toggle("user-menu-button--login", !isLoggedIn);
+    const label = username || email || "Benutzerkonto";
+    userMenuToggle.setAttribute("aria-label", isLoggedIn ? label : "Login");
+    userMenuToggle.setAttribute("title", isLoggedIn ? label : "Login");
+  }
+  if (userMenuEmail) {
+    userMenuEmail.textContent = username || email || "";
+  }
+}
+
+function toggleUserMenuDropdown() {
+  if (!userMenuDropdown) return;
+  const isOpen = !userMenuDropdown.classList.contains("hidden");
+  userMenuDropdown.classList.toggle("hidden", isOpen);
+  userMenuToggle?.setAttribute("aria-expanded", String(!isOpen));
+}
+
+function closeUserMenuDropdown() {
+  userMenuDropdown?.classList.add("hidden");
+  userMenuToggle?.setAttribute("aria-expanded", "false");
 }
 
 function applyDatasetAuthMode() {
+  const routerPanelSet = new Set(Object.values(screenPanels).filter(Boolean));
   fullAccessElements.forEach((element) => {
+    if (routerPanelSet.has(element)) return;
     element.hidden = !isLoggedIn;
   });
 
-  if (authLoginActionButton) {
-    authLoginActionButton.hidden = isLoggedIn;
+  if (userMenuDropdown && !isLoggedIn) {
+    userMenuDropdown.classList.add("hidden");
   }
-  if (authLogoutActionButton) {
-    authLogoutActionButton.hidden = !isLoggedIn;
-  }
+  syncUserMenuInfo();
 
   if (!isLoggedIn) {
     state.customDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
@@ -1995,26 +2188,34 @@ async function loadCustomDatasets() {
 }
 
 function getAllDatasetEntries() {
-  const presetEntries = Object.entries(PRESET_DATASETS)
-    .filter(([key]) => !REMOVED_PRESET_DATASET_KEYS.has(key))
-    .filter(([key]) => isLoggedIn || STANDARD_PRESET_DATASET_KEYS.has(key))
-    .map(([key, dataset]) => ({
-      key,
-      label: dataset.label,
-      cards: dataset.cards,
-      isCustom: false,
-    }));
   const customEntries = Object.values(state.customDatasets)
     .filter((dataset) => canAccessCustomDataset(dataset))
     .map((dataset) => normalizeStoredCustomDataset(dataset))
     .filter(Boolean)
     .map((dataset) => ({
       key: toCustomDatasetKey(dataset.id),
-      label: `${dataset.label} (Eigen)`,
+      label: dataset.label,
       cards: dataset.cards,
       isCustom: true,
+      isPublic: Boolean(dataset.isPublic),
       id: dataset.id,
     }));
+
+  // Skip presets whose labels already exist as public custom datasets (migrated)
+  const migratedLabels = new Set(
+    customEntries.filter((e) => e.isPublic).map((e) => String(e.label).trim().toLowerCase())
+  );
+  const presetEntries = Object.entries(PRESET_DATASETS)
+    .filter(([key]) => !REMOVED_PRESET_DATASET_KEYS.has(key))
+    .filter(([key]) => isLoggedIn || STANDARD_PRESET_DATASET_KEYS.has(key))
+    .filter(([, dataset]) => !migratedLabels.has(String(dataset.label).trim().toLowerCase()))
+    .map(([key, dataset]) => ({
+      key,
+      label: dataset.label,
+      cards: dataset.cards,
+      isCustom: false,
+    }));
+
   const storageEntries = Object.entries(state.storageDatasets).map(([objectName, cards]) => ({
     key: toStorageDatasetKey(objectName),
     label: `${objectName} (Storage)`,
@@ -2031,10 +2232,10 @@ function getDatasetEntryByKey(key) {
   if (REMOVED_PRESET_DATASET_KEYS.has(normalizedKey)) {
     return null;
   }
-  if (!isLoggedIn && !STANDARD_PRESET_DATASET_KEYS.has(normalizedKey)) {
-    return null;
-  }
   if (PRESET_DATASETS[normalizedKey]) {
+    if (!isLoggedIn && !STANDARD_PRESET_DATASET_KEYS.has(normalizedKey)) {
+      return null;
+    }
     const dataset = PRESET_DATASETS[normalizedKey];
     return { key: normalizedKey, label: dataset.label, cards: dataset.cards, isCustom: false };
   }
@@ -2045,9 +2246,10 @@ function getDatasetEntryByKey(key) {
     if (!dataset) return null;
     return {
       key: toCustomDatasetKey(dataset.id),
-      label: `${dataset.label} (Eigen)`,
+      label: dataset.label,
       cards: dataset.cards,
       isCustom: true,
+      isPublic: Boolean(dataset.isPublic),
       id: dataset.id,
     };
   }
@@ -2059,9 +2261,10 @@ function getDatasetEntryByKey(key) {
     if (!dataset) return null;
     return {
       key: toCustomDatasetKey(dataset.id),
-      label: `${dataset.label} (Eigen)`,
+      label: dataset.label,
       cards: dataset.cards,
       isCustom: true,
+      isPublic: Boolean(dataset.isPublic),
       id: dataset.id,
     };
   }
@@ -2079,7 +2282,30 @@ function getDatasetEntryByKey(key) {
   };
 }
 
+function resolveDefaultDatasetKey() {
+  const availableDatasets = getAllDatasetEntries();
+  // Prefer "Mittel" as default if available
+  const mittelDataset = availableDatasets.find((d) => d.label.trim().toLowerCase() === "mittel");
+  if (mittelDataset) {
+    return mittelDataset.key;
+  }
+  // Fallback to legacy default
+  const defaultLabel = (PRESET_DATASETS[DEFAULT_DATASET_KEY]?.label ?? "standard").trim().toLowerCase();
+  return availableDatasets.find((d) => d.label.trim().toLowerCase() === defaultLabel)?.key
+    ?? (availableDatasets.some((d) => d.key === DEFAULT_DATASET_KEY) ? DEFAULT_DATASET_KEY : "")
+    ?? availableDatasets[0]?.key
+    ?? "";
+}
+
 function refreshDatasetSelections() {
+  // Ensure at least the default dataset is selected
+  const hasValidSelection = state.selectedDatasets.some((key) => getDatasetEntryByKey(key));
+  if (!hasValidSelection) {
+    const defaultKey = resolveDefaultDatasetKey();
+    if (defaultKey) {
+      state.selectedDatasets = [defaultKey];
+    }
+  }
   setupDatasetSelects();
   applySelectedDatasets();
   syncStorageDatasetListSelectionState();
@@ -4243,6 +4469,859 @@ function createCustomDatasetId() {
   return `dataset-${Date.now()}-${Math.round(Math.random() * 100000)}`;
 }
 
+// ========== EDITOR DATASET MANAGEMENT ==========
+
+let editorStatusTimer = null;
+
+function updateEditorStatus(message, type = "") {
+  if (!editorStatus) return;
+  if (editorStatusTimer) clearTimeout(editorStatusTimer);
+  editorStatus.textContent = message;
+  editorStatus.className = "editor-status";
+  if (type) editorStatus.classList.add(type);
+  editorStatus.style.opacity = "1";
+  editorStatusTimer = setTimeout(() => {
+    editorStatus.style.transition = "opacity 0.4s ease";
+    editorStatus.style.opacity = "0";
+  }, 2000);
+}
+
+function clearEditorStatus() {
+  if (!editorStatus) return;
+  if (editorStatusTimer) clearTimeout(editorStatusTimer);
+  editorStatus.textContent = "";
+  editorStatus.className = "editor-status";
+  editorStatus.style.opacity = "0";
+}
+
+function updateEditorUnsavedChanges() {
+  state.editor.hasUnsavedChanges = true;
+  updateEditorStatus("Ungespeicherte Änderungen");
+}
+
+function clearEditorUnsavedChanges() {
+  state.editor.hasUnsavedChanges = false;
+  updateEditorStatus("Gespeichert", "is-saved");
+}
+
+function showEditorUnsavedConfirm() {
+  return new Promise((resolve) => {
+    if (!editorUnsavedConfirm) return resolve("discard");
+    editorUnsavedConfirm.classList.remove("hidden");
+
+    const cleanup = () => {
+      editorUnsavedConfirm.classList.add("hidden");
+      editorUnsavedSave?.removeEventListener("click", onSave);
+      editorUnsavedDiscard?.removeEventListener("click", onDiscard);
+    };
+    const onSave = () => { cleanup(); resolve("save"); };
+    const onDiscard = () => { cleanup(); resolve("discard"); };
+
+    editorUnsavedSave?.addEventListener("click", onSave);
+    editorUnsavedDiscard?.addEventListener("click", onDiscard);
+  });
+}
+
+function syncEditorSelectionToCardsets() {
+  const editorKeys = new Set(editorSelectedDatasets);
+  const checkboxes = [
+    ...(storageDatasetSummary ? [...storageDatasetSummary.querySelectorAll('input.storage-dataset-checkbox[data-key]')] : []),
+    ...(storageDatasetList ? [...storageDatasetList.querySelectorAll('input.storage-dataset-checkbox[data-key]')] : []),
+  ];
+  checkboxes.forEach((cb) => {
+    const key = String(cb.dataset.key ?? "").trim();
+    if (!key) return;
+    cb.checked = editorKeys.has(key);
+  });
+  // Also update the game's selected datasets
+  state.selectedDatasets = Array.from(editorKeys);
+  refreshDatasetSelections();
+}
+
+function showEditorSaveConfirm(datasetName) {
+  return new Promise((resolve) => {
+    if (!editorSaveConfirm) return resolve(false);
+    if (editorSaveConfirmText) {
+      editorSaveConfirmText.textContent = `Bestehenden Kartensatz „${datasetName}" überschreiben?`;
+    }
+    editorSaveConfirm.classList.remove("hidden");
+
+    const cleanup = () => {
+      editorSaveConfirm.classList.add("hidden");
+      editorSaveConfirmOk?.removeEventListener("click", onOk);
+      editorSaveConfirmCancel?.removeEventListener("click", onCancel);
+    };
+    const onOk = () => { cleanup(); resolve(true); };
+    const onCancel = () => { cleanup(); resolve(false); };
+
+    editorSaveConfirmOk?.addEventListener("click", onOk);
+    editorSaveConfirmCancel?.addEventListener("click", onCancel);
+  });
+}
+
+async function saveEditorDataset() {
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt - Anmeldung erforderlich", "has-error");
+    return;
+  }
+
+  const { cards, errors } = updateEditorValidationState();
+  if (errors.length > 0) {
+    updateEditorStatus("Ungültige Zeilen - kann nicht speichern", "has-error");
+    return;
+  }
+
+  if (cards.length === 0) {
+    updateEditorStatus("Keine Karten zum Speichern", "has-error");
+    return;
+  }
+
+  // Determine what type of dataset is currently loaded
+  const selectedKeys = Array.from(editorSelectedDatasets);
+  const currentKey = selectedKeys.length === 1 ? selectedKeys[0] : null;
+  const currentEntry = currentKey ? getDatasetEntryByKey(currentKey) : null;
+
+  // Check if current dataset is a user's own custom dataset
+  const isOwnCustom = currentEntry?.isCustom === true;
+  const isOwnStorage = currentEntry?.isStorage === true;
+  const isOwn = isOwnCustom || isOwnStorage;
+
+  // If it's an own dataset: show confirm modal to overwrite
+  if (isOwn && state.editor.currentDatasetId) {
+    const datasetName = stripDatasetLabelSuffix(state.editor.datasetName || currentEntry?.label || "Unbenannt");
+    const confirmed = await showEditorSaveConfirm(datasetName);
+    if (!confirmed) return;
+
+    updateEditorStatus("Speichert…", "is-saving");
+    state.editor.isSaving = true;
+
+    const existingDataset = state.customDatasets[state.editor.currentDatasetId];
+    const result = await saveCardsAsCustomDataset({
+      cards,
+      label: stripDatasetLabelSuffix(state.editor.datasetName || existingDataset?.label || "Unbenannter Datensatz"),
+      existingId: state.editor.currentDatasetId,
+      isPublic: existingDataset?.isPublic ?? false,
+    });
+
+    state.editor.isSaving = false;
+
+    if (!result.ok) {
+      if (result.persistenceResult?.conflict) {
+        updateEditorStatus("Konflikt - bitte neu laden", "has-error");
+      } else if (result.message?.includes("Name")) {
+        updateEditorStatus("Name bereits vergeben", "has-error");
+      } else {
+        updateEditorStatus("Speichern fehlgeschlagen", "has-error");
+      }
+      return;
+    }
+
+    state.editor.currentDatasetId = result.datasetId;
+    state.editor.datasetName = result.label;
+    state.editor.lastSavedAt = new Date();
+    clearEditorUnsavedChanges();
+    refreshDatasetSelections();
+    state.selectedDatasets = [toCustomDatasetKey(result.datasetId)];
+    return;
+  }
+
+  // If it's a public/preset dataset or no dataset loaded: save as new copy
+  const defaultName = currentEntry?.label ? `${stripDatasetLabelSuffix(currentEntry.label)} (Kopie)` : "";
+  const label = window.prompt("Name für neuen Kartensatz eingeben:", defaultName);
+  if (!label || !label.trim()) return;
+
+  updateEditorStatus("Speichert…", "is-saving");
+  state.editor.isSaving = true;
+
+  const result = await saveCardsAsCustomDataset({
+    cards,
+    label: label.trim(),
+    isPublic: false,
+  });
+
+  state.editor.isSaving = false;
+
+  if (!result.ok) {
+    if (result.message?.includes("Name")) {
+      updateEditorStatus("Name bereits vergeben", "has-error");
+    } else {
+      updateEditorStatus("Speichern fehlgeschlagen", "has-error");
+    }
+    return;
+  }
+
+  state.editor.currentDatasetId = result.datasetId;
+  state.editor.datasetName = result.label;
+  state.editor.lastSavedAt = new Date();
+  clearEditorUnsavedChanges();
+  refreshDatasetSelections();
+  state.selectedDatasets = [toCustomDatasetKey(result.datasetId)];
+}
+
+async function saveEditorDatasetAs() {
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt - Anmeldung erforderlich", "has-error");
+    return;
+  }
+
+  const { cards, errors } = updateEditorValidationState();
+  if (errors.length > 0) {
+    updateEditorStatus("Ungültige Zeilen - kann nicht speichern", "has-error");
+    return;
+  }
+
+  const defaultName = state.editor.datasetName || "";
+  const label = window.prompt("Name für den neuen Datensatz:", defaultName);
+  if (!label || !label.trim()) {
+    return; // User cancelled
+  }
+
+  updateEditorStatus("Speichert…", "is-saving");
+  state.editor.isSaving = true;
+
+  const result = await saveCardsAsCustomDataset({
+    cards,
+    label: label.trim(),
+    isPublic: false,
+  });
+
+  state.editor.isSaving = false;
+
+  if (!result.ok) {
+    if (result.message?.includes("bereits")) {
+      window.alert("Ein Datensatz mit diesem Namen existiert bereits. Bitte wähle einen anderen Namen.");
+      updateEditorStatus("Name bereits vergeben", "has-error");
+    } else {
+      updateEditorStatus("Speichern fehlgeschlagen", "has-error");
+    }
+    return;
+  }
+
+  state.editor.currentDatasetId = result.datasetId;
+  state.editor.datasetName = result.label;
+  state.editor.lastSavedAt = new Date();
+  clearEditorUnsavedChanges();
+
+  // Refresh main menu dataset list and auto-select the saved dataset
+  refreshDatasetSelections();
+  state.selectedDatasets = [toCustomDatasetKey(result.datasetId)];
+}
+
+async function loadEditorDataset() {
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt", "has-error");
+    return;
+  }
+
+  // Reload datasets from API
+  const { datasets, hasApiError } = await readCustomDatasetsFromApi();
+  if (hasApiError || !datasets) {
+    updateEditorStatus("Fehler beim Laden der Datensätze", "has-error");
+    return;
+  }
+
+  state.customDatasets = datasets;
+
+  const datasetList = Object.values(state.customDatasets)
+    .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  if (datasetList.length === 0) {
+    window.alert("Keine gespeicherten Datensätze vorhanden.");
+    return;
+  }
+
+  const options = datasetList.map((ds, index) => `${index + 1}. ${ds.label} (${ds.cards.length} Karten)`).join("\n");
+  const selection = window.prompt(`Datensatz wählen (Nummer eingeben):\n\n${options}`);
+  if (!selection) return;
+
+  const index = parseInt(selection, 10) - 1;
+  if (index < 0 || index >= datasetList.length) {
+    updateEditorStatus("Ungültige Auswahl", "has-error");
+    return;
+  }
+
+  const selectedDataset = datasetList[index];
+
+  if (state.editor.hasUnsavedChanges) {
+    const proceed = window.confirm("Ungespeicherte Änderungen gehen verloren. Trotzdem laden?");
+    if (!proceed) return;
+  }
+
+  state.editor.currentDatasetId = selectedDataset.id;
+  state.editor.datasetName = selectedDataset.label;
+  renderCardEditorRows(cloneCards(selectedDataset.cards));
+  updateEditorValidationState();
+  clearEditorUnsavedChanges();
+  updateEditorStatus(`Geladen: ${selectedDataset.label}`, "is-saved");
+
+  // Initialize dataset selector and select the loaded dataset
+  initEditorDatasetSelector();
+  editorSelectedDatasets.add(toCustomDatasetKey(selectedDataset.id));
+  updateSelectedCount();
+  updateEditorDatasetsView();
+}
+
+async function renameEditorDataset() {
+  if (!state.editor.currentDatasetId) {
+    updateEditorStatus("Kein Datensatz zum Umbenennen", "has-error");
+    return;
+  }
+
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt", "has-error");
+    return;
+  }
+
+  const newName = window.prompt("Neuer Name:", state.editor.datasetName);
+  if (!newName || !newName.trim()) return;
+
+  const trimmedName = newName.trim();
+  if (trimmedName === state.editor.datasetName) return;
+
+  updateEditorStatus("Umbenennen…", "is-saving");
+
+  const { cards } = updateEditorValidationState();
+  const result = await saveCardsAsCustomDataset({
+    cards,
+    label: trimmedName,
+    existingId: state.editor.currentDatasetId,
+    isPublic: false,
+  });
+
+  if (!result.ok) {
+    if (result.message?.includes("bereits")) {
+      window.alert("Ein Datensatz mit diesem Namen existiert bereits. Bitte wähle einen anderen Namen.");
+      updateEditorStatus("Name bereits vergeben", "has-error");
+    } else {
+      updateEditorStatus("Umbenennen fehlgeschlagen", "has-error");
+    }
+    return;
+  }
+
+  state.editor.datasetName = trimmedName;
+  clearEditorUnsavedChanges();
+  updateEditorStatus(`Umbenannt in: ${trimmedName}`, "is-saved");
+}
+
+async function duplicateEditorDataset() {
+  if (!state.editor.currentDatasetId) {
+    // Duplicate current editor content as new dataset
+    return saveEditorDatasetAs();
+  }
+
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt", "has-error");
+    return;
+  }
+
+  const baseName = state.editor.datasetName || "Kopie";
+  let copyName = `${baseName} Kopie`;
+
+  // Check for existing copies and increment number
+  const existingNames = Object.values(state.customDatasets).map(ds => ds.label.toLowerCase());
+  let counter = 2;
+  while (existingNames.includes(copyName.toLowerCase())) {
+    copyName = `${baseName} Kopie ${counter}`;
+    counter++;
+  }
+
+  const { cards } = updateEditorValidationState();
+
+  updateEditorStatus("Duplizieren…", "is-saving");
+
+  const result = await saveCardsAsCustomDataset({
+    cards: cloneCards(cards),
+    label: copyName,
+    isPublic: false,
+  });
+
+  if (!result.ok) {
+    updateEditorStatus("Duplizieren fehlgeschlagen", "has-error");
+    return;
+  }
+
+  state.editor.currentDatasetId = result.datasetId;
+  state.editor.datasetName = copyName;
+  clearEditorUnsavedChanges();
+  updateEditorStatus(`Dupliziert als: ${copyName}`, "is-saved");
+
+  // Refresh main menu dataset list and auto-select the duplicated dataset
+  refreshDatasetSelections();
+  state.selectedDatasets = [toCustomDatasetKey(result.datasetId)];
+}
+
+async function deleteEditorDataset() {
+  if (!state.editor.currentDatasetId) {
+    updateEditorStatus("Kein Datensatz zum Löschen", "has-error");
+    return;
+  }
+
+  if (!isLoggedIn) {
+    updateEditorStatus("Nicht eingeloggt", "has-error");
+    return;
+  }
+
+  const confirmed = window.confirm(
+    `Möchtest du "${state.editor.datasetName}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`
+  );
+  if (!confirmed) return;
+
+  updateEditorStatus("Löschen…", "is-saving");
+
+  const dataset = state.customDatasets[state.editor.currentDatasetId];
+  delete state.customDatasets[state.editor.currentDatasetId];
+
+  const persistenceResult = await persistCustomDatasets({
+    operation: "delete",
+    datasetId: state.editor.currentDatasetId,
+    previousDataset: dataset,
+  });
+
+  if (!persistenceResult.ok) {
+    state.customDatasets[state.editor.currentDatasetId] = dataset;
+    updateEditorStatus("Löschen fehlgeschlagen", "has-error");
+    return;
+  }
+
+  // Reset editor to empty state
+  state.editor.currentDatasetId = null;
+  state.editor.datasetName = "";
+  state.editor.hasUnsavedChanges = false;
+  renderCardEditorRows([]);
+  addEditorRow();
+  updateEditorValidationState();
+  updateEditorStatus("Gelöscht - Neuer Datensatz", "is-saved");
+
+  // Refresh main menu and clear selection of deleted dataset
+  refreshDatasetSelections();
+  state.selectedDatasets = [resolveDefaultDatasetKey()];
+}
+
+async function newEditorDataset() {
+  if (state.editor.hasUnsavedChanges) {
+    const action = await showEditorUnsavedConfirm();
+    if (action === "save") {
+      await saveEditorDataset();
+      if (state.editor.hasUnsavedChanges) return;
+    }
+    // "discard" falls through to name prompt
+  }
+
+  const name = await showDatasetNamePrompt("Name für neuen Datensatz:", "");
+  if (!name) return;
+
+  // Save an empty dataset with one blank card so it appears in the system
+  updateEditorStatus("Erstellt…", "is-saving");
+  const blankCard = { category: "Tabu", term: "", taboos: ["", "", "", ""] };
+  const result = await saveCardsAsCustomDataset({
+    cards: [blankCard],
+    label: name,
+    isPublic: false,
+  });
+
+  if (!result.ok) {
+    updateEditorStatus("Erstellen fehlgeschlagen", "has-error");
+    return;
+  }
+
+  // Refresh so the new dataset is available
+  await refreshPublicCsvList();
+
+  // Add the new dataset to the editor selection (keep existing)
+  const newKey = toCustomDatasetKey(result.datasetId);
+  editorSelectedDatasets.add(newKey);
+
+  // Repopulate dropdown so the new dataset checkbox is checked
+  populateDatasetDropdown();
+
+  // Update view
+  updateSelectedCount();
+  updateEditorDatasetsView();
+  syncEditorCurrentDataset();
+
+  // Collapse all sections except the new one
+  if (editorMultiSections) {
+    editorMultiSections.querySelectorAll(".editor-dataset-section").forEach((section) => {
+      if (section.dataset.datasetKey === newKey) {
+        section.classList.add("expanded");
+      } else {
+        section.classList.remove("expanded");
+      }
+    });
+  }
+
+  updateEditorStatus(`Neuer Datensatz: ${name}`);
+}
+
+function toggleMoreMenu() {
+  if (!editorMoreDropdown) return;
+  const isHidden = editorMoreDropdown.classList.contains("hidden");
+  if (isHidden) {
+    editorMoreDropdown.classList.remove("hidden");
+    editorMoreButton?.setAttribute("aria-expanded", "true");
+  } else {
+    editorMoreDropdown.classList.add("hidden");
+    editorMoreButton?.setAttribute("aria-expanded", "false");
+  }
+}
+
+function closeMoreMenu() {
+  if (!editorMoreDropdown) return;
+  editorMoreDropdown.classList.add("hidden");
+  editorMoreButton?.setAttribute("aria-expanded", "false");
+}
+
+// ========== DATASET SELECTOR FUNCTIONS ==========
+
+// Store which datasets are currently selected in the editor
+let editorSelectedDatasets = new Set();
+
+function toggleDatasetDropdown() {
+  if (!editorDatasetDropdown) return;
+  const isHidden = editorDatasetDropdown.classList.contains("hidden");
+  if (isHidden) {
+    populateDatasetDropdown();
+    editorDatasetDropdown.classList.remove("hidden");
+    editorDatasetDropdownToggle?.setAttribute("aria-expanded", "true");
+  } else {
+    editorDatasetDropdown.classList.add("hidden");
+    editorDatasetDropdownToggle?.setAttribute("aria-expanded", "false");
+  }
+}
+
+function closeDatasetDropdown() {
+  if (!editorDatasetDropdown) return;
+  editorDatasetDropdown.classList.add("hidden");
+  editorDatasetDropdownToggle?.setAttribute("aria-expanded", "false");
+}
+
+function populateDatasetDropdown() {
+  if (!editorDatasetList) return;
+
+  editorDatasetList.innerHTML = "";
+
+  // Use getAllDatasetEntries() - same data source as cardsets table
+  const datasetEntries = getAllDatasetEntries();
+
+  // Determine groups (same logic as renderStorageDatasetList)
+  const getEntryGroup = (entry) => {
+    if (entry?.isStorage) return "own";
+    if (entry?.isCustom) {
+      const customId = entry?.id ?? fromCustomDatasetKey(entry?.key);
+      const dataset = customId ? state.customDatasets[customId] : null;
+      return dataset?.isPublic ? "public" : "own";
+    }
+    return "public";
+  };
+
+  const publicEntries = datasetEntries.filter((e) => getEntryGroup(e) === "public");
+  const ownEntries = datasetEntries.filter((e) => getEntryGroup(e) === "own");
+
+  // Render group
+  const renderDropdownGroup = (title, entries) => {
+    if (!entries || entries.length === 0) return;
+
+    const groupHeader = document.createElement("div");
+    groupHeader.className = "editor-dataset-group-header";
+    groupHeader.textContent = title;
+    editorDatasetList.appendChild(groupHeader);
+
+    entries.forEach((entry) => {
+      const item = document.createElement("div");
+      item.className = "editor-dataset-item";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      const safeId = String(entry.key).replace(/[^a-zA-Z0-9]/g, "-");
+      checkbox.id = `editor-ds-${safeId}`;
+      checkbox.checked = editorSelectedDatasets.has(entry.key);
+      checkbox.dataset.datasetKey = entry.key;
+
+      const label = document.createElement("label");
+      label.htmlFor = checkbox.id;
+      label.textContent = entry.label;
+
+      item.appendChild(checkbox);
+      item.appendChild(label);
+
+      // Click to toggle
+      item.addEventListener("click", async (e) => {
+        if (e.target !== checkbox) {
+          checkbox.checked = !checkbox.checked;
+        }
+        await handleDatasetSelection(entry.key, checkbox.checked);
+      });
+
+      editorDatasetList.appendChild(item);
+    });
+  };
+
+  renderDropdownGroup("Öffentliche Kartensätze", publicEntries);
+  renderDropdownGroup("Eigene Kartensätze", ownEntries);
+
+  // Empty state
+  if (datasetEntries.length === 0) {
+    const emptyMsg = document.createElement("div");
+    emptyMsg.className = "editor-dataset-item";
+    emptyMsg.style.opacity = "0.6";
+    emptyMsg.style.cursor = "default";
+    emptyMsg.textContent = "Keine Kartensätze verfügbar";
+    editorDatasetList.appendChild(emptyMsg);
+  }
+
+  updateSelectedCount();
+}
+
+function handleDatasetSelection(datasetKey, isSelected) {
+  if (isSelected) {
+    editorSelectedDatasets.add(datasetKey);
+  } else {
+    editorSelectedDatasets.delete(datasetKey);
+  }
+  updateSelectedCount();
+  updateEditorDatasetsView();
+  syncEditorCurrentDataset();
+}
+
+function stripDatasetLabelSuffix(label) {
+  return String(label ?? "").replace(/\s*\((Eigen|Storage)\)\s*$/, "").trim();
+}
+
+function syncEditorCurrentDataset() {
+  const selectedKeys = Array.from(editorSelectedDatasets);
+  if (selectedKeys.length === 1) {
+    const entry = getDatasetEntryByKey(selectedKeys[0]);
+    if (entry?.isCustom && entry?.id) {
+      state.editor.currentDatasetId = entry.id;
+      state.editor.datasetName = stripDatasetLabelSuffix(entry.label);
+      return;
+    }
+  }
+  state.editor.currentDatasetId = null;
+  state.editor.datasetName = "";
+}
+
+function updateSelectedCount() {
+  const count = editorSelectedDatasets.size;
+  if (editorSelectedCount) {
+    editorSelectedCount.textContent = `${count} Kartensatz${count !== 1 ? "e" : ""}`;
+  }
+  if (editorSelectedNames) {
+    editorSelectedNames.innerHTML = "";
+    for (const key of editorSelectedDatasets) {
+      const entry = getDatasetEntryByKey(key);
+      if (!entry) continue;
+      const tag = document.createElement("span");
+      tag.className = "editor-selected-name-tag";
+      tag.textContent = entry.label;
+      tag.title = entry.label;
+      editorSelectedNames.appendChild(tag);
+    }
+  }
+}
+
+function updateEditorDatasetsView() {
+  const selectedKeys = Array.from(editorSelectedDatasets);
+
+  // 0 or 1 dataset: use single table
+  // 2+ datasets: use multi-sections (each dataset in its own collapsible container)
+  if (selectedKeys.length <= 1) {
+    if (editorSingleTable) editorSingleTable.classList.remove("hidden");
+    if (editorMultiSections) editorMultiSections.classList.add("hidden");
+    loadDatasetsToSingleTable(selectedKeys);
+  } else {
+    if (editorSingleTable) editorSingleTable.classList.add("hidden");
+    if (editorMultiSections) editorMultiSections.classList.remove("hidden");
+    loadDatasetsToMultiSections(selectedKeys);
+  }
+}
+
+function loadDatasetsToSingleTable(datasetKeys) {
+  // Combine all cards from selected datasets
+  const allCards = [];
+
+  for (const key of datasetKeys) {
+    const cards = getCardsFromDatasetKey(key);
+    allCards.push(...cards);
+  }
+
+  // If no datasets selected, clear the table completely
+  if (datasetKeys.length === 0) {
+    renderCardEditorRows([]);
+  } else if (allCards.length === 0) {
+    renderCardEditorRows([]);
+    addEditorRow();
+  } else {
+    renderCardEditorRows(allCards);
+  }
+
+  updateEditorValidationState();
+  updateEditorUnsavedChanges();
+}
+
+function loadDatasetsToMultiSections(datasetKeys) {
+  if (!editorMultiSections) return;
+
+  // Clear existing sections
+  editorMultiSections.innerHTML = "";
+
+  for (let index = 0; index < datasetKeys.length; index++) {
+    const key = datasetKeys[index];
+    const dataset = getDatasetInfoByKey(key);
+    if (!dataset) continue;
+
+    const section = document.createElement("div");
+    section.className = "editor-dataset-section";
+    section.dataset.datasetKey = key;
+
+    // Header
+    const header = document.createElement("div");
+    header.className = "editor-dataset-section-header";
+    header.innerHTML = `
+      <div class="editor-dataset-section-title">
+        ${dataset.label}
+        <span class="dataset-card-count">(${dataset.cards.length} Karten)</span>
+      </div>
+      <span class="editor-dataset-section-toggle">▼</span>
+    `;
+
+    // Toggle expand/collapse
+    header.addEventListener("click", () => {
+      section.classList.toggle("expanded");
+    });
+
+    // Content (table)
+    const content = document.createElement("div");
+    content.className = "editor-dataset-section-content";
+
+    const tableWrap = document.createElement("div");
+    tableWrap.className = "card-editor-table-wrap";
+    tableWrap.innerHTML = `
+      <table class="card-editor-table">
+        <thead>
+          <tr>
+            <th>Kategorie</th>
+            <th>Begriff/Frage</th>
+            <th>Antwort/Tabu1</th>
+            <th>Tabu2</th>
+            <th>Tabu3</th>
+            <th>Tabu4</th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody id="card-editor-body-${index}"></tbody>
+      </table>
+      <div class="card-editor-add-row">
+        <button class="ghost add-row-btn" data-section="${index}" type="button">+ Zeile</button>
+      </div>
+    `;
+
+    content.appendChild(tableWrap);
+    section.appendChild(header);
+    section.appendChild(content);
+    editorMultiSections.appendChild(section);
+
+    // Populate table
+    const tbody = tableWrap.querySelector(`#card-editor-body-${index}`);
+    dataset.cards.forEach((card) => {
+      const row = createEditorRow(card);
+      tbody.appendChild(row);
+    });
+
+    // Expand all sections by default
+    section.classList.add("expanded");
+  }
+
+  // Add event listeners for add row buttons in multi-sections
+  editorMultiSections.querySelectorAll(".add-row-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      const sectionIndex = e.target.dataset.section;
+      const tbody = document.getElementById(`card-editor-body-${sectionIndex}`);
+      const row = createEditorRow();
+      tbody.appendChild(row);
+      updateEditorUnsavedChanges();
+    });
+  });
+}
+
+function getCardsFromDatasetKey(key) {
+  const entry = getDatasetEntryByKey(key);
+  return entry?.cards || [];
+}
+
+function getDatasetInfoByKey(key) {
+  return getDatasetEntryByKey(key) || null;
+}
+
+function getCardsetsSummaryCheckedKeys() {
+  const keys = [];
+  const checkboxes = [
+    ...(storageDatasetSummary ? [...storageDatasetSummary.querySelectorAll('input.storage-dataset-checkbox[data-key]')] : []),
+    ...(storageDatasetList ? [...storageDatasetList.querySelectorAll('input.storage-dataset-checkbox[data-key]')] : []),
+  ];
+  const seen = new Set();
+  checkboxes.forEach((cb) => {
+    const key = String(cb.dataset.key ?? "").trim();
+    if (key && cb.checked && !seen.has(key)) {
+      seen.add(key);
+      keys.push(key);
+    }
+  });
+  return keys;
+}
+
+// Initialize with default dataset selected, or pending keys from cardsets page
+function initEditorDatasetSelector() {
+  editorSelectedDatasets.clear();
+
+  // If keys were passed from the cardsets page checkboxes, use those
+  const pendingKeys = state._pendingEditorDatasetKeys;
+  if (Array.isArray(pendingKeys) && pendingKeys.length > 0) {
+    pendingKeys.forEach((key) => editorSelectedDatasets.add(key));
+    state._pendingEditorDatasetKeys = null;
+  } else {
+    // Otherwise select the default dataset (prefer "Mittel" if available)
+    const allDatasets = getAllDatasetEntries();
+    const mittelEntry = allDatasets.find((d) => d.label.trim().toLowerCase() === "mittel");
+    if (mittelEntry) {
+      editorSelectedDatasets.add(mittelEntry.key);
+    } else if (DEFAULT_DATASET_KEY && PRESET_DATASETS[DEFAULT_DATASET_KEY]) {
+      editorSelectedDatasets.add(DEFAULT_DATASET_KEY);
+    }
+  }
+
+  updateSelectedCount();
+  updateEditorDatasetsView();
+  syncEditorCurrentDataset();
+}
+
+function handleMoreMenuAction(action) {
+  closeMoreMenu();
+  switch (action) {
+    case "new":
+      newEditorDataset();
+      break;
+    case "save-as":
+      saveEditorDatasetAs();
+      break;
+    case "rename":
+      renameEditorDataset();
+      break;
+    case "duplicate":
+      duplicateEditorDataset();
+      break;
+    case "delete":
+      deleteEditorDataset();
+      break;
+    case "import":
+      importCsvToEditor();
+      break;
+    case "export":
+      exportEditorCardsAsCsv();
+      break;
+  }
+}
+
 async function saveEditorAsNewDataset() {
   if (!requireFullAccess()) return;
   const { cards, errors } = updateEditorValidationState();
@@ -4397,23 +5476,116 @@ function buildCsvContentFromCards(cards) {
 }
 
 function exportEditorCardsAsCsv() {
-  const { cards, errors } = updateEditorValidationState();
-  if (errors.length > 0) {
-    csvStatus.textContent = "Export nicht möglich: Editor enthält ungültige Zeilen.";
+  // Collect all cards currently visible in the editor (single or multi-section)
+  const allCards = [];
+  for (const key of editorSelectedDatasets) {
+    const cards = getCardsFromDatasetKey(key);
+    allCards.push(...cards);
+  }
+
+  if (allCards.length === 0) {
+    updateEditorStatus("Keine Karten zum Exportieren", "has-error");
     return;
   }
 
-  const csvContent = buildCsvContentFromCards(cards);
+  const csvContent = buildCsvContentFromCards(allCards);
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  const filenameBase = cardEditorDatasetLabelInput?.value?.trim() || "wissivity-kartensatz";
+  const filenameBase = state.editor.datasetName || "Thinkaroo-Kartensatz";
   link.download = `${filenameBase.replace(/\s+/g, "-").toLowerCase()}.csv`;
   document.body.append(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(link.href);
-  csvStatus.textContent = `CSV exportiert: ${cards.length} Karten.`;
+  updateEditorStatus(`CSV exportiert: ${allCards.length} Karten`);
+}
+
+async function importCsvToEditor() {
+  if (!requireFullAccess()) return;
+
+  // Create hidden file input
+  const fileInput = document.createElement("input");
+  fileInput.type = "file";
+  fileInput.accept = ".csv";
+  fileInput.style.display = "none";
+  document.body.append(fileInput);
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+    if (!file) {
+      fileInput.remove();
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const parsed = parseStorageCsvToCards(text);
+
+      if (parsed.length === 0) {
+        updateEditorStatus("CSV enthält keine gültigen Karten", "has-error");
+        fileInput.remove();
+        return;
+      }
+
+      // Ask for name via game-layout modal
+      const defaultName = deriveDatasetLabelFromFilename(file.name);
+      const name = await showDatasetNamePrompt("Name für importierten Kartensatz:", defaultName);
+      if (!name) {
+        fileInput.remove();
+        return;
+      }
+
+      // Save as new custom dataset
+      updateEditorStatus("Speichert…", "is-saving");
+      const result = await saveCardsAsCustomDataset({
+        cards: parsed,
+        label: name,
+        isPublic: false,
+      });
+
+      if (!result.ok) {
+        updateEditorStatus("Speichern fehlgeschlagen", "has-error");
+        fileInput.remove();
+        return;
+      }
+
+      // Refresh so the new dataset appears
+      await refreshPublicCsvList();
+
+      // Add the new dataset to the editor selection
+      const newKey = toCustomDatasetKey(result.datasetId);
+      editorSelectedDatasets.add(newKey);
+
+      // Repopulate dropdown so the new dataset checkbox is checked
+      populateDatasetDropdown();
+
+      // Update view
+      updateSelectedCount();
+      updateEditorDatasetsView();
+      syncEditorCurrentDataset();
+
+      // Collapse all sections except the newly imported one
+      if (editorMultiSections) {
+        editorMultiSections.querySelectorAll(".editor-dataset-section").forEach((section) => {
+          if (section.dataset.datasetKey === newKey) {
+            section.classList.add("expanded");
+          } else {
+            section.classList.remove("expanded");
+          }
+        });
+      }
+
+      updateEditorStatus(`Importiert: ${parsed.length} Karten als „${name}"`);
+
+    } catch (error) {
+      updateEditorStatus("Fehler beim Importieren der CSV", "has-error");
+    } finally {
+      fileInput.remove();
+    }
+  });
+
+  fileInput.click();
 }
 
 async function uploadEditorCardsAsCsv() {
@@ -4527,7 +5699,7 @@ function readSelectedDatasetKeys() {
   }
 
   if (!datasetSelectList) {
-    return [DEFAULT_DATASET_KEY];
+    return [resolveDefaultDatasetKey()];
   }
 
   const keys = [...datasetSelectList.querySelectorAll("select")]
@@ -4775,9 +5947,42 @@ function populateMainDatasetSelect() {
   }
 
   const availableDatasets = getAllDatasetEntries();
-  const preferredKey =
-    state.selectedDatasets.find((key) => getDatasetEntryByKey(key)) ??
-    (getDatasetEntryByKey(datasetSelect.value) ? datasetSelect.value : "");
+  const availableKeys = new Set(availableDatasets.map((d) => d.key));
+  const defaultLabel = (PRESET_DATASETS[DEFAULT_DATASET_KEY]?.label ?? DEFAULT_DATASET_KEY).trim().toLowerCase();
+
+  // Find a key that actually exists in the available options
+  function resolveKey(key) {
+    if (!key) return "";
+    if (availableKeys.has(key)) return key;
+    // Try to find by label
+    const label = (getDatasetEntryByKey(key)?.label ?? "").trim().toLowerCase();
+    if (label) {
+      const match = availableDatasets.find((d) => d.label.trim().toLowerCase() === label);
+      if (match) return match.key;
+    }
+    return "";
+  }
+
+  // Prefer "Mittel" as default, then fall back to current selections
+  const mittelEntry = availableDatasets.find((d) => d.label.trim().toLowerCase() === "mittel");
+  const mittelKey = mittelEntry?.key;
+  
+  const candidates = [
+    mittelKey,
+    ...state.selectedDatasets,
+    datasetSelect.value,
+    DEFAULT_DATASET_KEY,
+  ].filter(Boolean);
+  
+  let nextKey = "";
+  for (const candidate of candidates) {
+    nextKey = resolveKey(candidate);
+    if (nextKey) break;
+  }
+  // Final fallback: find "Standard" by label, then first available
+  if (!nextKey) {
+    nextKey = availableDatasets.find((d) => d.label.trim().toLowerCase() === defaultLabel)?.key ?? availableDatasets[0]?.key ?? "";
+  }
 
   datasetSelect.innerHTML = "";
 
@@ -4793,7 +5998,6 @@ function populateMainDatasetSelect() {
     datasetSelect.append(option);
   });
 
-  const nextKey = getDatasetEntryByKey(preferredKey) ? preferredKey : "";
   datasetSelect.value = nextKey;
 }
 
@@ -4807,7 +6011,7 @@ function setupDatasetSelects() {
   datasetSelectList.innerHTML = "";
 
   if (state.selectedDatasets.length === 0) {
-    addDatasetSelect("");
+    addDatasetSelect(DEFAULT_DATASET_KEY);
     return;
   }
 
@@ -5085,6 +6289,9 @@ function syncCsvUploadButtonVisibility() {
   if (!csvUploadButton) return;
   const hasFile = Boolean(csvUpload?.files?.length);
   csvUploadButton.hidden = !hasFile;
+  if (csvUploadPublicButton) {
+    csvUploadPublicButton.hidden = !hasFile || !isAdminSession;
+  }
 }
 
 async function getAuthenticatedSupabaseUser() {
@@ -5206,13 +6413,14 @@ function renderStorageDatasetList(files = []) {
 
     const nameHead = document.createElement("th");
     nameHead.textContent = "Kartensatz";
-    nameHead.colSpan = 2;
+    nameHead.colSpan = 5;
     headRow.append(nameHead);
 
     allCategories.forEach((category) => {
       const th = document.createElement("th");
       th.className = "storage-dataset-summary-cat storage-dataset-summary-cat-head";
       th.dataset.category = category;
+      th.title = category;
       const visuals = CATEGORY_VISUALS[category];
       const bg = visuals?.color ?? "#F3E9D3";
       const fg = getReadableTextColor(bg);
@@ -5243,7 +6451,7 @@ function renderStorageDatasetList(files = []) {
       const groupRow = document.createElement("tr");
       const groupCell = document.createElement("td");
       groupCell.className = "storage-dataset-summary-group";
-      groupCell.colSpan = 3 + allCategories.length;
+      groupCell.colSpan = 6 + allCategories.length;
       groupCell.textContent = title;
       groupRow.append(groupCell);
       tbody.append(groupRow);
@@ -5266,6 +6474,68 @@ function renderStorageDatasetList(files = []) {
         nameCell.textContent = String(entry?.label ?? entry?.key ?? "");
         row.append(nameCell);
 
+        // Permission: own private custom or storage datasets can be renamed/deleted by owner.
+        // Public custom datasets and presets can only be edited by admins.
+        const isOwnPrivate = entry.isCustom && !entry.isPublic;
+        const canEdit = isOwnPrivate || entry.isStorage || isAdminSession;
+
+        const renameCell = document.createElement("td");
+        renameCell.className = "storage-dataset-summary-action";
+        if (canEdit) {
+          const renameBtn = document.createElement("button");
+          renameBtn.type = "button";
+          renameBtn.className = "dataset-action-btn dataset-rename-btn";
+          renameBtn.title = "Umbenennen";
+          renameBtn.setAttribute("aria-label", "Kartensatz umbenennen");
+          renameBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+          renameBtn.dataset.datasetKey = entry.key;
+          renameBtn.dataset.datasetLabel = stripDatasetLabelSuffix(entry?.label ?? entry?.key ?? "");
+          renameBtn.dataset.isCustom = String(!!entry.isCustom);
+          renameBtn.dataset.isStorage = String(!!entry.isStorage);
+          if (entry.isCustom && entry.id) renameBtn.dataset.datasetId = entry.id;
+          if (entry.isStorage && entry.objectName) renameBtn.dataset.objectName = entry.objectName;
+          renameCell.append(renameBtn);
+        }
+        row.append(renameCell);
+
+        const copyCell = document.createElement("td");
+        copyCell.className = "storage-dataset-summary-action";
+        if (isLoggedIn) {
+          const copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "dataset-action-btn dataset-copy-btn";
+          copyBtn.title = "Kopieren";
+          copyBtn.setAttribute("aria-label", "Kartensatz kopieren");
+          copyBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>`;
+          copyBtn.dataset.datasetKey = entry.key;
+          copyBtn.dataset.datasetLabel = stripDatasetLabelSuffix(entry?.label ?? entry?.key ?? "");
+          copyBtn.dataset.isCustom = String(!!entry.isCustom);
+          copyBtn.dataset.isStorage = String(!!entry.isStorage);
+          if (entry.isCustom && entry.id) copyBtn.dataset.datasetId = entry.id;
+          if (entry.isStorage && entry.objectName) copyBtn.dataset.objectName = entry.objectName;
+          copyCell.append(copyBtn);
+        }
+        row.append(copyCell);
+
+        const deleteCell = document.createElement("td");
+        deleteCell.className = "storage-dataset-summary-action";
+        if (canEdit) {
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.className = "dataset-action-btn dataset-delete-btn";
+          deleteBtn.title = "Kartensatz löschen";
+          deleteBtn.setAttribute("aria-label", "Kartensatz löschen");
+          deleteBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`;
+          deleteBtn.dataset.datasetKey = entry.key;
+          deleteBtn.dataset.datasetLabel = stripDatasetLabelSuffix(entry?.label ?? entry?.key ?? "");
+          deleteBtn.dataset.isCustom = String(!!entry.isCustom);
+          deleteBtn.dataset.isStorage = String(!!entry.isStorage);
+          if (entry.isCustom && entry.id) deleteBtn.dataset.datasetId = entry.id;
+          if (entry.isStorage && entry.objectName) deleteBtn.dataset.objectName = entry.objectName;
+          deleteCell.append(deleteBtn);
+        }
+        row.append(deleteCell);
+
         const cards = Array.isArray(entry?.cards) ? entry.cards : [];
         const counts = Object.fromEntries(allCategories.map((cat) => [cat, 0]));
         cards.forEach((card) => {
@@ -5287,6 +6557,7 @@ function renderStorageDatasetList(files = []) {
           cell.style.setProperty("--category-color", bg);
           cell.style.setProperty("--category-text-color", fg);
           cell.dataset.category = category;
+          cell.title = category;
           cell.classList.toggle("is-empty", value === 0);
           cell.textContent = String(value);
           row.append(cell);
@@ -5319,6 +6590,18 @@ function renderStorageDatasetList(files = []) {
     labelCell.className = "storage-dataset-summary-name storage-dataset-summary-selected-label";
     labelCell.textContent = "Ausgewählt";
     summaryRow.append(labelCell);
+
+    const emptyRenameCell = document.createElement("td");
+    emptyRenameCell.className = "storage-dataset-summary-action";
+    summaryRow.append(emptyRenameCell);
+
+    const emptyCopyCell = document.createElement("td");
+    emptyCopyCell.className = "storage-dataset-summary-action";
+    summaryRow.append(emptyCopyCell);
+
+    const emptyDeleteCell = document.createElement("td");
+    emptyDeleteCell.className = "storage-dataset-summary-action";
+    summaryRow.append(emptyDeleteCell);
 
     allCategories.forEach((category) => {
       const cell = document.createElement("td");
@@ -5446,6 +6729,7 @@ function syncStorageDatasetListSelectionState() {
 }
 
 let pendingStorageDeleteObjectName = "";
+let pendingDatasetDelete = null;
 
 function openStorageDeleteConfirm(objectName) {
   if (!storageDeleteConfirmModal) {
@@ -5464,9 +6748,182 @@ function openStorageDeleteConfirm(objectName) {
   return true;
 }
 
+function openDatasetDeleteConfirm(info) {
+  if (!storageDeleteConfirmModal) return;
+  pendingDatasetDelete = info;
+  pendingStorageDeleteObjectName = "";
+  if (storageDeleteConfirmText) {
+    storageDeleteConfirmText.textContent = `Sind Sie sicher, dass Sie den Kartensatz „${info.label}" löschen möchten?`;
+  }
+  storageDeleteConfirmModal.classList.remove("hidden");
+}
+
 function closeStorageDeleteConfirm() {
   storageDeleteConfirmModal?.classList.add("hidden");
   pendingStorageDeleteObjectName = "";
+  pendingDatasetDelete = null;
+}
+
+async function executeDatasetDelete(info) {
+  if (!info) return;
+  try {
+    // Resolve: if this is a preset key, find the migrated custom dataset with matching label
+    let resolvedInfo = info;
+    if (!info.isCustom && !info.isStorage && info.key && PRESET_DATASETS[info.key]) {
+      const presetLabel = PRESET_DATASETS[info.key]?.label?.trim().toLowerCase();
+      const migratedEntry = Object.values(state.customDatasets).find(
+        (d) => d.isPublic && String(d.label ?? "").trim().toLowerCase() === presetLabel
+      );
+      if (migratedEntry) {
+        resolvedInfo = { ...info, isCustom: true, datasetId: migratedEntry.id, key: toCustomDatasetKey(migratedEntry.id) };
+      } else {
+        // No migrated dataset — just hide the preset permanently
+        persistRemovedPresetKey(info.key);
+      }
+    }
+
+    if (isAdminSession && resolvedInfo.id) {
+      // Admin can delete any dataset with an ID directly via authenticated API
+      const deleteUrl = `${getCustomDatasetsApiEndpoint()}/${encodeURIComponent(resolvedInfo.id)}`;
+      console.log("Admin deleting dataset:", deleteUrl);
+      const response = await fetch(deleteUrl, {
+        method: "DELETE",
+        headers: await getAuthHeaders({ includeContentType: true }),
+        body: JSON.stringify({}),
+      });
+      console.log("Admin delete response:", response.status);
+      const responseText = await response.text().catch(() => "");
+      console.log("Admin delete response body:", responseText);
+      if (!response.ok) {
+        console.error("Admin delete failed:", response.status, responseText);
+        alert(`Löschen fehlgeschlagen: ${response.status} - ${responseText || "Keine Berechtigung"}`);
+        return;
+      }
+      // Also remove from local state
+      if (resolvedInfo.datasetId) {
+        delete state.customDatasets[resolvedInfo.datasetId];
+      }
+    } else if (resolvedInfo.isCustom && resolvedInfo.datasetId) {
+      const dataset = state.customDatasets[resolvedInfo.datasetId];
+      delete state.customDatasets[resolvedInfo.datasetId];
+      const persistenceResult = await persistCustomDatasets({
+        operation: "delete",
+        datasetId: resolvedInfo.datasetId,
+        previousDataset: dataset,
+      });
+      if (!persistenceResult.ok) {
+        if (dataset) state.customDatasets[resolvedInfo.datasetId] = dataset;
+        return;
+      }
+    } else if (resolvedInfo.isStorage && resolvedInfo.objectName) {
+      await deleteStoredCsvFile(resolvedInfo.objectName);
+      delete state.storageDatasets[resolvedInfo.objectName];
+    }
+    state.selectedDatasets = readSelectedDatasetKeys().filter(
+      (key) => key !== info.key && key !== resolvedInfo.key
+    );
+    refreshDatasetSelections();
+    await refreshPublicCsvList();
+  } catch (error) {
+    // silently fail
+  }
+}
+
+function showDatasetNamePrompt(title, defaultValue = "") {
+  return new Promise((resolve) => {
+    if (!datasetNamePrompt) return resolve(null);
+    if (datasetNamePromptText) datasetNamePromptText.textContent = title;
+    if (datasetNamePromptInput) {
+      datasetNamePromptInput.value = defaultValue;
+    }
+    datasetNamePrompt.classList.remove("hidden");
+    datasetNamePromptInput?.focus();
+
+    const cleanup = () => {
+      datasetNamePrompt.classList.add("hidden");
+      datasetNamePromptOk?.removeEventListener("click", onOk);
+      datasetNamePromptCancel?.removeEventListener("click", onCancel);
+      datasetNamePromptInput?.removeEventListener("keydown", onKey);
+    };
+    const onOk = () => {
+      const val = datasetNamePromptInput?.value?.trim() ?? "";
+      cleanup();
+      resolve(val || null);
+    };
+    const onCancel = () => { cleanup(); resolve(null); };
+    const onKey = (e) => { if (e.key === "Enter") onOk(); if (e.key === "Escape") onCancel(); };
+
+    datasetNamePromptOk?.addEventListener("click", onOk);
+    datasetNamePromptCancel?.addEventListener("click", onCancel);
+    datasetNamePromptInput?.addEventListener("keydown", onKey);
+  });
+}
+
+async function executeDatasetRename(info) {
+  if (!info) return;
+  const newName = await showDatasetNamePrompt(
+    `Kartensatz „${info.label}" umbenennen:`,
+    info.label
+  );
+  if (!newName) return;
+
+  try {
+    if (info.isCustom && info.datasetId) {
+      const existing = state.customDatasets[info.datasetId];
+      if (!existing) return;
+      const cards = Array.isArray(existing.cards) ? existing.cards : [];
+      const result = await saveCardsAsCustomDataset({
+        cards,
+        label: newName,
+        existingId: info.datasetId,
+        isPublic: existing.isPublic ?? false,
+      });
+      if (!result.ok) return;
+    } else if (info.isStorage && info.objectName) {
+      // Storage datasets can't be renamed directly - copy then delete old
+      const cards = state.storageDatasets[info.objectName];
+      if (!Array.isArray(cards)) return;
+      const result = await saveCardsAsCustomDataset({
+        cards,
+        label: newName,
+        isPublic: false,
+      });
+      if (!result.ok) return;
+      await deleteStoredCsvFile(info.objectName);
+      delete state.storageDatasets[info.objectName];
+    }
+    refreshDatasetSelections();
+    await refreshPublicCsvList();
+  } catch (error) {
+    // silently fail
+  }
+}
+
+async function executeDatasetCopy(info) {
+  if (!info) return;
+  const copyName = await showDatasetNamePrompt(
+    `Name für Kopie von „${info.label}":`,
+    `${info.label} (Kopie)`
+  );
+  if (!copyName) return;
+
+  try {
+    const entry = getDatasetEntryByKey(info.key);
+    const cards = entry?.cards;
+    if (!Array.isArray(cards) || cards.length === 0) return;
+
+    const result = await saveCardsAsCustomDataset({
+      cards: cloneCards(cards),
+      label: copyName,
+      isPublic: false,
+    });
+    if (!result.ok) return;
+
+    refreshDatasetSelections();
+    await refreshPublicCsvList();
+  } catch (error) {
+    // silently fail
+  }
 }
 
 function sanitizeUploadFileName(name) {
@@ -5668,6 +7125,64 @@ async function handleCsvUpload() {
     setCsvStatus(`Upload-Fehler: ${error?.message || String(error)}`, { isError: true });
   } finally {
     csvUploadButton && (csvUploadButton.disabled = false);
+    syncCsvUploadButtonVisibility();
+  }
+}
+
+async function handleCsvUploadPublic() {
+  if (!requireFullAccess() || !isAdminSession) return;
+  const file = csvUpload?.files?.[0];
+  if (!file) {
+    setCsvStatus("Bitte CSV-Datei zum Hochladen auswählen!", { isError: true });
+    return;
+  }
+  if (!isValidCsvUpload(file)) {
+    setCsvStatus("Ungültige Datei. Erlaubt ist nur .csv.", { isError: true });
+    return;
+  }
+  if (file.size > CSV_MAX_SIZE_BYTES) {
+    setCsvStatus("Datei ist zu groß. Maximal 1 MB erlaubt.", { isError: true });
+    return;
+  }
+
+  try {
+    csvUploadPublicButton && (csvUploadPublicButton.disabled = true);
+    const csvText = await file.text();
+    const cards = parseStorageCsvToCards(csvText);
+    if (cards.length === 0) {
+      setCsvStatus("CSV enthält keine gültigen Karten.", { isError: true });
+      return;
+    }
+
+    const defaultName = getDisplayDatasetName(file.name);
+    const name = await showDatasetNamePrompt("Name für öffentlichen Kartensatz:", defaultName);
+    if (!name) return;
+
+    setCsvStatus("Öffentlichen Kartensatz speichern…");
+    const result = await saveCardsAsCustomDataset({
+      cards,
+      label: name,
+      isPublic: true,
+    });
+
+    if (!result.ok) {
+      setCsvStatus(result.message || "Speichern fehlgeschlagen.", { isError: true });
+      return;
+    }
+
+    if (csvUpload) csvUpload.value = "";
+    syncCsvUploadButtonVisibility();
+    setCsvStatus(`Öffentlicher Kartensatz „${name}" erstellt (${cards.length} Karten).`);
+    await refreshPublicCsvList();
+  } catch (error) {
+    if (error?.isAuthError) {
+      setCsvStatus(error.message, { isError: true });
+      if (error.shouldRedirect) redirectToLogin();
+      return;
+    }
+    setCsvStatus(`Fehler: ${error?.message || String(error)}`, { isError: true });
+  } finally {
+    csvUploadPublicButton && (csvUploadPublicButton.disabled = false);
     syncCsvUploadButtonVisibility();
   }
 }
@@ -6214,6 +7729,40 @@ document.addEventListener("click", (event) => {
 window.addEventListener("hashchange", () => {
   setRoute(window.location.hash);
 });
+
+// Restore route when returning to tab (browser sometimes resets to landing)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    const storedRoute = localStorage.getItem(CURRENT_ROUTE_STORAGE_KEY);
+    const currentHash = window.location.hash || "#/landing";
+    // If current route is landing but stored route is different, restore it
+    if (currentHash === "#/landing" && storedRoute && storedRoute !== "#/landing") {
+      const activeGame = loadStoredActiveGameSnapshot();
+      // Don't interrupt active games, otherwise restore the stored route
+      if (!activeGame) {
+        window.history.replaceState(null, "", storedRoute);
+        setRoute(storedRoute);
+      }
+    }
+  }
+});
+
+// Also handle pageshow (fires when page is loaded from cache)
+window.addEventListener("pageshow", (event) => {
+  // If persisted (loaded from bfcache), check if we need to restore route
+  if (event.persisted) {
+    const storedRoute = localStorage.getItem(CURRENT_ROUTE_STORAGE_KEY);
+    const currentHash = window.location.hash || "#/landing";
+    if (currentHash === "#/landing" && storedRoute && storedRoute !== "#/landing") {
+      const activeGame = loadStoredActiveGameSnapshot();
+      if (!activeGame) {
+        window.history.replaceState(null, "", storedRoute);
+        setRoute(storedRoute);
+      }
+    }
+  }
+});
+
 document.addEventListener("click", (event) => {
   const target = event.target;
   if (!(target instanceof Element)) return;
@@ -6243,6 +7792,34 @@ document.addEventListener("keydown", (event) => {
     closeCardEditor();
   }
 });
+userMenuToggle?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (!isLoggedIn) {
+    setRoute("#/login");
+    return;
+  }
+  toggleUserMenuDropdown();
+});
+userMenuDropdown?.addEventListener("click", async (e) => {
+  const item = e.target.closest("[data-action]");
+  if (!item) return;
+  closeUserMenuDropdown();
+  const action = item.dataset.action;
+  if (action === "account") {
+    setRoute("#/account");
+  } else if (action === "logout") {
+    try {
+      await window.supabase?.auth?.signOut();
+    } catch { /* ignore */ }
+  }
+});
+document.addEventListener("click", (e) => {
+  if (userMenuDropdown && !userMenuDropdown.classList.contains("hidden")) {
+    if (!e.target.closest(".user-menu-container")) {
+      closeUserMenuDropdown();
+    }
+  }
+});
 rollButton.addEventListener("click", handleRoll);
 undoButton.addEventListener("click", handleUndo);
 csvUpload?.addEventListener("change", syncCsvUploadButtonVisibility);
@@ -6250,6 +7827,11 @@ csvUploadButton?.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
   handleCsvUpload();
+});
+csvUploadPublicButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  handleCsvUploadPublic();
 });
 csvRefreshListButton?.addEventListener("click", (event) => {
   event.preventDefault();
@@ -6326,11 +7908,48 @@ storageDatasetList?.addEventListener("click", async (event) => {
   }
 });
 
+storageDatasetSummary?.addEventListener("click", (event) => {
+  const actionBtn = event.target.closest(".dataset-action-btn");
+  if (!actionBtn) return;
+  event.preventDefault();
+  event.stopPropagation();
+
+  const rawDatasetId = actionBtn.dataset.datasetId;
+  const datasetKey = actionBtn.dataset.datasetKey;
+  const extractedId = rawDatasetId || (datasetKey?.startsWith("custom:") ? datasetKey.slice(7) : null);
+  const info = {
+    key: datasetKey,
+    label: actionBtn.dataset.datasetLabel || "Unbenannt",
+    isCustom: actionBtn.dataset.isCustom === "true",
+    isStorage: actionBtn.dataset.isStorage === "true",
+    datasetId: extractedId,
+    id: extractedId,
+    objectName: actionBtn.dataset.objectName || null,
+  };
+
+  if (actionBtn.classList.contains("dataset-delete-btn")) {
+    openDatasetDeleteConfirm(info);
+  } else if (actionBtn.classList.contains("dataset-rename-btn")) {
+    executeDatasetRename(info);
+  } else if (actionBtn.classList.contains("dataset-copy-btn")) {
+    executeDatasetCopy(info);
+  }
+});
+
 storageDeleteConfirmCancelButton?.addEventListener("click", () => {
   closeStorageDeleteConfirm();
 });
 
 storageDeleteConfirmOkButton?.addEventListener("click", async () => {
+  // Handle generic dataset delete (from summary table delete buttons)
+  if (pendingDatasetDelete) {
+    const info = pendingDatasetDelete;
+    closeStorageDeleteConfirm();
+    await executeDatasetDelete(info);
+    return;
+  }
+
+  // Handle legacy storage file delete
   const objectName = String(pendingStorageDeleteObjectName || "").trim();
   if (!objectName) {
     closeStorageDeleteConfirm();
@@ -6343,9 +7962,8 @@ storageDeleteConfirmOkButton?.addEventListener("click", async () => {
     state.selectedDatasets = readSelectedDatasetKeys().filter((key) => key !== toStorageDatasetKey(objectName));
     refreshDatasetSelections();
     await refreshPublicCsvList();
-    setCsvStatus(`CSV-Datei entfernt: ${getDisplayDatasetName(objectName)}.`);
   } catch (error) {
-    setCsvStatus(`Löschen fehlgeschlagen: ${error?.message || String(error)}`, { isError: true });
+    // silently fail
   } finally {
     closeStorageDeleteConfirm();
   }
@@ -6361,6 +7979,9 @@ if (openEditorPageButton) {
   openEditorPageButton.onclick = (event) => {
     event?.preventDefault?.();
     event?.stopPropagation?.();
+    // Read checked checkboxes from cardsets summary table
+    const checkedKeys = getCardsetsSummaryCheckedKeys();
+    state._pendingEditorDatasetKeys = checkedKeys.length > 0 ? checkedKeys : null;
     setRoute("#/editcardsets");
     return false;
   };
@@ -6382,10 +8003,73 @@ cardEditorDatasetSelect?.addEventListener("change", () => {
     cardEditorDatasetLabelInput.value = dataset?.label ?? "";
   }
 });
-cardEditorBody?.addEventListener("input", updateEditorValidationState);
-cardEditorBody?.addEventListener("change", updateEditorValidationState);
+cardEditorBody?.addEventListener("input", () => {
+  updateEditorValidationState();
+  updateEditorUnsavedChanges();
+});
+cardEditorBody?.addEventListener("change", () => {
+  updateEditorValidationState();
+  updateEditorUnsavedChanges();
+});
 cardEditorBody?.addEventListener("paste", handleEditorTablePaste);
 
+// New Editor Bottom Bar Event Listeners
+editorBackButton?.addEventListener("click", async () => {
+  if (state.editor.hasUnsavedChanges) {
+    const action = await showEditorUnsavedConfirm();
+    if (action === "save") {
+      await saveEditorDataset();
+      // If still unsaved after save attempt (e.g. cancelled or failed), stay
+      if (state.editor.hasUnsavedChanges) return;
+    }
+    // "discard" falls through to navigate back
+  }
+  syncEditorSelectionToCardsets();
+  setRoute("#/cardsets");
+});
+
+editorSaveButton?.addEventListener("click", () => {
+  saveEditorDataset();
+});
+
+editorMoreButton?.addEventListener("click", () => {
+  toggleMoreMenu();
+});
+
+// More menu item handlers
+editorMoreDropdown?.addEventListener("click", (event) => {
+  const item = event.target.closest(".editor-more-item");
+  if (!item) return;
+  const action = item.dataset.action;
+  if (action) {
+    handleMoreMenuAction(action);
+  }
+});
+
+// Dataset Selector Event Listeners
+editorDatasetDropdownToggle?.addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleDatasetDropdown();
+});
+
+// Close both dropdowns when clicking outside
+document.addEventListener("click", (event) => {
+  // Close more menu
+  if (!editorMoreDropdown?.classList.contains("hidden")) {
+    if (!editorMoreButton?.contains(event.target) && !editorMoreDropdown?.contains(event.target)) {
+      closeMoreMenu();
+    }
+  }
+
+  // Close dataset dropdown
+  if (!editorDatasetDropdown?.classList.contains("hidden")) {
+    if (!editorDatasetDropdownToggle?.contains(event.target) && !editorDatasetDropdown?.contains(event.target)) {
+      closeDatasetDropdown();
+    }
+  }
+});
+
+// Legacy buttons (for compatibility)
 editcardsetsCancelButton?.addEventListener("click", (event) => {
   event.preventDefault();
   event.stopPropagation();
@@ -6707,6 +8391,9 @@ window.addEventListener(AUTH_MODE_EVENT, async (event) => {
     const publicDatasets = filterCustomDatasetsForAuthMode(state.customDatasets);
     const loadedDatasets = await loadCustomDatasets();
     state.customDatasets = { ...publicDatasets, ...loadedDatasets };
+  }
+  if (isAdminSession && !previousIsAdminSession) {
+    await migratePresetDatasetsToBackend();
   }
   if (previousIsLoggedIn === isLoggedIn && previousIsAdminSession === isAdminSession) return;
   applyDatasetAuthMode();

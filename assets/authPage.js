@@ -1,4 +1,4 @@
-import { loginWithPassword, registerWithPassword } from "./auth.js";
+import { loginWithPassword, registerWithPassword, resolveEmailByUsername, verifyCurrentPassword, updatePassword, updateEmail, updateUsername, deleteAccount } from "./auth.js";
 import { initAuthState } from "./authState.js";
 
 const AUTH_MODE_EVENT = "thinkaroo:auth-mode-change";
@@ -7,108 +7,42 @@ const loginForm = document.querySelector("#login-form");
 const registerForm = document.querySelector("#register-form");
 const loginEmail = document.querySelector("#login-email");
 const password = document.querySelector("#login-password");
+const registerUsername = document.querySelector("#register-username");
 const registerEmail = document.querySelector("#register-email");
 const registerPassword = document.querySelector("#register-password");
-const loginEmailError = document.querySelector("#login-email-error");
-const loginPasswordError = document.querySelector("#login-password-error");
-const registerEmailError = document.querySelector("#register-email-error");
-const registerPasswordError = document.querySelector("#register-password-error");
+const registerUsernameError = document.querySelector("#register-username-error");
 const loginFeedback = document.querySelector("#login-feedback");
 const registerFeedback = document.querySelector("#register-feedback");
 const statusText = document.querySelector("#auth-page-status") ?? document.querySelector("#auth-status");
 const hintText = document.querySelector("#auth-page-hint");
 
-function clearError(field, errorElement) {
-  if (!field || !errorElement) {
-    return;
-  }
-  field.classList.remove("is-invalid");
-  errorElement.textContent = "";
-}
-
-function setFieldError(field, errorElement, message) {
-  if (!field || !errorElement) {
-    return;
-  }
-  field.classList.add("is-invalid");
-  errorElement.textContent = message;
-}
+// Account page elements
+const accountUsernameForm = document.querySelector("#account-username-form");
+const accountUsernameInput = document.querySelector("#account-username");
+const accountUsernameFeedback = document.querySelector("#account-username-feedback");
+const accountCurrentUsername = document.querySelector("#account-current-username");
+const accountPasswordForm = document.querySelector("#account-password-form");
+const accountCurrentPassword = document.querySelector("#account-current-password");
+const accountNewPassword = document.querySelector("#account-new-password");
+const accountConfirmPassword = document.querySelector("#account-confirm-password");
+const accountPasswordFeedback = document.querySelector("#account-password-feedback");
+const accountEmailForm = document.querySelector("#account-email-form");
+const accountCurrentEmail = document.querySelector("#account-current-email");
+const accountNewEmail = document.querySelector("#account-new-email");
+const accountEmailFeedback = document.querySelector("#account-email-feedback");
+const accountDeleteBtn = document.querySelector("#account-delete-btn");
+const accountDeleteFeedback = document.querySelector("#account-delete-feedback");
 
 function setFeedback(element, message, type = "info") {
-  if (!element) {
-    return;
-  }
+  if (!element) return;
   element.textContent = message;
   element.classList.remove("is-error", "is-success");
-  if (type === "error") {
-    element.classList.add("is-error");
-  }
-  if (type === "success") {
-    element.classList.add("is-success");
-  }
+  if (type === "error") element.classList.add("is-error");
+  if (type === "success") element.classList.add("is-success");
 }
 
 function validateEmailAddress(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
-
-function clearLoginState() {
-  clearError(loginEmail, loginEmailError);
-  clearError(password, loginPasswordError);
-  setFeedback(loginFeedback, "");
-}
-
-function clearRegisterState() {
-  clearError(registerEmail, registerEmailError);
-  clearError(registerPassword, registerPasswordError);
-  setFeedback(registerFeedback, "");
-}
-
-function validateLoginInputs() {
-  const email = loginEmail?.value?.trim() ?? "";
-  const userPassword = password?.value ?? "";
-  let valid = true;
-
-  clearLoginState();
-  if (!email) {
-    setFieldError(loginEmail, loginEmailError, "Bitte gib deine E-Mail-Adresse ein.");
-    valid = false;
-  } else if (!validateEmailAddress(email)) {
-    setFieldError(loginEmail, loginEmailError, "Bitte gib eine gültige E-Mail-Adresse ein.");
-    valid = false;
-  }
-
-  if (!userPassword) {
-    setFieldError(password, loginPasswordError, "Bitte gib dein Passwort ein.");
-    valid = false;
-  }
-
-  return valid;
-}
-
-function validateRegisterInputs() {
-  const email = registerEmail?.value?.trim() ?? "";
-  const userPassword = registerPassword?.value ?? "";
-  let valid = true;
-
-  clearRegisterState();
-  if (!email) {
-    setFieldError(registerEmail, registerEmailError, "Bitte gib deine E-Mail-Adresse ein.");
-    valid = false;
-  } else if (!validateEmailAddress(email)) {
-    setFieldError(registerEmail, registerEmailError, "Bitte gib eine gültige E-Mail-Adresse ein.");
-    valid = false;
-  }
-
-  if (!userPassword) {
-    setFieldError(registerPassword, registerPasswordError, "Bitte gib ein Passwort ein.");
-    valid = false;
-  } else if (userPassword.length < 8) {
-    setFieldError(registerPassword, registerPasswordError, "Das Passwort muss mindestens 8 Zeichen lang sein.");
-    valid = false;
-  }
-
-  return valid;
 }
 
 function mapAuthError(error, mode) {
@@ -117,42 +51,23 @@ function mapAuthError(error, mode) {
 
   if (mode === "register") {
     if (code === "email_already_registered" || message.includes("already registered")) {
-      return {
-        email: "Diese E-Mail-Adresse ist bereits registriert.",
-      };
+      return { generic: "Diese E-Mail-Adresse ist bereits registriert." };
     }
     if (message.includes("password should be at least")) {
-      return {
-        password: "Das Passwort ist zu kurz. Verwende mindestens 8 Zeichen.",
-      };
+      return { generic: "Das Passwort ist zu kurz. Verwende mindestens 8 Zeichen." };
     }
   }
 
   if (mode === "login") {
     if (message.includes("invalid login credentials")) {
-      return {
-        password: "Falsche E-Mail oder falsches Passwort.",
-      };
+      return { generic: "Falsche Anmeldedaten. Bitte überprüfe E-Mail/Benutzername und Passwort." };
     }
     if (message.includes("email not confirmed")) {
-      return {
-        email: "Bitte bestätige zuerst deine E-Mail-Adresse.",
-      };
+      return { generic: "Bitte bestätige zuerst deine E-Mail-Adresse." };
     }
   }
 
-  return {
-    generic: "Anmeldung derzeit nicht möglich. Bitte versuche es erneut.",
-  };
-}
-
-function getReturnTarget() {
-  const params = new URLSearchParams(window.location.search);
-  const returnTo = params.get("returnTo");
-  if (typeof returnTo === "string" && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
-    return returnTo;
-  }
-  return "./index.html#/select";
+  return { generic: "Anmeldung derzeit nicht möglich. Bitte versuche es erneut." };
 }
 
 function routeToSelect() {
@@ -170,98 +85,216 @@ function setStatus(session) {
   }
 }
 
+// ===== Login (email or username) =====
 if (loginForm) {
   loginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!validateLoginInputs()) {
-      setFeedback(loginFeedback, "Bitte korrigiere die markierten Felder.", "error");
+    const identifier = loginEmail?.value?.trim() ?? "";
+    const userPassword = password?.value ?? "";
+
+    if (!identifier || !userPassword) {
+      setFeedback(loginFeedback, "Bitte fülle alle Felder aus.", "error");
       return;
     }
 
     const button = loginForm.querySelector('button[type="submit"]');
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Login läuft …";
-    }
+    if (button) { button.disabled = true; button.textContent = "Login läuft …"; }
+
     try {
-      await loginWithPassword(loginEmail.value.trim(), password.value);
+      let email = identifier;
+      // If it's not an email, resolve username to email
+      if (!validateEmailAddress(identifier)) {
+        const resolved = await resolveEmailByUsername(identifier);
+        if (!resolved) {
+          setFeedback(loginFeedback, "Benutzername nicht gefunden.", "error");
+          return;
+        }
+        email = resolved;
+      }
+      await loginWithPassword(email, userPassword);
       setFeedback(loginFeedback, "Login erfolgreich. Weiterleitung …", "success");
-      hintText.textContent = "Login erfolgreich";
+      if (hintText) hintText.textContent = "Login erfolgreich";
       routeToSelect();
     } catch (error) {
       console.error(error);
-      const friendlyError = mapAuthError(error, "login");
-      if (friendlyError.email) {
-        setFieldError(loginEmail, loginEmailError, friendlyError.email);
-      }
-      if (friendlyError.password) {
-        setFieldError(password, loginPasswordError, friendlyError.password);
-      }
-      setFeedback(loginFeedback, friendlyError.generic ?? "Login fehlgeschlagen.", "error");
+      const friendly = mapAuthError(error, "login");
+      setFeedback(loginFeedback, friendly.generic ?? "Login fehlgeschlagen.", "error");
     } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Login";
-      }
+      if (button) { button.disabled = false; button.textContent = "Login"; }
     }
   });
 }
 
+// ===== Registration (with username) =====
 if (registerForm) {
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!validateRegisterInputs()) {
-      setFeedback(registerFeedback, "Bitte korrigiere die markierten Felder.", "error");
+    const username = registerUsername?.value?.trim() ?? "";
+    const email = registerEmail?.value?.trim() ?? "";
+    const userPassword = registerPassword?.value ?? "";
+
+    if (!username || username.length < 3) {
+      setFeedback(registerFeedback, "Benutzername muss mindestens 3 Zeichen lang sein.", "error");
+      return;
+    }
+    if (!email || !validateEmailAddress(email)) {
+      setFeedback(registerFeedback, "Bitte gib eine gültige E-Mail-Adresse ein.", "error");
+      return;
+    }
+    if (!userPassword || userPassword.length < 8) {
+      setFeedback(registerFeedback, "Das Passwort muss mindestens 8 Zeichen lang sein.", "error");
       return;
     }
 
     const button = registerForm.querySelector('button[type="submit"]');
-    if (button) {
-      button.disabled = true;
-      button.textContent = "Registrierung läuft …";
-    }
+    if (button) { button.disabled = true; button.textContent = "Registrierung läuft …"; }
+
     try {
-      await registerWithPassword(registerEmail.value.trim(), registerPassword.value);
+      await registerWithPassword(email, userPassword, username);
       setFeedback(registerFeedback, "Account erstellt. Du wirst weitergeleitet …", "success");
-      hintText.textContent = "Account erstellt";
+      if (hintText) hintText.textContent = "Account erstellt";
       routeToSelect();
     } catch (error) {
       console.error(error);
-      const friendlyError = mapAuthError(error, "register");
-      if (friendlyError.email) {
-        setFieldError(registerEmail, registerEmailError, friendlyError.email);
-      }
-      if (friendlyError.password) {
-        setFieldError(registerPassword, registerPasswordError, friendlyError.password);
-      }
-      setFeedback(registerFeedback, friendlyError.generic ?? "Registrierung fehlgeschlagen.", "error");
+      const friendly = mapAuthError(error, "register");
+      setFeedback(registerFeedback, friendly.generic ?? "Registrierung fehlgeschlagen.", "error");
     } finally {
-      if (button) {
-        button.disabled = false;
-        button.textContent = "Registrierung";
-      }
+      if (button) { button.disabled = false; button.textContent = "Registrierung"; }
     }
   });
 }
 
+// ===== Account: Change Username =====
+if (accountUsernameForm) {
+  accountUsernameForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const newName = accountUsernameInput?.value?.trim() ?? "";
+    if (!newName || newName.length < 3) {
+      setFeedback(accountUsernameFeedback, "Benutzername muss mindestens 3 Zeichen lang sein.", "error");
+      return;
+    }
+    const button = accountUsernameForm.querySelector('button[type="submit"]');
+    if (button) { button.disabled = true; }
+    try {
+      await updateUsername(newName);
+      setFeedback(accountUsernameFeedback, "Benutzername geändert.", "success");
+    } catch (error) {
+      setFeedback(accountUsernameFeedback, error?.message || "Fehler beim Ändern.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+
+// ===== Account: Change Password =====
+if (accountPasswordForm) {
+  accountPasswordForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const currentPw = accountCurrentPassword?.value ?? "";
+    const newPw = accountNewPassword?.value ?? "";
+    const confirmPw = accountConfirmPassword?.value ?? "";
+    if (!currentPw) {
+      setFeedback(accountPasswordFeedback, "Bitte gib dein aktuelles Passwort ein.", "error");
+      return;
+    }
+    if (newPw.length < 8) {
+      setFeedback(accountPasswordFeedback, "Neues Passwort muss mindestens 8 Zeichen lang sein.", "error");
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setFeedback(accountPasswordFeedback, "Passwörter stimmen nicht überein.", "error");
+      return;
+    }
+    const button = accountPasswordForm.querySelector('button[type="submit"]');
+    if (button) { button.disabled = true; }
+    try {
+      await verifyCurrentPassword(currentPw);
+      await updatePassword(newPw);
+      setFeedback(accountPasswordFeedback, "Passwort geändert.", "success");
+      if (accountCurrentPassword) accountCurrentPassword.value = "";
+      if (accountNewPassword) accountNewPassword.value = "";
+      if (accountConfirmPassword) accountConfirmPassword.value = "";
+    } catch (error) {
+      setFeedback(accountPasswordFeedback, error?.message || "Fehler beim Ändern.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+
+// ===== Account: Change Email =====
+const accountConfirmEmail = document.querySelector("#account-confirm-email");
+if (accountEmailForm) {
+  accountEmailForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const newEmail = accountNewEmail?.value?.trim() ?? "";
+    const confirmEmail = accountConfirmEmail?.value?.trim() ?? "";
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      setFeedback(accountEmailFeedback, "Bitte gib eine gültige E-Mail-Adresse ein.", "error");
+      return;
+    }
+    if (newEmail !== confirmEmail) {
+      setFeedback(accountEmailFeedback, "E-Mail-Adressen stimmen nicht überein.", "error");
+      return;
+    }
+    const button = accountEmailForm.querySelector('button[type="submit"]');
+    if (button) { button.disabled = true; }
+    try {
+      await updateEmail(newEmail);
+      setFeedback(accountEmailFeedback, "Bestätigungslink wurde an die neue Adresse gesendet.", "success");
+    } catch (error) {
+      setFeedback(accountEmailFeedback, error?.message || "Fehler beim Ändern.", "error");
+    } finally {
+      if (button) button.disabled = false;
+    }
+  });
+}
+
+// ===== Account: Delete Account =====
+if (accountDeleteBtn) {
+  accountDeleteBtn.addEventListener("click", async () => {
+    if (!confirm("Konto wirklich unwiderruflich löschen? Alle Daten gehen verloren.")) return;
+    accountDeleteBtn.disabled = true;
+    try {
+      await deleteAccount();
+      setFeedback(accountDeleteFeedback, "Konto gelöscht. Du wirst abgemeldet …", "success");
+      setTimeout(() => { window.location.href = "./index.html"; }, 1500);
+    } catch (error) {
+      setFeedback(accountDeleteFeedback, error?.message || "Fehler beim Löschen.", "error");
+      accountDeleteBtn.disabled = false;
+    }
+  });
+}
+
+// ===== Init =====
 (async function initAuthPage() {
-  if (!loginForm && !registerForm) {
-    return;
-  }
+  if (!loginForm && !registerForm && !accountUsernameForm) return;
 
   try {
     const authState = await initAuthState();
     setStatus(authState.session);
+    const user = authState.session?.user;
+    // Display current username
+    if (accountCurrentUsername) {
+      accountCurrentUsername.textContent = user?.user_metadata?.username || "–";
+    }
+    // Pre-fill account username
+    if (accountUsernameInput && user?.user_metadata?.username) {
+      accountUsernameInput.value = user.user_metadata.username;
+    }
+    // Display current email
+    if (accountCurrentEmail) {
+      accountCurrentEmail.textContent = user?.email || "–";
+    }
   } catch (error) {
     console.error(error);
-    alert(error.message);
   }
 
   window.addEventListener(AUTH_MODE_EVENT, (event) => {
     const session = event.detail?.session ?? null;
     setStatus(session);
-    if (session?.user?.email) {
-      window.location.href = getReturnTarget();
+    if (session?.user?.email && loginForm) {
+      routeToSelect();
     }
   });
 })();

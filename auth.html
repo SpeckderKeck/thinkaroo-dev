@@ -6,17 +6,45 @@
   <title>Thinkaroo · Auth</title>
   <link rel="icon" href="./thinkaroologo.ico" sizes="any">
   <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./user-menu.css" />
 </head>
 <body class="auth-page">
   <header class="global-header">
     <div class="global-header-inner">
-      <div class="auth-topbar" aria-label="Authentifizierung">
-        <div class="auth-topbar-left">
-          <a class="auth-back-link" href="./index.html">← Zurück zum Spiel</a>
-        </div>
-        <div class="auth-topbar-right">
-          <span id="auth-page-status">Du bist nicht eingeloggt.</span>
-        </div>
+      <div class="header-left">
+        <a href="./index.html" class="settings-back-link settings-back-link--topbar auth-icon-button" aria-label="Zurück zum Spiel" title="Zurück">←</a>
+      </div>
+      <div class="header-center">
+        <button
+          id="theme-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Theme umschalten"
+          aria-pressed="false"
+          title="Theme umschalten"
+        >
+          <svg class="theme-icon theme-icon--sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 18a6 6 0 1 1 0-12 6 6 0 0 1 0 12Z"></path>
+            <path d="M12 2v2.2M12 19.8V22M4 12H2M22 12h-2.2M5 5l1.6 1.6M17.4 17.4 19 19M19 5l-1.6 1.6M6.6 17.4 5 19"></path>
+          </svg>
+          <svg class="theme-icon theme-icon--moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M21 14.5A8.2 8.2 0 0 1 9.5 3 7.2 7.2 0 1 0 21 14.5Z"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="header-right">
+        <button
+          id="fullscreen-toggle"
+          class="icon-button"
+          type="button"
+          aria-label="Vollbildmodus umschalten"
+          aria-pressed="false"
+          title="Vollbildmodus"
+        >
+          <svg class="fullscreen-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"></path>
+          </svg>
+        </button>
       </div>
     </div>
   </header>
@@ -34,14 +62,12 @@
           <h2>Login</h2>
           <p class="hint">Willkommen zurück 👋</p>
           <label class="field" for="login-email">
-            E-Mail
-            <input id="login-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
-            <span id="login-email-error" class="field-error" aria-live="polite"></span>
+            E-Mail oder Benutzername
+            <input id="login-email" type="text" required autocomplete="username" placeholder="name@beispiel.de oder Benutzername" />
           </label>
           <label class="field" for="login-password">
             Passwort
             <input id="login-password" type="password" required minlength="8" autocomplete="current-password" />
-            <span id="login-password-error" class="field-error" aria-live="polite"></span>
           </label>
           <button class="primary" type="submit">Login</button>
           <p id="login-feedback" class="form-feedback" aria-live="polite"></p>
@@ -50,15 +76,18 @@
         <form id="register-form" class="auth-form" novalidate>
           <h2>Registrierung</h2>
           <p class="hint">Neues Konto in wenigen Sekunden.</p>
+          <label class="field" for="register-username">
+            Benutzername
+            <input id="register-username" type="text" required autocomplete="username" placeholder="MeinName" minlength="3" maxlength="30" />
+            <span id="register-username-error" class="field-error" aria-live="polite"></span>
+          </label>
           <label class="field" for="register-email">
             E-Mail
             <input id="register-email" type="email" required autocomplete="email" placeholder="name@beispiel.de" />
-            <span id="register-email-error" class="field-error" aria-live="polite"></span>
           </label>
           <label class="field" for="register-password">
             Passwort
             <input id="register-password" type="password" required minlength="8" autocomplete="new-password" />
-            <span id="register-password-error" class="field-error" aria-live="polite"></span>
           </label>
           <button class="primary" type="submit">Registrierung</button>
           <p id="register-feedback" class="form-feedback" aria-live="polite"></p>
