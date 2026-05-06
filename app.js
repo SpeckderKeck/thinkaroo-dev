@@ -316,6 +316,8 @@ const editcardsetsCancelButton = document.getElementById("editcardsets-cancel");
 const editcardsetsSaveButton = document.getElementById("editcardsets-save");
 const csvVisibilityField = document.getElementById("csv-visibility-field");
 const csvVisibilityToggle = document.getElementById("csv-visibility-public");
+const editorVisibilityField = document.getElementById("editor-visibility-field");
+const editorVisibilityToggle = document.getElementById("editor-visibility-public");
 const fullscreenToggle = document.getElementById("fullscreen-toggle");
 const gameSoundToggle = document.getElementById("game-sound-toggle");
 const musicToggle = document.getElementById("music-toggle");
@@ -1782,6 +1784,33 @@ function syncCsvVisibilityFromSelectedDataset() {
   const selectedId = csvOverwriteSelect?.value ?? "";
   const dataset = state.customDatasets[selectedId];
   csvVisibilityToggle.checked = Boolean(dataset?.isPublic);
+}
+
+function updateEditorVisibilityControls() {
+  const shouldShowToggle = Boolean(isLoggedIn && isAdminSession);
+  if (editorVisibilityField && editorVisibilityToggle) {
+    editorVisibilityField.hidden = !shouldShowToggle;
+    if (!shouldShowToggle) {
+      editorVisibilityToggle.checked = false;
+    }
+  }
+}
+
+function syncEditorVisibilityFromSelectedDataset() {
+  if (!editorVisibilityToggle || !canPublishPublicDatasets()) return;
+  // Get the current dataset from editor state
+  const currentDatasetId = state.editor.currentDatasetId;
+  if (currentDatasetId) {
+    const dataset = state.customDatasets[currentDatasetId];
+    editorVisibilityToggle.checked = Boolean(dataset?.isPublic);
+  } else {
+    // Default to private for new datasets
+    editorVisibilityToggle.checked = false;
+  }
+}
+
+function isEditorVisibilityPublic() {
+  return Boolean(canPublishPublicDatasets() && editorVisibilityToggle?.checked);
 }
 
 const TEAM_ICONS = [
@@ -4608,7 +4637,7 @@ async function saveEditorDataset() {
       cards,
       label: stripDatasetLabelSuffix(state.editor.datasetName || existingDataset?.label || "Unbenannter Datensatz"),
       existingId: state.editor.currentDatasetId,
-      isPublic: existingDataset?.isPublic ?? false,
+      isPublic: isEditorVisibilityPublic(),
     });
 
     state.editor.isSaving = false;
@@ -4644,7 +4673,7 @@ async function saveEditorDataset() {
   const result = await saveCardsAsCustomDataset({
     cards,
     label: label.trim(),
-    isPublic: false,
+    isPublic: isEditorVisibilityPublic(),
   });
 
   state.editor.isSaving = false;
@@ -4690,7 +4719,7 @@ async function saveEditorDatasetAs() {
   const result = await saveCardsAsCustomDataset({
     cards,
     label: label.trim(),
-    isPublic: false,
+    isPublic: isEditorVisibilityPublic(),
   });
 
   state.editor.isSaving = false;
@@ -4761,6 +4790,9 @@ async function loadEditorDataset() {
   updateEditorValidationState();
   clearEditorUnsavedChanges();
   updateEditorStatus(`Geladen: ${selectedDataset.label}`, "is-saved");
+
+  // Sync visibility toggle for admins
+  syncEditorVisibilityFromSelectedDataset();
 
   // Initialize dataset selector and select the loaded dataset
   initEditorDatasetSelector();
@@ -4840,7 +4872,7 @@ async function duplicateEditorDataset() {
   const result = await saveCardsAsCustomDataset({
     cards: cloneCards(cards),
     label: copyName,
-    isPublic: false,
+    isPublic: isEditorVisibilityPublic(),
   });
 
   if (!result.ok) {
@@ -4918,13 +4950,18 @@ async function newEditorDataset() {
   const name = await showDatasetNamePrompt("Name für neuen Datensatz:", "");
   if (!name) return;
 
+  // Reset visibility toggle to private for new datasets
+  if (editorVisibilityToggle) {
+    editorVisibilityToggle.checked = false;
+  }
+
   // Save an empty dataset with one blank card so it appears in the system
   updateEditorStatus("Erstellt…", "is-saving");
   const blankCard = { category: "Tabu", term: "", taboos: ["", "", "", ""] };
   const result = await saveCardsAsCustomDataset({
     cards: [blankCard],
     label: name,
-    isPublic: false,
+    isPublic: isEditorVisibilityPublic(),
   });
 
   if (!result.ok) {
@@ -7629,6 +7666,7 @@ async function setup() {
   updateFullscreenState();
   syncSettingsPanel();
   setupDatasetSelects();
+  updateEditorVisibilityControls();
   renderBoardCategorySelector();
   renderBoardCategoryOptions();
   applySelectedDatasets();
@@ -8051,6 +8089,18 @@ editorMoreDropdown?.addEventListener("click", (event) => {
   const action = item.dataset.action;
   if (action) {
     handleMoreMenuAction(action);
+  }
+});
+
+// Editor visibility toggle handler
+editorVisibilityToggle?.addEventListener("change", () => {
+  // Update status to reflect visibility change
+  if (state.editor.currentDatasetId) {
+    const isPublic = editorVisibilityToggle.checked;
+    updateEditorStatus(isPublic ? "Wird öffentlich gespeichert" : "Wird privat gespeichert", "is-saving");
+    setTimeout(() => {
+      updateEditorStatus(state.editor.hasUnsavedChanges ? "Ungespeicherte Änderungen" : "Bereit", state.editor.hasUnsavedChanges ? "has-warning" : "");
+    }, 1000);
   }
 });
 

@@ -549,6 +549,47 @@ body.is-editor-active .editor-fixed-bottom-bar {
   margin: 0 0 8px 0;
 }
 
+/* Editor Visibility Toggle */
+.editor-visibility-field {
+  margin: 8px 0;
+  padding: 8px 12px;
+  background: rgba(124, 92, 255, 0.1);
+  border: 1px solid rgba(124, 92, 255, 0.3);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.editor-visibility-field.hidden {
+  display: none;
+}
+
+.editor-visibility-field .category-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+}
+
+.editor-visibility-field .category-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #7c5cff;
+  cursor: pointer;
+}
+
+/* Light theme for visibility field */
+html[data-theme="light"] .editor-visibility-field {
+  background: rgba(124, 92, 255, 0.05);
+  border-color: rgba(124, 92, 255, 0.2);
+}
+
+html[data-theme="light"] .editor-visibility-field .category-toggle {
+  color: rgba(26, 31, 58, 0.92);
+}
+
 /* Dataset Selector Dropdown */
 .editor-dataset-selector {
   position: relative;
