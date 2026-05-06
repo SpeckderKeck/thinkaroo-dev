@@ -1221,6 +1221,14 @@ const GAME_MODE_STORAGE_KEY = "thinkaroo.gameMode";
 const STANDARD_PRESET_DATASET_KEYS = new Set([]);
 const REMOVED_CUSTOM_DATASET_LABELS = new Set(["umformen", "tiefziehen"]);
 const PRESET_MIGRATION_KEY = "wissivity.presetsMigrated";
+
+function normalizeDatasetLabel(label) {
+  return String(label ?? "").trim().toLowerCase();
+}
+
+function isRemovedCustomDatasetLabel(label) {
+  return REMOVED_CUSTOM_DATASET_LABELS.has(normalizeDatasetLabel(label));
+}
 const REMOVED_PRESETS_STORAGE_KEY = "thinkaroo.removedPresetKeys";
 
 // Load removed presets from storage (with hardcoded defaults)
@@ -1254,7 +1262,7 @@ async function migratePresetDatasetsToBackend() {
   const existingLabels = new Set(
     Object.values(state.customDatasets)
       .filter((d) => d.isPublic)
-      .map((d) => String(d.label ?? "").trim().toLowerCase())
+      .map((d) => normalizeDatasetLabel(d.label))
   );
 
   let migrated = 0;
@@ -1262,7 +1270,7 @@ async function migratePresetDatasetsToBackend() {
     const preset = PRESET_DATASETS[key];
     if (!preset?.cards?.length) continue;
     const label = preset.label || key;
-    if (existingLabels.has(label.trim().toLowerCase())) continue;
+    if (existingLabels.has(normalizeDatasetLabel(label))) continue;
 
     try {
       const result = await saveCardsAsCustomDataset({
@@ -1926,11 +1934,11 @@ function canAccessCustomDataset(rawDataset) {
 
 function filterCustomDatasetsForAuthMode(datasetsById) {
   return Object.values(datasetsById ?? {}).reduce((accumulator, dataset) => {
-    if (!canAccessCustomDataset(dataset)) {
+    if (!canAccessCustomDataset(dataset) || isRemovedCustomDatasetLabel(dataset?.label)) {
       return accumulator;
     }
     const normalized = normalizeStoredCustomDataset(dataset);
-    if (normalized) {
+    if (normalized && !isRemovedCustomDatasetLabel(normalized.label)) {
       accumulator[normalized.id] = normalized;
     }
     return accumulator;
@@ -1992,7 +2000,7 @@ function readCustomDatasetsFromStorage() {
     if (!Array.isArray(parsed)) return {};
     return parsed.reduce((accumulator, rawDataset) => {
       const dataset = normalizeStoredCustomDataset(rawDataset);
-      if (dataset) {
+      if (dataset && !isRemovedCustomDatasetLabel(dataset.label)) {
         accumulator[dataset.id] = dataset;
       }
       return accumulator;
@@ -2026,7 +2034,7 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
 
     const datasets = parsed.reduce((accumulator, rawDataset) => {
       const dataset = normalizeStoredCustomDataset(rawDataset);
-      if (dataset) {
+      if (dataset && !isRemovedCustomDatasetLabel(dataset.label)) {
         accumulator[dataset.id] = dataset;
       }
       return accumulator;
@@ -2189,9 +2197,9 @@ async function loadCustomDatasets() {
 
 function getAllDatasetEntries() {
   const customEntries = Object.values(state.customDatasets)
-    .filter((dataset) => canAccessCustomDataset(dataset))
+    .filter((dataset) => canAccessCustomDataset(dataset) && !isRemovedCustomDatasetLabel(dataset?.label))
     .map((dataset) => normalizeStoredCustomDataset(dataset))
-    .filter(Boolean)
+    .filter((dataset) => dataset && !isRemovedCustomDatasetLabel(dataset.label))
     .map((dataset) => ({
       key: toCustomDatasetKey(dataset.id),
       label: dataset.label,
@@ -2203,12 +2211,12 @@ function getAllDatasetEntries() {
 
   // Skip presets whose labels already exist as public custom datasets (migrated)
   const migratedLabels = new Set(
-    customEntries.filter((e) => e.isPublic).map((e) => String(e.label).trim().toLowerCase())
+    customEntries.filter((e) => e.isPublic).map((e) => normalizeDatasetLabel(e.label))
   );
   const presetEntries = Object.entries(PRESET_DATASETS)
     .filter(([key]) => !REMOVED_PRESET_DATASET_KEYS.has(key))
     .filter(([key]) => isLoggedIn || STANDARD_PRESET_DATASET_KEYS.has(key))
-    .filter(([, dataset]) => !migratedLabels.has(String(dataset.label).trim().toLowerCase()))
+    .filter(([, dataset]) => !migratedLabels.has(normalizeDatasetLabel(dataset.label)))
     .map(([key, dataset]) => ({
       key,
       label: dataset.label,
@@ -6770,9 +6778,9 @@ async function executeDatasetDelete(info) {
     // Resolve: if this is a preset key, find the migrated custom dataset with matching label
     let resolvedInfo = info;
     if (!info.isCustom && !info.isStorage && info.key && PRESET_DATASETS[info.key]) {
-      const presetLabel = PRESET_DATASETS[info.key]?.label?.trim().toLowerCase();
+      const presetLabel = normalizeDatasetLabel(PRESET_DATASETS[info.key]?.label);
       const migratedEntry = Object.values(state.customDatasets).find(
-        (d) => d.isPublic && String(d.label ?? "").trim().toLowerCase() === presetLabel
+        (d) => d.isPublic && normalizeDatasetLabel(d.label) === presetLabel
       );
       if (migratedEntry) {
         resolvedInfo = { ...info, isCustom: true, datasetId: migratedEntry.id, key: toCustomDatasetKey(migratedEntry.id) };
