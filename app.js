@@ -1067,13 +1067,12 @@ function applyTeamsFromSharedData(teams) {
 }
 
 async function createSharedGameFromCurrentMenu() {
-  if (!requireFullAccess()) return;
   if (!sharedGameStatus || !sharedGameCodeEl || !sharedGameLinkButton || !sharedGameQrImage) return;
 
-  // Try backend first, fall back to static
+  // Try backend first (requires login), fall back to static (works for everyone)
   const baseUrl = resolveSharedGamesApiBaseUrl();
-  if (!baseUrl) {
-    // No backend available - use static method
+  if (!baseUrl || !isLoggedIn) {
+    // No backend available or not logged in - use static method
     return createStaticSharedGame();
   }
 
@@ -2339,7 +2338,7 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
     let query = supabase.from('custom_datasets').select('*');
 
     if (includeOnlyPublic) {
-      // For public datasets, filter by visibility
+      // For public datasets, filter by visibility (works for anon if RLS policy allows)
       query = query.eq('visibility', 'public');
     } else if (isLoggedIn) {
       // For private datasets, filter by owner
@@ -2347,12 +2346,20 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
       if (session?.user?.id) {
         query = query.eq('owner_id', session.user.id);
       }
+    } else {
+      // Not logged in and not requesting public - return empty
+      return { datasets: {}, hasApiError: false };
     }
 
     const { data: parsed, error } = await query;
 
     if (error) {
       console.error(`[Supabase] Error loading datasets:`, error);
+      // If auth error for public datasets, return empty instead of error
+      if (includeOnlyPublic && (error.message?.includes('JWT') || error.message?.includes('auth'))) {
+        console.warn(`[Supabase] Auth error for public datasets - check RLS policies`);
+        return { datasets: {}, hasApiError: false };
+      }
       return { datasets: null, hasApiError: true };
     }
 
