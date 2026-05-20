@@ -2239,7 +2239,8 @@ function isCustomDatasetPublic(rawDataset) {
     return rawDataset.public;
   }
 
-  return !normalizeOwnerId(rawDataset.ownerId ?? rawDataset.owner_id);
+  const hasOwner = !!normalizeOwnerId(rawDataset.ownerId ?? rawDataset.owner_id);
+  return !hasOwner;
 }
 
 function canAccessCustomDataset(rawDataset) {
@@ -2325,40 +2326,37 @@ function readCustomDatasetsFromStorage() {
 }
 
 async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
-  const endpoint = includeOnlyPublic ? getPublicCustomDatasetsApiEndpoint() : getCustomDatasetsApiEndpoint();
-  const actionLabel = includeOnlyPublic
-    ? "Laden der öffentlichen Kartensätze"
-    : "Laden der eigenen Kartensätze";
-
-  console.log(`[API] Loading datasets from: ${endpoint}, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
+  console.log(`[Supabase] Loading datasets, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
 
   try {
-    // For public datasets, don't require authentication
-    const headers = includeOnlyPublic
-      ? { Accept: "application/json" }
-      : await getAuthHeaders();
-
-    console.log(`[API] Request headers:`, headers);
-
-    const response = await fetch(endpoint, {
-      method: "GET",
-      headers,
-    });
-
-    console.log(`[API] Response status: ${response.status}`);
-
-    // Only check auth errors for non-public endpoints
-    if (!includeOnlyPublic) {
-      ensureAuthorizedResponse(response, actionLabel);
-    }
-
-    if (!response.ok) {
-      console.error(`[API] Failed to load datasets: ${response.status}`);
+    const supabase = window.supabase;
+    if (!supabase) {
+      console.error(`[Supabase] Client not available`);
       return { datasets: null, hasApiError: true };
     }
 
-    const parsed = await response.json();
-    console.log(`[API] Parsed ${Array.isArray(parsed) ? parsed.length : 'non-array'} datasets`);
+    // Build query
+    let query = supabase.from('custom_datasets').select('*');
+
+    if (includeOnlyPublic) {
+      // For public datasets, filter by visibility
+      query = query.eq('visibility', 'public');
+    } else if (isLoggedIn) {
+      // For private datasets, filter by owner
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        query = query.eq('owner_id', session.user.id);
+      }
+    }
+
+    const { data: parsed, error } = await query;
+
+    if (error) {
+      console.error(`[Supabase] Error loading datasets:`, error);
+      return { datasets: null, hasApiError: true };
+    }
+
+    console.log(`[Supabase] Loaded ${Array.isArray(parsed) ? parsed.length : 0} datasets`);
 
     if (!Array.isArray(parsed)) {
       return { datasets: null, hasApiError: true };
@@ -2372,13 +2370,10 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
       return accumulator;
     }, {});
 
-    console.log(`[API] Loaded ${Object.keys(datasets).length} datasets`);
+    console.log(`[Supabase] Normalized ${Object.keys(datasets).length} datasets`);
     return { datasets, hasApiError: false };
   } catch (error) {
-    console.error(`[API] Error loading datasets:`, error);
-    if (error?.isAuthError && !includeOnlyPublic) {
-      throw error;
-    }
+    console.error(`[Supabase] Error:`, error);
     return { datasets: null, hasApiError: true };
   }
 }
@@ -2394,94 +2389,75 @@ async function persistCustomDatasets({ operation, datasetId, previousDataset } =
     return accumulator;
   }, {});
 
-  if (state.datasetStorageMode === "remote") {
+  // Try Supabase first
+  const supabase = window.supabase;
+  if (supabase && isLoggedIn) {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) {
+        throw new Error("Not authenticated");
+      }
+
       const targetDataset = datasetId ? state.customDatasets[datasetId] : null;
-      let response;
 
       if (operation === "delete") {
-        response = await fetch(`${getCustomDatasetsApiEndpoint()}/${encodeURIComponent(datasetId)}`, {
-          method: "DELETE",
-          headers: await getAuthHeaders({ includeContentType: true }),
-          body: JSON.stringify({
-            expectedVersion: previousDataset?.version,
-            expectedUpdatedAt: previousDataset?.updatedAt,
-          }),
-        });
+        const { error } = await supabase
+          .from('custom_datasets')
+          .delete()
+          .eq('id', datasetId);
+
+        if (error) throw error;
       } else if (targetDataset) {
         const hasPreviousDataset = Boolean(previousDataset);
-        const visibilityPayload = isLoggedIn && isAdminSession
-          ? { visibility: targetDataset.isPublic ? "public" : "private" }
-          : {};
-        response = await fetch(
-          hasPreviousDataset
-            ? `${getCustomDatasetsApiEndpoint()}/${encodeURIComponent(targetDataset.id)}`
-            : getCustomDatasetsApiEndpoint(),
-          {
-            method: hasPreviousDataset ? "PATCH" : "POST",
-            headers: await getAuthHeaders({ includeContentType: true }),
-            body: JSON.stringify(
-              hasPreviousDataset
-                ? {
-                    label: targetDataset.label,
-                    cards: targetDataset.cards,
-                    ...visibilityPayload,
-                    expectedVersion: previousDataset?.version,
-                    expectedUpdatedAt: previousDataset?.updatedAt,
-                  }
-                : { ...targetDataset, ...visibilityPayload },
-            ),
-          },
-        );
-      } else {
-        response = { ok: true, status: 200, json: async () => null };
-      }
+        const payload = {
+          label: targetDataset.label,
+          cards: targetDataset.cards,
+          visibility: (isLoggedIn && isAdminSession && targetDataset.isPublic) ? "public" : "private",
+          owner_id: session.user.id,
+        };
 
-      ensureAuthorizedResponse(response, "Speichern der eigenen Kartensätze");
+        if (hasPreviousDataset) {
+          // Update existing
+          const { data, error } = await supabase
+            .from('custom_datasets')
+            .update(payload)
+            .eq('id', targetDataset.id)
+            .select()
+            .single();
 
-      if (!response.ok) {
-        if (response.status === 409) {
-          const conflictPayload = await response.json().catch(() => null);
-          if (operation === "delete" && previousDataset?.id) {
-            state.customDatasets[previousDataset.id] = previousDataset;
-          } else if (datasetId) {
-            if (previousDataset?.id) {
-              state.customDatasets[previousDataset.id] = previousDataset;
-            } else {
-              delete state.customDatasets[datasetId];
-            }
+          if (error) throw error;
+          if (data) {
+            state.customDatasets[targetDataset.id] = normalizeStoredCustomDataset(data);
           }
-          localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
-          return {
-            ok: false,
-            mode: "remote",
-            conflict: true,
-            message: "Konflikt erkannt: Kartensatz wurde zwischenzeitlich geändert.",
-            serverDataset: normalizeStoredCustomDataset(conflictPayload?.current),
-          };
-        }
-        throw new Error(`HTTP ${response.status}`);
-      }
+        } else {
+          // Insert new
+          const { data, error } = await supabase
+            .from('custom_datasets')
+            .insert({ ...payload, id: targetDataset.id })
+            .select()
+            .single();
 
-      if (operation !== "delete" && datasetId) {
-        const persistedDataset = normalizeStoredCustomDataset(await response.json());
-        if (persistedDataset) {
-          state.customDatasets[persistedDataset.id] = persistedDataset;
+          if (error) throw error;
+          if (data) {
+            state.customDatasets[data.id] = normalizeStoredCustomDataset(data);
+          }
         }
       }
 
+      state.datasetStorageMode = "remote";
       localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
       return { ok: true, mode: "remote" };
     } catch (error) {
+      console.error("Supabase save error:", error);
       if (error?.isAuthError) {
         return { ok: false, mode: "remote", authRequired: true, message: error.message };
       }
+      // Fall back to local storage
       state.datasetStorageMode = "local";
-      localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
-      return { ok: false, mode: "local", message: "Server nicht erreichbar, lokal gespeichert." };
     }
   }
 
+  // Local fallback
   localStorage.setItem(CUSTOM_DATASETS_STORAGE_KEY, JSON.stringify(Object.values(state.customDatasets)));
   return { ok: true, mode: "local" };
 }
