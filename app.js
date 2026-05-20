@@ -2325,63 +2325,64 @@ function readCustomDatasetsFromStorage() {
 }
 
 async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
-  console.log(`[Supabase] Loading datasets, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
+  console.log(`[Datasets] Loading datasets, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
 
+  const datasets = {};
+
+  // Try to load from local JSON files in custom-datasets-store
   try {
-    const supabase = window.supabase;
-    if (!supabase) {
-      console.error(`[Supabase] Client not available`);
-      return { datasets: null, hasApiError: true };
-    }
+    // List of known public datasets from metadata
+    const publicDatasetIds = [
+      'c38f5823-002a-430f-8dea-2afded8892b3',  // Leicht
+      '8098171f-8f9c-46dd-8b1f-9d6b3d49703a',  // Mittel
+      'a2c2a651-8f35-4d20-b0ec-dbe048a7f311',  // Schwer
+      'dataset-sprichwoerter-englisch'          // Sprichwörter Englisch
+    ];
 
-    // Build query
-    let query = supabase.from('custom_datasets').select('*');
+    const publicDatasetLabels = {
+      'c38f5823-002a-430f-8dea-2afded8892b3': 'Leicht',
+      '8098171f-8f9c-46dd-8b1f-9d6b3d49703a': 'Mittel',
+      'a2c2a651-8f35-4d20-b0ec-dbe048a7f311': 'Schwer',
+      'dataset-sprichwoerter-englisch': 'Sprichwörter Englisch'
+    };
 
-    if (includeOnlyPublic) {
-      // For public datasets, filter by visibility (works for anon if RLS policy allows)
-      query = query.eq('visibility', 'public');
-    } else if (isLoggedIn) {
-      // For private datasets, filter by owner
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.id) {
-        query = query.eq('owner_id', session.user.id);
+    const datasetIdsToLoad = includeOnlyPublic ? publicDatasetIds : 
+      (isLoggedIn ? [...publicDatasetIds] : publicDatasetIds);
+
+    for (const datasetId of datasetIdsToLoad) {
+      try {
+        const response = await fetch(`./data/custom-datasets-store/${datasetId}.json`, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.cards && Array.isArray(data.cards)) {
+            datasets[datasetId] = {
+              id: datasetId,
+              label: publicDatasetLabels[datasetId] || datasetId,
+              visibility: 'public',
+              ownerId: data.ownerId || '',
+              cards: data.cards,
+              createdAt: '2026-05-06T04:16:54.398Z',
+              updatedAt: '2026-05-06T04:16:54.398Z',
+              version: 1
+            };
+            console.log(`[Datasets] Loaded ${datasetId}: ${data.cards.length} cards`);
+          }
+        }
+      } catch (fileError) {
+        console.warn(`[Datasets] Could not load ${datasetId}:`, fileError.message);
       }
-    } else {
-      // Not logged in and not requesting public - return empty
-      return { datasets: {}, hasApiError: false };
     }
 
-    const { data: parsed, error } = await query;
-
-    if (error) {
-      console.error(`[Supabase] Error loading datasets:`, error);
-      // If auth error for public datasets, return empty instead of error
-      if (includeOnlyPublic && (error.message?.includes('JWT') || error.message?.includes('auth'))) {
-        console.warn(`[Supabase] Auth error for public datasets - check RLS policies`);
-        return { datasets: {}, hasApiError: false };
-      }
-      return { datasets: null, hasApiError: true };
-    }
-
-    console.log(`[Supabase] Loaded ${Array.isArray(parsed) ? parsed.length : 0} datasets`);
-
-    if (!Array.isArray(parsed)) {
-      return { datasets: null, hasApiError: true };
-    }
-
-    const datasets = parsed.reduce((accumulator, rawDataset) => {
-      const dataset = normalizeStoredCustomDataset(rawDataset);
-      if (dataset && !isRemovedCustomDatasetLabel(dataset.label)) {
-        accumulator[dataset.id] = dataset;
-      }
-      return accumulator;
-    }, {});
-
-    console.log(`[Supabase] Normalized ${Object.keys(datasets).length} datasets`);
+    console.log(`[Datasets] Loaded ${Object.keys(datasets).length} datasets from JSON files`);
     return { datasets, hasApiError: false };
+
   } catch (error) {
-    console.error(`[Supabase] Error:`, error);
-    return { datasets: null, hasApiError: true };
+    console.error(`[Datasets] Error loading from JSON files:`, error);
+    return { datasets: {}, hasApiError: false };
   }
 }
 
@@ -2476,17 +2477,23 @@ async function loadCustomDatasets() {
 
   console.log(`[loadCustomDatasets] Starting - isLoggedIn: ${isLoggedIn}, INCLUDE_PUBLIC: ${INCLUDE_PUBLIC_DATASETS_FOR_LOGGED_IN}`);
 
+  // First, load local datasets as backup
+  const localDatasets = readCustomDatasetsFromStorage();
+  console.log(`[loadCustomDatasets] Local datasets from storage: ${Object.keys(localDatasets).length}`);
+
   try {
     if (isLoggedIn) {
+      console.log(`[loadCustomDatasets] User logged in - loading private datasets`);
       const privateResult = await readCustomDatasetsFromApi({ includeOnlyPublic: false });
       privateDatasets = privateResult.datasets ?? {};
       hasApiError = hasApiError || privateResult.hasApiError;
+      console.log(`[loadCustomDatasets] Private datasets loaded: ${Object.keys(privateDatasets).length}, hasApiError: ${hasApiError}`);
 
-      if (INCLUDE_PUBLIC_DATASETS_FOR_LOGGED_IN) {
-        const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
-        publicDatasets = publicResult.datasets ?? {};
-        hasApiError = hasApiError || publicResult.hasApiError;
-      }
+      // Always load public datasets for logged in users too
+      const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
+      publicDatasets = publicResult.datasets ?? {};
+      hasApiError = hasApiError || publicResult.hasApiError;
+      console.log(`[loadCustomDatasets] Public datasets loaded: ${Object.keys(publicDatasets).length}, hasApiError: ${hasApiError}`);
     } else {
       console.log(`[loadCustomDatasets] Not logged in - loading public datasets only`);
       const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
@@ -2496,27 +2503,24 @@ async function loadCustomDatasets() {
     }
   } catch (error) {
     console.error(`[loadCustomDatasets] Error:`, error);
-    if (error?.isAuthError) {
-      if (csvStatus) {
-        csvStatus.textContent = error.message;
-      }
-      redirectToLogin();
-      return {};
-    }
     hasApiError = true;
   }
 
-  const remoteDatasets = filterCustomDatasetsForAuthMode({ ...publicDatasets, ...privateDatasets });
-  console.log(`[loadCustomDatasets] Remote datasets after filtering: ${Object.keys(remoteDatasets).length}`);
+  // Merge remote and local datasets
+  const remoteDatasets = { ...publicDatasets, ...privateDatasets };
+  console.log(`[loadCustomDatasets] Remote datasets total: ${Object.keys(remoteDatasets).length}`);
 
-  if (!hasApiError) {
+  // Filter for auth mode
+  const accessibleDatasets = filterCustomDatasetsForAuthMode({ ...localDatasets, ...remoteDatasets });
+  console.log(`[loadCustomDatasets] Accessible datasets after filtering: ${Object.keys(accessibleDatasets).length}`);
+
+  if (!hasApiError && Object.keys(remoteDatasets).length > 0) {
     state.datasetStorageMode = "remote";
-    return remoteDatasets;
+  } else {
+    state.datasetStorageMode = "local";
   }
 
-  state.datasetStorageMode = "local";
-  const localDatasets = readCustomDatasetsFromStorage();
-  return filterCustomDatasetsForAuthMode({ ...localDatasets, ...remoteDatasets });
+  return accessibleDatasets;
 }
 
 function getAllDatasetEntries() {
