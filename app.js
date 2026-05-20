@@ -2330,16 +2330,22 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
     ? "Laden der öffentlichen Kartensätze"
     : "Laden der eigenen Kartensätze";
 
+  console.log(`[API] Loading datasets from: ${endpoint}, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
+
   try {
     // For public datasets, don't require authentication
     const headers = includeOnlyPublic
       ? { Accept: "application/json" }
       : await getAuthHeaders();
 
+    console.log(`[API] Request headers:`, headers);
+
     const response = await fetch(endpoint, {
       method: "GET",
       headers,
     });
+
+    console.log(`[API] Response status: ${response.status}`);
 
     // Only check auth errors for non-public endpoints
     if (!includeOnlyPublic) {
@@ -2347,10 +2353,13 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
     }
 
     if (!response.ok) {
+      console.error(`[API] Failed to load datasets: ${response.status}`);
       return { datasets: null, hasApiError: true };
     }
 
     const parsed = await response.json();
+    console.log(`[API] Parsed ${Array.isArray(parsed) ? parsed.length : 'non-array'} datasets`);
+
     if (!Array.isArray(parsed)) {
       return { datasets: null, hasApiError: true };
     }
@@ -2363,8 +2372,10 @@ async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
       return accumulator;
     }, {});
 
+    console.log(`[API] Loaded ${Object.keys(datasets).length} datasets`);
     return { datasets, hasApiError: false };
   } catch (error) {
+    console.error(`[API] Error loading datasets:`, error);
     if (error?.isAuthError && !includeOnlyPublic) {
       throw error;
     }
@@ -2480,6 +2491,8 @@ async function loadCustomDatasets() {
   let publicDatasets = {};
   let hasApiError = false;
 
+  console.log(`[loadCustomDatasets] Starting - isLoggedIn: ${isLoggedIn}, INCLUDE_PUBLIC: ${INCLUDE_PUBLIC_DATASETS_FOR_LOGGED_IN}`);
+
   try {
     if (isLoggedIn) {
       const privateResult = await readCustomDatasetsFromApi({ includeOnlyPublic: false });
@@ -2492,11 +2505,14 @@ async function loadCustomDatasets() {
         hasApiError = hasApiError || publicResult.hasApiError;
       }
     } else {
+      console.log(`[loadCustomDatasets] Not logged in - loading public datasets only`);
       const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
       publicDatasets = publicResult.datasets ?? {};
       hasApiError = publicResult.hasApiError;
+      console.log(`[loadCustomDatasets] Public datasets loaded: ${Object.keys(publicDatasets).length}, hasApiError: ${hasApiError}`);
     }
   } catch (error) {
+    console.error(`[loadCustomDatasets] Error:`, error);
     if (error?.isAuthError) {
       if (csvStatus) {
         csvStatus.textContent = error.message;
@@ -2508,6 +2524,8 @@ async function loadCustomDatasets() {
   }
 
   const remoteDatasets = filterCustomDatasetsForAuthMode({ ...publicDatasets, ...privateDatasets });
+  console.log(`[loadCustomDatasets] Remote datasets after filtering: ${Object.keys(remoteDatasets).length}`);
+
   if (!hasApiError) {
     state.datasetStorageMode = "remote";
     return remoteDatasets;
@@ -2519,6 +2537,9 @@ async function loadCustomDatasets() {
 }
 
 function getAllDatasetEntries() {
+  console.log(`[getAllDatasetEntries] state.customDatasets count: ${Object.keys(state.customDatasets).length}`);
+  console.log(`[getAllDatasetEntries] customDatasets:`, Object.keys(state.customDatasets));
+
   const customEntries = Object.values(state.customDatasets)
     .filter((dataset) => canAccessCustomDataset(dataset) && !isRemovedCustomDatasetLabel(dataset?.label))
     .map((dataset) => normalizeStoredCustomDataset(dataset))
@@ -2531,6 +2552,8 @@ function getAllDatasetEntries() {
       isPublic: Boolean(dataset.isPublic),
       id: dataset.id,
     }));
+
+  console.log(`[getAllDatasetEntries] customEntries after filter: ${customEntries.length}`);
 
   // Skip presets whose labels already exist as public custom datasets (migrated)
   const migratedLabels = new Set(
