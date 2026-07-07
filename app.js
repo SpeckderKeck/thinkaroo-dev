@@ -7876,7 +7876,7 @@ function showWordCard() {
   state.phase = GAME_PHASES.FULLSCREEN_CARD;
   syncBoardViewLoop();
   resetRoundState(state.pendingCategory ?? "");
-  state.roundActive = normalizeGameMode(state.gameMode) === GAME_MODES.BLITZ;
+  state.roundActive = normalizeGameMode(state.gameMode) === GAME_MODES.BLITZ && state.pendingCategory !== MASTER_QUIZ_CATEGORY;
   state.currentCardType = state.pendingCategory;
   updateRoundCounterDisplay(0);
   const card = getCardByCategory(state.pendingCategory);
