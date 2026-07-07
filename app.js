@@ -163,12 +163,22 @@ function setRoute(hash) {
   }
 
   if (nextHash === "#/shared") {
-    loadSharedGameFromLocationHash();
+    // Only load from token if state.sharedGame not already set (e.g. from static URL data)
+    if (!state.sharedGame) {
+      loadSharedGameFromLocationHash();
+    } else if (sharedSummary && !sharedSummary.textContent) {
+      loadSharedGameFromLocationHash();
+    }
+  }
+
+  if (nextHash === "#/landing") {
+    state.sharedGame = null;
   }
 
   if (nextHash === "#/join") {
-    // Check for static shared game data in URL
-    const urlParams = new URLSearchParams(window.location.search);
+    // Check for static shared game data in hash fragment (e.g. #/join?data=...)
+    const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
+    const urlParams = new URLSearchParams(hashQuery);
     const staticData = urlParams.get('data');
 
     if (staticData) {
