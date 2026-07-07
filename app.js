@@ -599,15 +599,18 @@ function resolveSharedGamesApiBaseUrl() {
 async function fetchSharedGameByToken(shareToken) {
   try {
     const supabase = window.supabase;
-    if (!supabase) return { ok: false, status: 503 };
+    if (!supabase) { console.error('[fetchSharedGameByToken] no supabase client'); return { ok: false, status: 503 }; }
 
+    console.log('[fetchSharedGameByToken] querying token:', shareToken);
     const { data, error } = await supabase
       .from('shared_games')
       .select('*')
       .eq('share_token', shareToken)
       .single();
 
-    if (error || !data) return { ok: false, status: 404 };
+    console.log('[fetchSharedGameByToken] result - data:', !!data, 'error:', error?.message ?? null, 'code:', error?.code ?? null);
+
+    if (error || !data) return { ok: false, status: error?.code === 'PGRST116' ? 404 : 500 };
 
     const payload = {
       id: data.id,
@@ -618,7 +621,8 @@ async function fetchSharedGameByToken(shareToken) {
       cardSets: [],
     };
     return { ok: true, payload };
-  } catch {
+  } catch (e) {
+    console.error('[fetchSharedGameByToken] exception:', e);
     return { ok: false, status: 500 };
   }
 }
