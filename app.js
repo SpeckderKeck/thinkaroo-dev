@@ -2327,63 +2327,84 @@ function readCustomDatasetsFromStorage() {
 async function readCustomDatasetsFromApi({ includeOnlyPublic = false } = {}) {
   console.log(`[Datasets] Loading datasets, includeOnlyPublic: ${includeOnlyPublic}, isLoggedIn: ${isLoggedIn}`);
 
-  const datasets = {};
+  // Load private datasets from Supabase for logged-in users
+  if (!includeOnlyPublic && isLoggedIn) {
+    try {
+      const supabase = window.supabase;
+      if (!supabase) return { datasets: {}, hasApiError: false };
 
-  // Try to load from local JSON files in custom-datasets-store
-  try {
-    // List of known public datasets from metadata
-    const publicDatasetIds = [
-      'c38f5823-002a-430f-8dea-2afded8892b3',  // Leicht
-      '8098171f-8f9c-46dd-8b1f-9d6b3d49703a',  // Mittel
-      'a2c2a651-8f35-4d20-b0ec-dbe048a7f311',  // Schwer
-      'dataset-sprichwoerter-englisch'          // Sprichwörter Englisch
-    ];
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.id) return { datasets: {}, hasApiError: false };
 
-    const publicDatasetLabels = {
-      'c38f5823-002a-430f-8dea-2afded8892b3': 'Leicht',
-      '8098171f-8f9c-46dd-8b1f-9d6b3d49703a': 'Mittel',
-      'a2c2a651-8f35-4d20-b0ec-dbe048a7f311': 'Schwer',
-      'dataset-sprichwoerter-englisch': 'Sprichwörter Englisch'
-    };
+      const { data: parsed, error } = await supabase
+        .from('custom_datasets')
+        .select('*')
+        .eq('owner_id', session.user.id)
+        .eq('visibility', 'private');
 
-    const datasetIdsToLoad = includeOnlyPublic ? publicDatasetIds : 
-      (isLoggedIn ? [...publicDatasetIds] : publicDatasetIds);
-
-    for (const datasetId of datasetIdsToLoad) {
-      try {
-        const response = await fetch(`./data/custom-datasets-store/${datasetId}.json`, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.cards && Array.isArray(data.cards)) {
-            datasets[datasetId] = {
-              id: datasetId,
-              label: publicDatasetLabels[datasetId] || datasetId,
-              visibility: 'public',
-              ownerId: data.ownerId || '',
-              cards: data.cards,
-              createdAt: '2026-05-06T04:16:54.398Z',
-              updatedAt: '2026-05-06T04:16:54.398Z',
-              version: 1
-            };
-            console.log(`[Datasets] Loaded ${datasetId}: ${data.cards.length} cards`);
-          }
-        }
-      } catch (fileError) {
-        console.warn(`[Datasets] Could not load ${datasetId}:`, fileError.message);
+      if (error) {
+        console.error(`[Supabase] Error loading private datasets:`, error);
+        return { datasets: {}, hasApiError: true };
       }
+
+      const datasets = (parsed ?? []).reduce((acc, rawDataset) => {
+        const dataset = normalizeStoredCustomDataset(rawDataset);
+        if (dataset && !isRemovedCustomDatasetLabel(dataset.label)) {
+          acc[dataset.id] = dataset;
+        }
+        return acc;
+      }, {});
+
+      console.log(`[Supabase] Loaded ${Object.keys(datasets).length} private datasets`);
+      return { datasets, hasApiError: false };
+    } catch (error) {
+      console.error(`[Supabase] Error loading private datasets:`, error);
+      return { datasets: {}, hasApiError: false };
     }
-
-    console.log(`[Datasets] Loaded ${Object.keys(datasets).length} datasets from JSON files`);
-    return { datasets, hasApiError: false };
-
-  } catch (error) {
-    console.error(`[Datasets] Error loading from JSON files:`, error);
-    return { datasets: {}, hasApiError: false };
   }
+
+  // Load public datasets from static JSON files (no auth required)
+  const datasets = {};
+  const publicDatasetIds = [
+    'c38f5823-002a-430f-8dea-2afded8892b3',
+    '8098171f-8f9c-46dd-8b1f-9d6b3d49703a',
+    'a2c2a651-8f35-4d20-b0ec-dbe048a7f311',
+    'dataset-sprichwoerter-englisch'
+  ];
+  const publicDatasetLabels = {
+    'c38f5823-002a-430f-8dea-2afded8892b3': 'Leicht',
+    '8098171f-8f9c-46dd-8b1f-9d6b3d49703a': 'Mittel',
+    'a2c2a651-8f35-4d20-b0ec-dbe048a7f311': 'Schwer',
+    'dataset-sprichwoerter-englisch': 'Sprichwörter Englisch'
+  };
+
+  for (const datasetId of publicDatasetIds) {
+    try {
+      const response = await fetch(`./data/custom-datasets-store/${datasetId}.json`, {
+        headers: { 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.cards && Array.isArray(data.cards)) {
+          datasets[datasetId] = {
+            id: datasetId,
+            label: publicDatasetLabels[datasetId] || datasetId,
+            visibility: 'public',
+            ownerId: data.ownerId || '',
+            cards: data.cards,
+            createdAt: '2026-05-06T04:16:54.398Z',
+            updatedAt: '2026-05-06T04:16:54.398Z',
+            version: 1
+          };
+        }
+      }
+    } catch (fileError) {
+      console.warn(`[Datasets] Could not load ${datasetId}:`, fileError.message);
+    }
+  }
+
+  console.log(`[Datasets] Loaded ${Object.keys(datasets).length} public datasets from JSON files`);
+  return { datasets, hasApiError: false };
 }
 
 async function persistCustomDatasets({ operation, datasetId, previousDataset } = {}) {
@@ -2482,36 +2503,42 @@ async function loadCustomDatasets() {
   console.log(`[loadCustomDatasets] Local datasets from storage: ${Object.keys(localDatasets).length}`);
 
   try {
+    // Load public datasets for all users
+    const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
+    publicDatasets = publicResult.datasets ?? {};
+    hasApiError = publicResult.hasApiError;
+    console.log(`[loadCustomDatasets] Public datasets loaded: ${Object.keys(publicDatasets).length}`);
+
     if (isLoggedIn) {
+      // Load private datasets (owned by current user) separately
       console.log(`[loadCustomDatasets] User logged in - loading private datasets`);
       const privateResult = await readCustomDatasetsFromApi({ includeOnlyPublic: false });
       privateDatasets = privateResult.datasets ?? {};
       hasApiError = hasApiError || privateResult.hasApiError;
-      console.log(`[loadCustomDatasets] Private datasets loaded: ${Object.keys(privateDatasets).length}, hasApiError: ${hasApiError}`);
-
-      // Always load public datasets for logged in users too
-      const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
-      publicDatasets = publicResult.datasets ?? {};
-      hasApiError = hasApiError || publicResult.hasApiError;
-      console.log(`[loadCustomDatasets] Public datasets loaded: ${Object.keys(publicDatasets).length}, hasApiError: ${hasApiError}`);
-    } else {
-      console.log(`[loadCustomDatasets] Not logged in - loading public datasets only`);
-      const publicResult = await readCustomDatasetsFromApi({ includeOnlyPublic: true });
-      publicDatasets = publicResult.datasets ?? {};
-      hasApiError = publicResult.hasApiError;
-      console.log(`[loadCustomDatasets] Public datasets loaded: ${Object.keys(publicDatasets).length}, hasApiError: ${hasApiError}`);
+      console.log(`[loadCustomDatasets] Private datasets loaded: ${Object.keys(privateDatasets).length}`);
     }
   } catch (error) {
     console.error(`[loadCustomDatasets] Error:`, error);
     hasApiError = true;
   }
 
-  // Merge remote and local datasets
+  // Merge: public first, then private overrides (same ID = private version wins)
   const remoteDatasets = { ...publicDatasets, ...privateDatasets };
   console.log(`[loadCustomDatasets] Remote datasets total: ${Object.keys(remoteDatasets).length}`);
 
+  // Remove local cache entries whose label already exists in remote datasets (avoids duplicates from old IDs)
+  const remoteLabels = new Set(
+    Object.values(remoteDatasets).map((d) => normalizeDatasetLabel(d?.label))
+  );
+  const deduplicatedLocal = Object.fromEntries(
+    Object.entries(localDatasets).filter(([id, d]) => {
+      // Keep local entry only if not already covered by a remote dataset with same label or ID
+      return !remoteDatasets[id] && !remoteLabels.has(normalizeDatasetLabel(d?.label));
+    })
+  );
+
   // Filter for auth mode
-  const accessibleDatasets = filterCustomDatasetsForAuthMode({ ...localDatasets, ...remoteDatasets });
+  const accessibleDatasets = filterCustomDatasetsForAuthMode({ ...deduplicatedLocal, ...remoteDatasets });
   console.log(`[loadCustomDatasets] Accessible datasets after filtering: ${Object.keys(accessibleDatasets).length}`);
 
   if (!hasApiError && Object.keys(remoteDatasets).length > 0) {
