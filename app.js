@@ -95,7 +95,7 @@ function normalizeRouteHash(hash) {
   if (hash === "/advancedsettings") {
     return "#/advancedsettings";
   }
-  if (String(hash ?? "").startsWith("#/join/")) {
+  if (String(hash ?? "").startsWith("#/join")) {
     return "#/join";
   }
   if (String(hash ?? "").startsWith("#/shared/")) {
@@ -107,7 +107,7 @@ function normalizeRouteHash(hash) {
 function setRoute(hash) {
   const rawHash = String(hash ?? "");
   const nextHash = normalizeRouteHash(rawHash);
-  const shouldPreserveHash = rawHash.startsWith("#/shared/") || rawHash.startsWith("#/join/");
+  const shouldPreserveHash = rawHash.startsWith("#/shared/") || rawHash.startsWith("#/join");
   const desiredHash = shouldPreserveHash ? rawHash : nextHash;
   if (window.location.hash !== desiredHash) {
     window.location.hash = desiredHash;
