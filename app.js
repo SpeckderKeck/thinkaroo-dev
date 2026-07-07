@@ -596,10 +596,21 @@ function resolveSharedGamesApiBaseUrl() {
   return window.location.origin;
 }
 
+async function waitForSupabase(timeoutMs = 5000) {
+  if (window.supabase) return window.supabase;
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const interval = setInterval(() => {
+      if (window.supabase) { clearInterval(interval); resolve(window.supabase); return; }
+      if (Date.now() - start > timeoutMs) { clearInterval(interval); resolve(null); }
+    }, 50);
+  });
+}
+
 async function fetchSharedGameByToken(shareToken) {
   try {
-    const supabase = window.supabase;
-    if (!supabase) { console.error('[fetchSharedGameByToken] no supabase client'); return { ok: false, status: 503 }; }
+    const supabase = await waitForSupabase();
+    if (!supabase) { console.error('[fetchSharedGameByToken] no supabase client after wait'); return { ok: false, status: 503 }; }
 
     console.log('[fetchSharedGameByToken] querying token:', shareToken);
     const { data, error } = await supabase
