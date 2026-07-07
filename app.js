@@ -180,6 +180,7 @@ function setRoute(hash) {
     const hashQuery = window.location.hash.includes('?') ? window.location.hash.split('?')[1] : '';
     const urlParams = new URLSearchParams(hashQuery);
     const staticData = urlParams.get('data');
+    console.log('[Join] hash:', window.location.hash, '| hashQuery:', hashQuery, '| staticData length:', staticData?.length ?? 0);
 
     if (staticData) {
       // Handle static shared game from URL
@@ -997,82 +998,45 @@ async function decompressData(bytes) {
   return bytes;
 }
 
-// Load and start a static shared game from URL-encoded data
+// Load a static shared game from URL-encoded data and show team screen
 async function loadStaticSharedGame(base64Data) {
   try {
-    // Decode and decompress
+    console.log('[loadStaticSharedGame] starting, data length:', base64Data?.length);
     const compressed = decodeBase64UrlSafe(base64Data);
     const decompressed = await decompressData(compressed);
     const decoder = new TextDecoder();
     const jsonString = decoder.decode(decompressed);
     const sharedGameData = JSON.parse(jsonString);
+    console.log('[loadStaticSharedGame] parsed ok, v:', sharedGameData.v, 'has gs:', !!sharedGameData.gs);
 
-    // Validate version
     if (!sharedGameData.v || !sharedGameData.gs) {
       throw new Error("Ungültige Spieldaten");
     }
 
     const gameSettings = sharedGameData.gs;
-    const teamSettings = sharedGameData.ts;
+    const teamSettings = sharedGameData.ts ?? {};
 
-    // Apply game settings
-    if (gameSettings.categories) {
-      state.categories = gameSettings.categories;
-    }
-    if (gameSettings.categoryTimes) {
-      applyCategoryTimes(gameSettings.categoryTimes);
-    }
-    if (gameSettings.swapPenalty) {
-      state.swapPenalty = gameSettings.swapPenalty;
-      if (swapSelect) swapSelect.value = String(gameSettings.swapPenalty);
-    }
-    if (gameSettings.boardSize) {
-      setSelectedBoardSize(gameSettings.boardSize);
-    }
-    if (gameSettings.selectedBoardCategories) {
-      state.selectedBoardCategories = gameSettings.selectedBoardCategories;
-    }
-    if (gameSettings.categoryWeights) {
-      state.categoryWeights = { ...gameSettings.categoryWeights };
-    }
-    if (gameSettings.gameMode) {
-      state.gameMode = gameSettings.gameMode;
-    }
+    // Store in state.sharedGame so startSharedGame() can use it
+    state.sharedGame = {
+      id: null,
+      code: null,
+      shareToken: null,
+      gameSettings,
+      teamSettings,
+      cardSets: [],
+    };
+    console.log('[loadStaticSharedGame] state.sharedGame set, navigating to #/shared');
 
-    // Apply embedded card sets
-    if (gameSettings.embeddedCardSets && Array.isArray(gameSettings.embeddedCardSets)) {
-      // Store embedded cards
-      state.embeddedSharedCards = gameSettings.embeddedCardSets.flatMap((set, index) => {
-        const cards = Array.isArray(set?.cards) ? set.cards : [];
-        return cards.map(card => normalizeCardInput(card)).filter(Boolean);
-      });
-
-      // Create dataset entries for the embedded sets
-      gameSettings.embeddedCardSets.forEach((set, index) => {
-        if (set.key && set.cards) {
-          const key = `embedded:${index}`;
-          state.storageDatasets[key] = {
-            cards: set.cards,
-            label: set.label || `Kartensatz ${index + 1}`,
-            name: set.label || `Kartensatz ${index + 1}`,
-          };
-        }
-      });
-
-      // Select these embedded datasets
-      state.selectedDatasets = gameSettings.embeddedCardSets.map((_, index) => `embedded:${index}`);
+    // Show team screen with pre-filled teams
+    applyTeamsToSharedEditor(teamSettings?.teams ?? []);
+    if (sharedSummary) {
+      const labels = (gameSettings.embeddedCardSets ?? []).map((s) => s.label).filter(Boolean).join(" + ");
+      sharedSummary.textContent = labels || "Geteiltes Spiel";
     }
-
-    // Apply team settings
-    if (teamSettings?.teams && Array.isArray(teamSettings.teams)) {
-      applyTeamsFromSharedData(teamSettings.teams);
-    }
-
-    // Start the game
-    await startGame({ isMultiScreen: false });
+    setRoute("#/shared");
 
   } catch (error) {
-    console.error("Failed to load static shared game:", error);
+    console.error('[loadStaticSharedGame] error:', error);
     window.alert(`Fehler beim Laden des Spiels: ${error.message}`);
     setRoute("#/landing");
   }
