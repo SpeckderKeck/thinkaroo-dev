@@ -586,29 +586,57 @@ function resolveSharedGamesApiBaseUrl() {
 }
 
 async function fetchSharedGameByToken(shareToken) {
-  const baseUrl = resolveSharedGamesApiBaseUrl();
-  const response = await fetch(`${baseUrl}/shared-games/token/${encodeURIComponent(shareToken)}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) {
-    return { ok: false, status: response.status };
+  try {
+    const supabase = window.supabase;
+    if (!supabase) return { ok: false, status: 503 };
+
+    const { data, error } = await supabase
+      .from('shared_games')
+      .select('*')
+      .eq('share_token', shareToken)
+      .single();
+
+    if (error || !data) return { ok: false, status: 404 };
+
+    const payload = {
+      id: data.id,
+      code: data.code,
+      shareToken: data.share_token,
+      gameSettings: data.game_settings_json ?? {},
+      teamSettings: data.team_settings_json ?? {},
+      cardSets: [],
+    };
+    return { ok: true, payload };
+  } catch {
+    return { ok: false, status: 500 };
   }
-  const payload = await response.json();
-  return { ok: true, payload };
 }
 
 async function fetchSharedGameByCode(code) {
-  const baseUrl = resolveSharedGamesApiBaseUrl();
-  const response = await fetch(`${baseUrl}/shared-games/code/${encodeURIComponent(code)}`, {
-    method: "GET",
-    headers: { Accept: "application/json" },
-  });
-  if (!response.ok) {
-    return { ok: false, status: response.status };
+  try {
+    const supabase = window.supabase;
+    if (!supabase) return { ok: false, status: 503 };
+
+    const { data, error } = await supabase
+      .from('shared_games')
+      .select('*')
+      .eq('code', code.toUpperCase())
+      .single();
+
+    if (error || !data) return { ok: false, status: 404 };
+
+    const payload = {
+      id: data.id,
+      code: data.code,
+      shareToken: data.share_token,
+      gameSettings: data.game_settings_json ?? {},
+      teamSettings: data.team_settings_json ?? {},
+      cardSets: [],
+    };
+    return { ok: true, payload };
+  } catch {
+    return { ok: false, status: 500 };
   }
-  const payload = await response.json();
-  return { ok: true, payload };
 }
 
 function clampSharedTeamCount(value) {
@@ -1069,23 +1097,18 @@ function applyTeamsFromSharedData(teams) {
 async function createSharedGameFromCurrentMenu() {
   if (!sharedGameStatus || !sharedGameCodeEl || !sharedGameLinkButton || !sharedGameQrImage) return;
 
-  // Try backend first (requires login), fall back to static (works for everyone)
-  const baseUrl = resolveSharedGamesApiBaseUrl();
-  if (!baseUrl || !isLoggedIn) {
-    // No backend available or not logged in - use static method
-    return createStaticSharedGame();
-  }
-
   const isMainMenuComplete = updateMainMenuRequiredSelectionState();
   if (!isMainMenuComplete) {
     if (sharedGameStatus) {
       sharedGameStatus.textContent = "Bitte Kartensätze und Kategorien auswählen.";
+      sharedGameStatus.hidden = false;
     }
     openSharedGameModal();
     return;
   }
 
-  sharedGameStatus.textContent = "Erstelle Spielcode ...";
+  sharedGameStatus.textContent = "Erstelle Spiel-Link ...";
+  sharedGameStatus.hidden = false;
   if (sharedGameLinkStatus) {
     sharedGameLinkStatus.hidden = true;
     sharedGameLinkStatus.textContent = "";
@@ -1095,115 +1118,97 @@ async function createSharedGameFromCurrentMenu() {
   sharedGameQrImage.src = "";
   openSharedGameModal();
 
- const selectedKeys = readSelectedDatasetKeys();
-console.log("SELECTED_KEYS:", selectedKeys);
+  // Collect all selected datasets with their cards
+  const selectedKeys = readSelectedDatasetKeys();
+  const datasetEntries = selectedKeys.map((key) => getDatasetEntryByKey(key)).filter(Boolean);
+  const embeddedCardSets = datasetEntries.map((entry) => ({
+    key: String(entry.key),
+    label: String(entry.label ?? entry.key),
+    cards: Array.isArray(entry.cards) ? entry.cards : [],
+  })).filter((s) => s.cards.length > 0);
 
-const datasetSelection = selectedKeys.reduce(
-  (acc, key) => {
-    const entry = getDatasetEntryByKey(key);
-    console.log("DATASET_ENTRY_FOR_KEY:", key, entry);
-
-    if (!entry) return acc;
-
-    if (entry.key && PRESET_DATASETS[entry.key]) {
-      acc.presetKeys.push(String(entry.key));
-      return acc;
-    }
-
-    if (entry.isCustom && entry.key && Array.isArray(entry.cards) && entry.cards.length > 0) {
-      acc.embeddedCardSets.push({
-        key: String(entry.key),
-        label: String(entry.label ?? entry.key),
-        cards: entry.cards,
-      });
-      return acc;
-    }
-
-    if (entry.id) {
-      acc.cardSetIds.push(String(entry.id));
-      return acc;
-    }
-
-    if (entry.key && Array.isArray(entry.cards) && entry.cards.length > 0) {
-      acc.embeddedCardSets.push({
-        key: String(entry.key),
-        label: String(entry.label ?? entry.key),
-        cards: entry.cards,
-      });
-      return acc;
-    }
-
-    return acc;
-  },
-  { cardSetIds: [], presetKeys: [], embeddedCardSets: [] }
-);
-
-console.log("DATASET_SELECTION:", datasetSelection);
-
-if (
-  datasetSelection.cardSetIds.length === 0
-  && datasetSelection.presetKeys.length === 0
-  && datasetSelection.embeddedCardSets.length === 0
-) {
-  sharedGameStatus.textContent = "Ausgewählte Kartensätze konnten nicht für ein geteiltes Spiel übernommen werden.";
-  return;
-}
+  if (embeddedCardSets.length === 0) {
+    sharedGameStatus.textContent = "Keine Karten in den ausgewählten Kartensätzen gefunden.";
+    sharedGameStatus.hidden = false;
+    return;
+  }
 
   const selectedBoardSize = getSelectedBoardSize(boardSizeSelect ?? boardSizeInputs);
   const gameSettings = {
     categories: state.categories.filter((category) => SELECTABLE_CARD_CATEGORIES.includes(category)),
     categoryTimes: readCategoryTimes(menuCategoryControls),
-    swapPenalty: Number.parseInt(swapSelect.value, 10),
+    swapPenalty: Number.parseInt(swapSelect?.value || "10", 10),
     boardSize: selectedBoardSize,
     selectedBoardCategories: [...state.selectedBoardCategories],
     categoryWeights: { ...state.categoryWeights },
     gameMode: normalizeGameMode(state.gameMode),
+    embeddedCardSets,
   };
   const teamSettings = {
     teams: readTeamsFromContainer(teamListContainer),
   };
 
+  // Try to save in Supabase for a short code (logged-in users)
+  if (isLoggedIn && window.supabase) {
+    try {
+      const { data: { session } } = await window.supabase.auth.getSession();
+      if (session?.user?.id) {
+        const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const shareToken = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).substring(2)}`;
+
+        const { data, error } = await window.supabase
+          .from('shared_games')
+          .insert({
+            code,
+            share_token: shareToken,
+            created_by_user_id: session.user.id,
+            game_settings_json: gameSettings,
+            team_settings_json: teamSettings,
+            status: 'active',
+          })
+          .select()
+          .single();
+
+        if (!error && data) {
+          const baseDocumentUrl = `${window.location.origin}${window.location.pathname}`;
+          const shareUrl = `${baseDocumentUrl}#/shared/${encodeURIComponent(shareToken)}`;
+          sharedGameCodeEl.textContent = code;
+          sharedGameLinkButton.textContent = shareUrl;
+          sharedGameStatus.textContent = "";
+          sharedGameStatus.hidden = true;
+          sharedGameQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}`;
+          return;
+        }
+      }
+    } catch {
+      // Fall through to static method
+    }
+  }
+
+  // Fallback: static URL-encoded game (works for everyone, no backend needed)
   try {
-    const baseUrl = resolveSharedGamesApiBaseUrl();
-    const response = await fetch(`${baseUrl}/shared-games`, {
-      method: "POST",
-      headers: await getAuthHeaders({ includeContentType: true }),
-      body: JSON.stringify({ gameSettings, teamSettings, datasetSelection }),
-    });
-    ensureAuthorizedResponse(response, "Spiel erstellen");
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "");
-      throw new Error(`HTTP ${response.status}${errorText ? `: ${errorText}` : ""}`);
-    }
-    const payload = await response.json();
-    const code = payload?.code ?? "";
-    const shareToken = payload?.shareToken ?? payload?.share_token ?? "";
+    const sharedGameData = {
+      v: 1,
+      gs: gameSettings,
+      ts: teamSettings,
+      t: Date.now(),
+    };
+
+    const jsonString = JSON.stringify(sharedGameData);
+    const compressed = await compressData(jsonString);
+    const base64 = encodeBase64UrlSafe(compressed);
+
     const baseDocumentUrl = `${window.location.origin}${window.location.pathname}`;
-    const shareUrl = code
-      ? `${baseDocumentUrl}#/join/${encodeURIComponent(String(code).trim())}`
-      : (shareToken ? `${baseDocumentUrl}#/shared/${encodeURIComponent(shareToken)}` : (payload?.shareUrl ?? ""));
-    sharedGameCodeEl.textContent = code;
+    const shareUrl = `${baseDocumentUrl}#/join?data=${base64}`;
+
+    sharedGameCodeEl.textContent = "LINK";
     sharedGameLinkButton.textContent = shareUrl;
-    if (sharedGameStatus) {
-      sharedGameStatus.textContent = "";
-      sharedGameStatus.hidden = true;
-    }
+    sharedGameStatus.textContent = "Link erstellt! Scan den QR-Code oder kopiere den Link.";
+    sharedGameStatus.hidden = false;
     sharedGameQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=512x512&data=${encodeURIComponent(shareUrl)}`;
   } catch (error) {
-    if (error?.isAuthError) {
-      if (sharedGameStatus) {
-        sharedGameStatus.textContent = error.message;
-        sharedGameStatus.hidden = false;
-      }
-      if (error.shouldRedirect) {
-        redirectToLogin();
-      }
-      return;
-    }
-    if (sharedGameStatus) {
-      sharedGameStatus.textContent = `Fehler: ${error?.message || String(error)}`;
-      sharedGameStatus.hidden = false;
-    }
+    sharedGameStatus.textContent = `Fehler: ${error?.message || String(error)}`;
+    sharedGameStatus.hidden = false;
   }
 }
 
